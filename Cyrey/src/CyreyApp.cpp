@@ -4,28 +4,35 @@
 void Cyrey::CyreyApp::Init()
 {
 	this->mRefreshRate = 60;
-	this->mScreenWidth = 800;
-	this->mScreenHeight = 650;
+	this->mWidth = 800;
+	this->mHeight = 650;
 }
 
 void Cyrey::CyreyApp::RunGame()
 {
-    raylib::Window window(this->mScreenWidth, 
-        this->mScreenHeight, 
+    raylib::Window window(
+        this->mWidth, 
+        this->mHeight, 
         "Cyrey", 
         ConfigFlags::FLAG_WINDOW_RESIZABLE |
         ConfigFlags::FLAG_WINDOW_ALWAYS_RUN |
-        ConfigFlags::FLAG_WINDOW_HIGHDPI);
+        ConfigFlags::FLAG_WINDOW_HIGHDPI
+    );
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
-    ::SetTargetFPS(this->mRefreshRate);
+    window.SetTargetFPS(this->mRefreshRate);
+    this->mWindow = &window;
+
+    this->mBoard = &Board(8, 8);
+    this->mBoard->Init();
 
     while (!window.ShouldClose())
     {
         this->Update();
         this->Draw();
+        window.DrawFPS();
     }
 #endif
 }
@@ -41,7 +48,7 @@ void Cyrey::CyreyApp::Draw()
 
     ClearBackground(RAYWHITE);
 
-    DrawText("Hello World!", 160, 200, 20, LIGHTGRAY);
+    this->mBoard->Draw();
 
     EndDrawing();
 }

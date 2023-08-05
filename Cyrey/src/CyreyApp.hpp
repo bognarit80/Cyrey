@@ -2,22 +2,24 @@
 #define _CYREY_APP_HEADER
 
 #include "raylib-cpp.hpp"
+#include "Board.hpp"
 
 namespace Cyrey 
 {
 	class CyreyApp
 	{
-
 	public:
-
 		CyreyApp() = default;
-		CyreyApp(CyreyApp& other) = delete;
-		CyreyApp(const CyreyApp& other) = delete;
-		CyreyApp& operator=(const CyreyApp& other) = delete;
+		CyreyApp(const CyreyApp&) = delete;
+		CyreyApp& operator=(const CyreyApp&) = delete;
+		CyreyApp(CyreyApp&&) = delete;
+		CyreyApp& operator=(const CyreyApp&&) = delete;
 
-		int mScreenWidth;
-		int mScreenHeight;
+		int mWidth;
+		int mHeight;
 		int mRefreshRate;
+		Board *mBoard;
+		raylib::Window *mWindow;
 
 		void Init();
 		void RunGame();
