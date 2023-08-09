@@ -3,10 +3,13 @@
 
 #include "raylib-cpp.hpp"
 #include "Piece.hpp"
+#include "CyreyApp.hpp"
 #include <memory>
 
 namespace Cyrey
 {
+	class CyreyApp;
+
 	class Board
 	{
 	public:
@@ -16,10 +19,13 @@ namespace Cyrey
 		int mYOffset;
 		int mTileSize;
 		float mBoardAlpha;
-		std::unique_ptr<std::vector<std::vector<Piece>>> mBoard;
+		std::vector<std::vector<Piece>> mBoard;
+		CyreyApp* mApp;
+		int mZoomPct;
 
 		Board() = default;
-		Board(int width, int height);
+		Board(int width, int height) :
+			mWidth(width), mHeight(height) {};
 		Board(int size) : Board(size, size) {};
 
 		void Init();
@@ -30,6 +36,7 @@ namespace Cyrey
 	private:
 		void DrawCheckerboard();
 		void DrawPieces();
+		void DrawHoverSquare();
 	};
 }
 	

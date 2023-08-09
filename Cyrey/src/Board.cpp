@@ -3,27 +3,16 @@
 #include <sstream>
 #include <map>
 
-Cyrey::Board::Board(int width, int height)
-{
-	this->mWidth = width;
-	this->mHeight = height;
-}
-
 void Cyrey::Board::Init()
 {
 	this->mXOffset = 100;
 	this->mYOffset = 100;
 	this->mTileSize = 30;
 	this->mBoardAlpha = 0.25f;
-
-	/*std::vector<std::vector<Piece>> boardMock = {
-		{ Piece(PieceColor::Red), Piece(PieceColor::Blue) },
-		{ Piece(PieceColor::Purple), Piece(PieceColor::Orange) },
-		{ Piece(PieceColor::Green), Piece(PieceColor::White) }
-	};*/
+	this->mZoomPct = 90;
 
 	auto boardMock = ParseBoardString(
-		R"(brygyrgr
+R"(brygyrgr
 ygbpwpwg
 gygwygyw
 gwygwywg
@@ -32,17 +21,29 @@ rwprpwrw
 ryygbgbb
 pprpprpr
 )");
-	this->mBoard = std::make_unique<std::vector<std::vector<Piece>>>(boardMock);
-	this->mWidth = mBoard->at(0).size();
-	this->mHeight = mBoard->size();
+	this->mBoard = boardMock;
+	this->mWidth = mBoard[0].size();
+	this->mHeight = mBoard.size();
+}
+
+void Cyrey::Board::Update()
+{
+	int screenWidth = this->mApp->mWindow->GetWidth();
+	int screenHeight = this->mApp->mWindow->GetHeight();
+
+	if (screenWidth > 0 && screenHeight > 0)
+	{
+		this->mTileSize = (screenHeight * this->mZoomPct / 100) / this->mHeight;
+		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2);
+		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2);
+	}
 }
 
 void Cyrey::Board::Draw()
 {
-	this->mXOffset = (::GetScreenWidth() / 2) - (this->mWidth * mTileSize / 2);
-	this->mYOffset = (::GetScreenHeight() / 2) - (this->mWidth * mTileSize / 2);
 	this->DrawCheckerboard();
 	this->DrawPieces();
+	this->DrawHoverSquare();
 }
 
 std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char* data)
@@ -98,17 +99,17 @@ void Cyrey::Board::DrawCheckerboard()
 		(float)(this->mYOffset - 1),
 		(float)((this->mTileSize * this->mWidth) + 2),
 		(float)((this->mTileSize * this->mHeight) + 2)
-	).DrawRoundedLines(0.0f, 1, 3, raylib::Color::Gray());
+	).DrawRoundedLines(0.0f, 1, 3, this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray());
 }
 
 void Cyrey::Board::DrawPieces()
 {
-	for (int i = 0; i < this->mBoard->size(); i++)
+	for (int i = 0; i < this->mBoard.size(); i++)
 	{
-		for (int j = 0; j < this->mBoard->at(0).size(); j++)
+		for (int j = 0; j < this->mBoard[0].size(); j++)
 		{
 			Color color;
-			switch (this->mBoard->at(i).at(j).mColor)
+			switch (this->mBoard[i][j].mColor)
 			{
 			case PieceColor::Red:
 				color = raylib::Color::Red(); break;
@@ -130,11 +131,31 @@ void Cyrey::Board::DrawPieces()
 			}
 
 			raylib::Rectangle(
-				(float)((j* this->mTileSize) + this->mXOffset + 3),
-					(float)((i* this->mTileSize) + this->mYOffset + 3),
-					(float)this->mTileSize - 6,
-					(float)this->mTileSize - 6
+				(float)((j * this->mTileSize) + this->mXOffset + 3),
+				(float)((i * this->mTileSize) + this->mYOffset + 3),
+				(float)this->mTileSize - 6,
+				(float)this->mTileSize - 6
 			).Draw(color);
 		}
 	}
+}
+
+void Cyrey::Board::DrawHoverSquare()
+{
+	int mouseX = raylib::Mouse::GetX() - this->mXOffset;
+	int mouseY = raylib::Mouse::GetY() - this->mYOffset;
+	if (mouseX <= 0 || mouseY <= 0 || this->mTileSize <= 0) return;
+
+	int xTile = mouseX / mTileSize;
+	int yTile = mouseY / mTileSize;
+	if (xTile >= this->mWidth ||
+		yTile >= this->mHeight)
+		return;
+
+	raylib::Rectangle(
+		(float)((xTile * mTileSize) + this->mXOffset + 1),
+		(float)((yTile * mTileSize) + this->mYOffset + 1),
+		(float)(this->mTileSize - 2),
+		(float)(this->mTileSize - 2)
+	).DrawRoundedLines(0.0f, 1, 3, raylib::Color::Orange());
 }

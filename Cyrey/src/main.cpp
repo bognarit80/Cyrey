@@ -1,20 +1,31 @@
 #include "raylib-cpp.hpp"
 #include "CyreyApp.hpp"
-//#define PLATFORM_WEB
 
-#if defined(PLATFORM_WEB)
+#ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
+
+static Cyrey::CyreyApp gApp;
 
 //----------------------------------------------------------------------------------
 // Main Entry Point
 //----------------------------------------------------------------------------------
-int main()
+void web_loop()
 {
-    Cyrey::CyreyApp theApp{};
-    //Cyrey::gApp = &theApp;
-    theApp.Init();
-    theApp.RunGame();
+    gApp.GameLoop();
+}
+
+int main(void)
+{
+    gApp.Init();
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(web_loop, 0, 1);
+#else
+    while (!WindowShouldClose())
+    {
+        gApp.GameLoop();
+    }
+#endif
 
     return 0;
 }

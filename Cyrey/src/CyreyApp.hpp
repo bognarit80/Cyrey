@@ -3,9 +3,12 @@
 
 #include "raylib-cpp.hpp"
 #include "Board.hpp"
+#include <memory>
 
 namespace Cyrey 
 {
+	class Board;
+
 	class CyreyApp
 	{
 	public:
@@ -18,14 +21,15 @@ namespace Cyrey
 		int mWidth;
 		int mHeight;
 		int mRefreshRate;
-		Board *mBoard;
-		raylib::Window *mWindow;
+		std::unique_ptr<Board> mBoard;
+		std::unique_ptr<raylib::Window> mWindow;
+		bool mDarkMode;
 
 		void Init();
-		void RunGame();
+		void GameLoop();
 		void Update();
 		void Draw();
 	};
-}
+} // namespace Cyrey 
 
 #endif // !_CYREY_APP_HEADER

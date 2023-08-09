@@ -6,49 +6,39 @@ void Cyrey::CyreyApp::Init()
 	this->mRefreshRate = 60;
 	this->mWidth = 800;
 	this->mHeight = 650;
-}
+    this->mDarkMode = true;
 
-void Cyrey::CyreyApp::RunGame()
-{
-    raylib::Window window(
-        this->mWidth, 
-        this->mHeight, 
-        "Cyrey", 
+    this->mWindow = std::make_unique<raylib::Window>(
+        this->mWidth,
+        this->mHeight,
+        "Cyrey",
         ConfigFlags::FLAG_WINDOW_RESIZABLE |
         ConfigFlags::FLAG_WINDOW_ALWAYS_RUN |
-        ConfigFlags::FLAG_WINDOW_HIGHDPI
-    );
-
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
-#else
-    window.SetTargetFPS(this->mRefreshRate);
-    this->mWindow = &window;
-
-    this->mBoard = &Board(8, 8);
+        ConfigFlags::FLAG_WINDOW_HIGHDPI);
+    this->mBoard = std::make_unique<Board>(8, 8);
     this->mBoard->Init();
+    this->mBoard->mApp = this;
+}
 
-    while (!window.ShouldClose())
-    {
-        this->Update();
-        this->Draw();
-        window.DrawFPS();
-    }
-#endif
+void Cyrey::CyreyApp::GameLoop()
+{
+    this->Update();
+    this->Draw();
+    this->mWindow->DrawFPS();
 }
 
 void Cyrey::CyreyApp::Update()
 {
-
+    this->mBoard->Update();
 }
 
 void Cyrey::CyreyApp::Draw() 
 {
-    BeginDrawing();
+    this->mWindow->BeginDrawing();
 
-    ClearBackground(RAYWHITE);
+    this->mWindow->ClearBackground(this->mDarkMode ? raylib::Color::Black() : raylib::Color::RayWhite());
 
     this->mBoard->Draw();
 
-    EndDrawing();
+    this->mWindow->EndDrawing();
 }
