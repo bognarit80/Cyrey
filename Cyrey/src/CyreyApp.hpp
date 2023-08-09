@@ -28,7 +28,7 @@ namespace Cyrey
 		void Init();
 		void GameLoop();
 		void Update();
-		void Draw();
+		void Draw() const;
 	};
 } // namespace Cyrey 
 

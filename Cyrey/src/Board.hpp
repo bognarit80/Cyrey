@@ -18,6 +18,7 @@ namespace Cyrey
 		int mXOffset;
 		int mYOffset;
 		int mTileSize;
+		int mTileInset;
 		float mBoardAlpha;
 		std::vector<std::vector<Piece>> mBoard;
 		CyreyApp* mApp;
@@ -30,13 +31,13 @@ namespace Cyrey
 
 		void Init();
 		void Update();
-		void Draw();
+		void Draw() const;
 		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
 
 	private:
-		void DrawCheckerboard();
-		void DrawPieces();
-		void DrawHoverSquare();
+		void DrawCheckerboard() const;
+		void DrawPieces() const;
+		void DrawHoverSquare() const;
 	};
 }
 	

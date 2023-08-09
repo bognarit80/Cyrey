@@ -32,7 +32,7 @@ void Cyrey::CyreyApp::Update()
     this->mBoard->Update();
 }
 
-void Cyrey::CyreyApp::Draw() 
+void Cyrey::CyreyApp::Draw() const
 {
     this->mWindow->BeginDrawing();
 

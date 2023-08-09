@@ -8,6 +8,7 @@ void Cyrey::Board::Init()
 	this->mXOffset = 100;
 	this->mYOffset = 100;
 	this->mTileSize = 30;
+	this->mTileInset = 3;
 	this->mBoardAlpha = 0.25f;
 	this->mZoomPct = 90;
 
@@ -34,12 +35,15 @@ void Cyrey::Board::Update()
 	if (screenWidth > 0 && screenHeight > 0)
 	{
 		this->mTileSize = (screenHeight * this->mZoomPct / 100) / this->mHeight;
+		this->mTileInset = this->mTileSize / 10;
 		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2);
 		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2);
 	}
+
+	this->mZoomPct += raylib::Mouse::GetWheelMove();
 }
 
-void Cyrey::Board::Draw()
+void Cyrey::Board::Draw() const
 {
 	this->DrawCheckerboard();
 	this->DrawPieces();
@@ -76,7 +80,7 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char
 	return board;
 }
 
-void Cyrey::Board::DrawCheckerboard()
+void Cyrey::Board::DrawCheckerboard() const
 {
 	for (int i = 0; i < this->mHeight; i++)
 	{
@@ -102,7 +106,7 @@ void Cyrey::Board::DrawCheckerboard()
 	).DrawRoundedLines(0.0f, 1, 3, this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray());
 }
 
-void Cyrey::Board::DrawPieces()
+void Cyrey::Board::DrawPieces() const
 {
 	for (int i = 0; i < this->mBoard.size(); i++)
 	{
@@ -131,16 +135,16 @@ void Cyrey::Board::DrawPieces()
 			}
 
 			raylib::Rectangle(
-				(float)((j * this->mTileSize) + this->mXOffset + 3),
-				(float)((i * this->mTileSize) + this->mYOffset + 3),
-				(float)this->mTileSize - 6,
-				(float)this->mTileSize - 6
+				(float)((j * this->mTileSize) + this->mXOffset + this->mTileInset),
+				(float)((i * this->mTileSize) + this->mYOffset + this->mTileInset),
+				(float)this->mTileSize - (this->mTileInset * 2),
+				(float)this->mTileSize - (this->mTileInset * 2)
 			).Draw(color);
 		}
 	}
 }
 
-void Cyrey::Board::DrawHoverSquare()
+void Cyrey::Board::DrawHoverSquare() const
 {
 	int mouseX = raylib::Mouse::GetX() - this->mXOffset;
 	int mouseY = raylib::Mouse::GetY() - this->mYOffset;
@@ -157,5 +161,5 @@ void Cyrey::Board::DrawHoverSquare()
 		(float)((yTile * mTileSize) + this->mYOffset + 1),
 		(float)(this->mTileSize - 2),
 		(float)(this->mTileSize - 2)
-	).DrawRoundedLines(0.0f, 1, 3, raylib::Color::Orange());
+	).DrawRoundedLines(0.0f, 1, this->mTileInset / 2.0f, raylib::Color::Orange());
 }
