@@ -15,6 +15,7 @@ void Cyrey::CyreyApp::Init()
         ConfigFlags::FLAG_WINDOW_RESIZABLE |
         ConfigFlags::FLAG_WINDOW_ALWAYS_RUN |
         ConfigFlags::FLAG_WINDOW_HIGHDPI);
+    this->mWindow->SetTargetFPS(60);
     this->mBoard = std::make_unique<Board>(8, 8);
     this->mBoard->Init();
     this->mBoard->mApp = this;

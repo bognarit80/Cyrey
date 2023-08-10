@@ -21,11 +21,14 @@ namespace Cyrey
 		PieceColor mColor;
 		unsigned int mFlags;
 		bool mCanSwap;
+		bool mDragging;
+		float mXDiff;
+		float mYDiff;
 
 		Piece() = default;
 
 		Piece(PieceColor mColor)
-			: mColor(mColor), mFlags(0), mCanSwap(true)
+			: mColor(mColor), mFlags(0), mCanSwap(true), mDragging(false), mXDiff(0.0f), mYDiff(0.0f)
 		{};
 	};
 }
