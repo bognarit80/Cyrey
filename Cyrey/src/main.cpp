@@ -21,7 +21,7 @@ int main(void)
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(web_loop, 0, 1);
 #else
-    while (!WindowShouldClose())
+    while (!gApp.mWindow->ShouldClose())
     {
         gApp.GameLoop();
     }

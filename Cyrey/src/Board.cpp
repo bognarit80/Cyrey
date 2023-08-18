@@ -1,6 +1,4 @@
 #include "Board.hpp"
-#include "raylib-cpp.hpp"
-#include <sstream>
 #include <map>
 
 void Cyrey::Board::Init()
@@ -14,7 +12,7 @@ void Cyrey::Board::Init()
 	this->mDragging = false;
 	this->mTriedSwap = false;
 
-	auto boardMock = ParseBoardString(
+	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
 ygbpwpwg
 gygwygyw
@@ -23,8 +21,14 @@ gwywgygy
 rwprpwrw
 ryygbgbb
 pprpprpr
-)");
-	this->mBoard = boardMock;
+)");*/
+	this->mCurrentMatchSet = std::make_unique<MatchSet>();
+	do
+	{
+		this->mMatchSets.clear();
+		this->mBoard = this->GenerateStartingBoard();
+	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
+
 	this->mWidth = mBoard[0].size();
 	this->mHeight = mBoard.size();
 }
@@ -84,6 +88,23 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char
 	return board;
 }
 
+std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() const
+{
+	std::vector<std::vector<Cyrey::Piece>> board{};
+	std::vector<Cyrey::Piece> row{};
+	//TODO: SetRandomSeed
+	for (int i = 0; i < this->mHeight; i++)
+	{
+		for (int j = 0; j < this->mWidth; j++)
+		{
+			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, static_cast<int>(PieceColor::Count) - 1))));
+		}
+		board.push_back(row);
+		row.clear();
+	}
+	return board;
+}
+
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
 {
 	int mouseX = raylib::Mouse::GetX() - this->mXOffset;
@@ -104,30 +125,129 @@ bool Cyrey::Board::IsMouseInBoard() const
 	return this->GetHoveredTile().has_value();
 }
 
-bool Cyrey::Board::TrySwap(int x, int y, int toX, int toY)
+bool Cyrey::Board::FindSets()
 {
-	if (!this->IsSwapLegal(x, y, toX, toY))
+	bool foundSet = false;
+
+	for (int i = 0; i < this->mHeight; i++)
+	{
+		for (int j = 0; j < this->mWidth; j++)
+		{
+			this->FindSets(i, j, this->mBoard[i][j].mColor);
+			if (this->mMatchSets.size() > 0)
+				foundSet = true;
+		}
+	}
+
+	return foundSet;
+}
+
+bool Cyrey::Board::FindSets(int pieceRow, int pieceCol, PieceColor color, bool first)
+{
+	if (this->mBoard[pieceRow][pieceCol].mColor == PieceColor::Uncolored)
+		return false; //don't check uncolored pieces at all
+
+	if (this->mCurrentMatchSet->mPieces.size() == 0)
+	{
+		if (!this->IsPieceBeingMatched(this->mBoard[pieceRow][pieceCol].mID))
+			this->mCurrentMatchSet->mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
+		else return false; //already checked
+	}
+	else
+	{
+		for (auto piece : this->mCurrentMatchSet->mPieces)
+		{
+			if (piece->mID == this->mBoard[pieceRow][pieceCol].mID)
+				return false; // already checked
+		}
+		this->mCurrentMatchSet->mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
+	}
+
+	if ((pieceRow - 1) >= 0 &&
+		(pieceRow - 1) < this->mWidth &&
+		this->mBoard[pieceRow - 1][pieceCol].mColor == color)
+	{
+		this->FindSets(pieceRow - 1, pieceCol, color, false);
+	}
+
+	if ((pieceRow + 1) >= 0 &&
+		(pieceRow + 1) < this->mWidth &&
+		this->mBoard[pieceRow + 1][pieceCol].mColor == color)
+	{
+		this->FindSets(pieceRow + 1, pieceCol, color, false);
+	}
+
+	if ((pieceCol - 1) >= 0 &&
+		(pieceCol - 1) < this->mHeight &&
+		this->mBoard[pieceRow][pieceCol - 1].mColor == color)
+	{
+		this->FindSets(pieceRow, pieceCol - 1, color, false);
+	}
+
+	if ((pieceCol + 1) >= 0 &&
+		(pieceCol + 1) < this->mHeight &&
+		this->mBoard[pieceRow][pieceCol + 1].mColor == color)
+	{
+		this->FindSets(pieceRow, pieceCol + 1, color, false);
+	}
+
+	bool foundSet = false;
+	if (this->mCurrentMatchSet->mPieces.size() >= 3)
+	{
+		this->mMatchSets.push_back(*this->mCurrentMatchSet);
+		foundSet = true;
+	}
+
+	if (first)
+		this->mCurrentMatchSet->mPieces.clear();
+
+	return foundSet;
+}
+
+bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
+{
+	for (auto& matchSet : this->mMatchSets)
+	{
+		for (auto piece : matchSet.mPieces)
+		{
+			if (piece->mID == pieceID)
+				return true;
+		}
+	}
+	return false;
+}
+
+bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
+{
+	if (!this->IsSwapLegal(row, col, toRow, toCol))
 		return false;
 
-	Cyrey::Piece temp = this->mBoard[x][y];
-	this->mBoard[x][y] = this->mBoard[toX][toY];
-	this->mBoard[toX][toY] = temp;
+	Cyrey::Piece temp = this->mBoard[row][col];
+	this->mBoard[row][col] = this->mBoard[toRow][toCol];
+	this->mBoard[toRow][toCol] = temp;
+	this->FindSets(row, col, this->mBoard[row][col].mColor);
+	this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
 	return true;
 }
 
-bool Cyrey::Board::IsSwapLegal(int x, int y, int toX, int toY) const
+bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
 {
-	if (toX < 0 || toY < 0 || toX >= this->mWidth || toY >= this->mHeight)
+	if (toRow < 0 || toCol < 0 || toRow >= this->mWidth || toCol >= this->mHeight)
 		return false; //out of bounds
 	
-	int xDiff = abs(x - toX);
-	int yDiff = abs(y - toY);
+	int xDiff = std::abs(row - toRow);
+	int yDiff = std::abs(col - toCol);
 
 	//swap with only adjacent squares. no diagonal swaps. swap with itself is also considered illegal
 	if (xDiff > 1 || yDiff > 1 || !(xDiff ^ yDiff))
 		return false;
 
 	return true;
+}
+
+constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
+{
+	return !(row < 0 || col < 0 || row >= this->mWidth || col >= this->mHeight);
 }
 
 void Cyrey::Board::UpdateDragging()
@@ -146,7 +266,7 @@ void Cyrey::Board::UpdateDragging()
 		}
 		else if (this->mDragging)
 		{
-			//this->mBoard[this->mDragTileBegin.x][this->mDragTileBegin.y].mDragging = true;
+			//this->mBoard[this->mDragTileBegin.row][this->mDragTileBegin.col].mDragging = true;
 
 			float xDiff = this->mDragMouseBegin.x - mousePos.x;
 			float yDiff = this->mDragMouseBegin.y - mousePos.y;
@@ -159,23 +279,75 @@ void Cyrey::Board::UpdateDragging()
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin + (xDiff > 0 ? -1 : 1), yTileBegin);
 				this->mDragging = false;
 				this->mTriedSwap = true;
+				this->UpdateMatchSets();
 			}
 			else if (abs(yDiff) > (this->mTileSize * 0.50f))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin, yTileBegin + (yDiff > 0 ? -1 : 1));
 				this->mDragging = false;
 				this->mTriedSwap = true;
+				this->UpdateMatchSets();
 			}
 		}
 	}
 	else if (raylib::Mouse::IsButtonReleased(MouseButton::MOUSE_BUTTON_LEFT))
 	{
-		//this->mBoard[this->mDragTileBegin.x][this->mDragTileBegin.y].mDragging = false;
+		//this->mBoard[this->mDragTileBegin.row][this->mDragTileBegin.col].mDragging = false;
 		this->mDragging = false;
 		this->mDragMouseBegin = raylib::Vector2::Zero();
 		this->mDragTileBegin = raylib::Vector2::Zero();
 		this->mTriedSwap = false;
 	}
+}
+
+void Cyrey::Board::UpdateMatchSets()
+{
+	for ( auto& matchSet : this->mMatchSets )
+	{
+		for ( auto piece : matchSet.mPieces )
+		{
+			piece->mMatched = true;
+		}
+	}
+	this->mMatchSets.clear();
+
+	this->UpdateFalling();
+}
+
+void Cyrey::Board::UpdateFalling()
+{
+	for (int i = this->mHeight - 1; i >= 0; i--)
+	{
+		for (int j = this->mWidth - 1; j >= 0; j--)
+		{
+			if (this->mBoard[i][j].mMatched)
+				this->mBoard[i][j] = Cyrey::gNullPiece;
+			else
+			{
+				int k = 1;
+				while (this->IsPositionLegal(i, j + k) && this->mBoard[i][j + k].mID == 0)
+				{
+					this->mBoard[i][j + k] = this->mBoard[i][j + k - 1];
+					this->mBoard[i][j + k - 1] = Cyrey::gNullPiece;
+					k++;
+				}
+			}
+		}
+	}
+	this->FillInBlanks();
+}
+
+void Cyrey::Board::FillInBlanks()
+{
+	for (auto &row : this->mBoard)
+	{
+		for (auto &piece : row)
+		{
+			if (piece.mID == 0)
+				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, static_cast<int>(PieceColor::Count) - 1))));
+		}
+	}
+	this->FindSets();
 }
 
 void Cyrey::Board::DrawCheckerboard() const
