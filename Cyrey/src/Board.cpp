@@ -11,6 +11,10 @@ void Cyrey::Board::Init()
 	this->mZoomPct = 90;
 	this->mDragging = false;
 	this->mTriedSwap = false;
+	this->mScore = 0;
+	this->mPiecesCleared = 0;
+	this->mCascadeNumber = 0;
+	this->mPiecesClearedInMove = 0;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -66,6 +70,7 @@ void Cyrey::Board::Draw() const
 	this->DrawCheckerboard();
 	this->DrawPieces();
 	this->DrawHoverSquare();
+	this->DrawScore();
 }
 
 std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char* data)
@@ -204,8 +209,9 @@ bool Cyrey::Board::FindSets(int pieceRow, int pieceCol, PieceColor color, bool f
 	bool foundSet = false;
 	if (this->mCurrentMatchSet->mPieces.size() >= 3)
 	{
-		this->mMatchSets.push_back(*this->mCurrentMatchSet);
 		foundSet = true;
+		if(first)
+			this->mMatchSets.push_back(*this->mCurrentMatchSet);
 	}
 
 	if (first)
@@ -313,15 +319,23 @@ void Cyrey::Board::UpdateDragging()
 
 void Cyrey::Board::UpdateMatchSets()
 {
+	if (this->mMatchSets.size() > 0)
+	{
+		this->mCascadeDelay = 0.20f;
+		this->mCascadeNumber++;
+	}
 	for ( auto& matchSet : this->mMatchSets )
 	{
+		int piecesPerSet = 0;
 		for ( auto piece : matchSet.mPieces )
 		{
 			*piece = Cyrey::gNullPiece;
+			piecesPerSet++;
 		}
+		this->mPiecesCleared += piecesPerSet;
+		this->mScore += (piecesPerSet - 2) * 50 * this->mCascadeNumber;
+		this->mPiecesClearedInMove += piecesPerSet;
 	}
-	if (this->mMatchSets.size() > 0)
-		this->mCascadeDelay = 0.20f;
 	this->mMatchSets.clear();
 }
 
@@ -353,7 +367,11 @@ void Cyrey::Board::FillInBlanks()
 				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, static_cast<int>(PieceColor::Count) - 1))));
 		}
 	}
-	this->FindSets();
+	if (!this->FindSets())
+	{
+		this->mCascadeNumber = 0;
+		this->mPiecesClearedInMove = 0;
+	}
 }
 
 void Cyrey::Board::DrawCheckerboard() const
@@ -438,4 +456,45 @@ void Cyrey::Board::DrawHoverSquare() const
 		(float)(this->mTileSize - 2),
 		(float)(this->mTileSize - 2)
 	).DrawRoundedLines(0.0f, 1, this->mTileInset / 2.0f, rectColor);
+}
+
+void Cyrey::Board::DrawScore() const
+{
+	std::string score = "Score: " + std::to_string(this->mScore);
+	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
+	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);
+	std::string piecesInMove = "Pieces: " + std::to_string(this->mPiecesClearedInMove);
+	int fontSize = this->mApp->mWindow->GetHeight() / 30;
+	int fontWidthScore = raylib::MeasureText(score, fontSize);
+	int fontWidthPieces = raylib::MeasureText(pieces, fontSize);
+	int fontWidthCascades = raylib::MeasureText(cascades, fontSize);
+	int fontWidthPiecesInMove = raylib::MeasureText(piecesInMove, fontSize);
+	raylib::Color color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::Black();
+
+	raylib::DrawText(score, 
+		this->mXOffset - (this->mTileSize / 2) - fontWidthScore,
+		this->mApp->mWindow->GetHeight() / 2,
+		fontSize, 
+		color);
+	raylib::DrawText(pieces,
+		this->mXOffset - (this->mTileSize / 2) - fontWidthPieces,
+		(this->mApp->mWindow->GetHeight() / 2) + fontSize,
+		fontSize,
+		color);
+	if (this->mCascadeNumber >= 3)
+	{
+		raylib::DrawText(cascades,
+			this->mXOffset - (this->mTileSize / 2) - fontWidthCascades,
+			(this->mApp->mWindow->GetHeight() / 2) + fontSize * 3,
+			fontSize,
+			this->mApp->mDarkMode ? raylib::Color::Green() : raylib::Color::DarkGreen());
+	}
+	if (this->mPiecesClearedInMove >= 10)
+	{
+		raylib::DrawText(piecesInMove,
+			this->mXOffset - (this->mTileSize / 2) - fontWidthPiecesInMove,
+			(this->mApp->mWindow->GetHeight() / 2) + fontSize * 4,
+			fontSize,
+			this->mApp->mDarkMode ? raylib::Color::SkyBlue() : raylib::Color::DarkBlue());
+	}
 }

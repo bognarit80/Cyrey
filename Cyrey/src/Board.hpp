@@ -32,6 +32,10 @@ namespace Cyrey
 		std::vector<MatchSet> mMatchSets;
 		std::unique_ptr<MatchSet> mCurrentMatchSet;
 		float mCascadeDelay;
+		__int64 mScore;
+		int mPiecesCleared;
+		int mCascadeNumber;
+		int mPiecesClearedInMove;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -60,6 +64,7 @@ namespace Cyrey
 		void DrawCheckerboard() const;
 		void DrawPieces() const;
 		void DrawHoverSquare() const;
+		void DrawScore() const;
 	};
 }
 	

@@ -3,8 +3,8 @@
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
 {
-	this->mWidth = 800;
-	this->mHeight = 650;
+	this->mWidth = 1280;
+	this->mHeight = 720;
     this->mDarkMode = true;
 
     this->mWindow = std::make_unique<raylib::Window>(
@@ -12,10 +12,12 @@ void Cyrey::CyreyApp::Init()
         this->mHeight,
         "Cyrey",
         ConfigFlags::FLAG_WINDOW_RESIZABLE |
-        ConfigFlags::FLAG_WINDOW_ALWAYS_RUN |
-        ConfigFlags::FLAG_WINDOW_HIGHDPI);
-	this->mRefreshRate = ::GetMonitorRefreshRate(::GetCurrentMonitor());
+        ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
+    int currentMonitor = ::GetCurrentMonitor();
+	this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
     this->mWindow->SetTargetFPS(this->mRefreshRate);
+    /*this->mWindow->SetPosition((::GetMonitorWidth(currentMonitor) / 2) - (this->mWindow->GetWidth() / 2),
+        (::GetMonitorHeight(currentMonitor) / 2) - (this->mWindow->GetHeight() / 2));*/
     this->mBoard = std::make_unique<Board>(8, 8);
     this->mBoard->Init();
     this->mBoard->mApp = this;
