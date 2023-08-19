@@ -31,6 +31,7 @@ namespace Cyrey
 		bool mTriedSwap;
 		std::vector<MatchSet> mMatchSets;
 		std::unique_ptr<MatchSet> mCurrentMatchSet;
+		float mCascadeDelay;
 
 		Board() = default;
 		Board(int width, int height) :

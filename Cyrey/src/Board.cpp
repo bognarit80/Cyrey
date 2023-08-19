@@ -48,7 +48,17 @@ void Cyrey::Board::Update()
 		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2);
 		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2);
 	}
-	
+
+	if (this->mCascadeDelay > 0.0f)
+	{
+		this->mCascadeDelay -= this->mApp->GetDeltaTime();
+		if (this->mCascadeDelay <= 0.0f)
+		{
+			this->mCascadeDelay = 0.0f;
+			this->UpdateFalling();
+			this->UpdateMatchSets();
+		}
+	}
 }
 
 void Cyrey::Board::Draw() const
@@ -225,6 +235,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	Cyrey::Piece temp = this->mBoard[row][col];
 	this->mBoard[row][col] = this->mBoard[toRow][toCol];
 	this->mBoard[toRow][toCol] = temp;
+	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
 	this->FindSets(row, col, this->mBoard[row][col].mColor);
 	this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
 	return true;
@@ -232,7 +243,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 
 bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
 {
-	if (toRow < 0 || toCol < 0 || toRow >= this->mWidth || toCol >= this->mHeight)
+	if (!this->IsPositionLegal(toRow, toCol))
 		return false; //out of bounds
 	
 	int xDiff = std::abs(row - toRow);
@@ -264,7 +275,7 @@ void Cyrey::Board::UpdateDragging()
 			this->mDragMouseBegin = mousePos;
 			this->mDragTileBegin = *this->GetHoveredTile(); //we're guaranteed to have a value here
 		}
-		else if (this->mDragging)
+		else if (this->mDragging && this->mCascadeDelay <= 0.0f)
 		{
 			//this->mBoard[this->mDragTileBegin.row][this->mDragTileBegin.col].mDragging = true;
 
@@ -274,14 +285,14 @@ void Cyrey::Board::UpdateDragging()
 			float xTileBegin = this->mDragTileBegin.x;
 			float yTileBegin = this->mDragTileBegin.y;
 
-			if (abs(xDiff) > (this->mTileSize * 0.50f))
+			if (abs(xDiff) > (this->mTileSize * 0.33f))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin + (xDiff > 0 ? -1 : 1), yTileBegin);
 				this->mDragging = false;
 				this->mTriedSwap = true;
 				this->UpdateMatchSets();
 			}
-			else if (abs(yDiff) > (this->mTileSize * 0.50f))
+			else if (abs(yDiff) > (this->mTileSize * 0.33f))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin, yTileBegin + (yDiff > 0 ? -1 : 1));
 				this->mDragging = false;
@@ -306,12 +317,12 @@ void Cyrey::Board::UpdateMatchSets()
 	{
 		for ( auto piece : matchSet.mPieces )
 		{
-			piece->mMatched = true;
+			*piece = Cyrey::gNullPiece;
 		}
 	}
+	if (this->mMatchSets.size() > 0)
+		this->mCascadeDelay = 0.20f;
 	this->mMatchSets.clear();
-
-	this->UpdateFalling();
 }
 
 void Cyrey::Board::UpdateFalling()
@@ -320,17 +331,12 @@ void Cyrey::Board::UpdateFalling()
 	{
 		for (int j = this->mWidth - 1; j >= 0; j--)
 		{
-			if (this->mBoard[i][j].mMatched)
-				this->mBoard[i][j] = Cyrey::gNullPiece;
-			else
+			int k = 1;
+			while (this->IsPositionLegal(i, j + k) && this->mBoard[i][j + k].mID == 0)
 			{
-				int k = 1;
-				while (this->IsPositionLegal(i, j + k) && this->mBoard[i][j + k].mID == 0)
-				{
-					this->mBoard[i][j + k] = this->mBoard[i][j + k - 1];
-					this->mBoard[i][j + k - 1] = Cyrey::gNullPiece;
-					k++;
-				}
+				this->mBoard[i][j + k] = this->mBoard[i][j + k - 1];
+				this->mBoard[i][j + k - 1] = Cyrey::gNullPiece;
+				k++;
 			}
 		}
 	}
@@ -420,10 +426,16 @@ void Cyrey::Board::DrawHoverSquare() const
 	if (!hoveredTile)
 		return;
 
+	raylib::Color rectColor = raylib::Color::Orange();
+	if (this->mDragging)
+		rectColor = raylib::Color::Green();
+	if (this->mCascadeDelay > 0.0f)
+		rectColor = raylib::Color::Red();
+
 	raylib::Rectangle(
 		(float)(((*hoveredTile).x * mTileSize) + this->mXOffset + 1),
 		(float)(((*hoveredTile).y * mTileSize) + this->mYOffset + 1),
 		(float)(this->mTileSize - 2),
 		(float)(this->mTileSize - 2)
-	).DrawRoundedLines(0.0f, 1, this->mTileInset / 2.0f, this->mDragging ? raylib::Color::Green() : raylib::Color::Orange());
+	).DrawRoundedLines(0.0f, 1, this->mTileInset / 2.0f, rectColor);
 }

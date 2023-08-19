@@ -29,6 +29,7 @@ namespace Cyrey
 		void GameLoop();
 		void Update();
 		void Draw() const;
+		float GetDeltaTime() const;
 	};
 } // namespace Cyrey 
 
