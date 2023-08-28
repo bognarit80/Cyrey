@@ -27,11 +27,7 @@ ryygbgbb
 pprpprpr
 )");*/
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
-	do
-	{
-		this->mMatchSets.clear();
-		this->mBoard = this->GenerateStartingBoard();
-	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
+	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
 	this->mHeight = mBoard.size();
@@ -41,6 +37,7 @@ void Cyrey::Board::Update()
 {
 	this->mZoomPct += raylib::Mouse::GetWheelMove();
 	this->UpdateDragging();
+	this->UpdateInput();
 
 	int screenWidth = this->mApp->mWindow->GetWidth();
 	int screenHeight = this->mApp->mWindow->GetHeight();
@@ -71,6 +68,37 @@ void Cyrey::Board::Draw() const
 	this->DrawPieces();
 	this->DrawHoverSquare();
 	this->DrawScore();
+}
+
+void Cyrey::Board::UpdateInput()
+{
+	if (!this->GetHoveredTile() || this->mCascadeDelay > 0.0)
+	{
+		return; //change this once more functionality is implemented
+	}
+	Vector2 hoveredTile = *this->GetHoveredTile();
+	
+	KeyboardKey key = (KeyboardKey)::GetKeyPressed();
+	switch (key)
+	{
+	case KeyboardKey::KEY_W:
+		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x, hoveredTile.y - 1);
+		break;
+	case KeyboardKey::KEY_A:
+		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x - 1, hoveredTile.y);
+		break;
+	case KeyboardKey::KEY_S:
+		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x, hoveredTile.y + 1);
+		break;
+	case KeyboardKey::KEY_D:
+		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x + 1, hoveredTile.y);
+		break;
+	case KeyboardKey::KEY_R:
+		this->ResetBoard();
+		break;
+	default:
+		break;
+	}
 }
 
 std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char* data)
@@ -118,6 +146,17 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 		row.clear();
 	}
 	return board;
+}
+
+void Cyrey::Board::ResetBoard()
+{
+	do
+	{
+		this->mMatchSets.clear();
+		this->mBoard = this->GenerateStartingBoard();
+	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
+	this->mScore = 0;
+	this->mPiecesCleared = 0;
 }
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
@@ -244,6 +283,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
 	this->FindSets(row, col, this->mBoard[row][col].mColor);
 	this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
+	this->UpdateMatchSets();
 	return true;
 }
 
@@ -296,14 +336,12 @@ void Cyrey::Board::UpdateDragging()
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin + (xDiff > 0 ? -1 : 1), yTileBegin);
 				this->mDragging = false;
 				this->mTriedSwap = true;
-				this->UpdateMatchSets();
 			}
 			else if (abs(yDiff) > (this->mTileSize * 0.33f))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, xTileBegin, yTileBegin + (yDiff > 0 ? -1 : 1));
 				this->mDragging = false;
 				this->mTriedSwap = true;
-				this->UpdateMatchSets();
 			}
 		}
 	}

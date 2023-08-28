@@ -45,8 +45,10 @@ namespace Cyrey
 		void Init();
 		void Update();
 		void Draw() const;
+		void UpdateInput();
 		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
 		std::vector<std::vector<Piece>> GenerateStartingBoard() const;
+		void ResetBoard();
 		std::optional<raylib::Vector2> GetHoveredTile() const;
 		bool IsMouseInBoard() const;
 		bool FindSets();
