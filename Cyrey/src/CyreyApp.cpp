@@ -14,7 +14,7 @@ void Cyrey::CyreyApp::Init()
         ConfigFlags::FLAG_WINDOW_RESIZABLE |
         ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
     int currentMonitor = ::GetCurrentMonitor();
-	this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
+    this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
     this->mWindow->SetTargetFPS(this->mRefreshRate);
     /*this->mWindow->SetPosition((::GetMonitorWidth(currentMonitor) / 2) - (this->mWindow->GetWidth() / 2),
         (::GetMonitorHeight(currentMonitor) / 2) - (this->mWindow->GetHeight() / 2));*/

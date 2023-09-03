@@ -15,6 +15,8 @@ void Cyrey::Board::Init()
 	this->mPiecesCleared = 0;
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
+	this->mBoardSwerve = { 0,0 };
+	this->mUpdateCnt = 0;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -35,7 +37,7 @@ pprpprpr
 
 void Cyrey::Board::Update()
 {
-	this->mZoomPct += raylib::Mouse::GetWheelMove();
+	this->mZoomPct += raylib::Mouse::GetWheelMove(); //perhaps change this to the Camera functionality in raylib? seems a lot more versatile
 	this->UpdateDragging();
 	this->UpdateInput();
 
@@ -46,9 +48,14 @@ void Cyrey::Board::Update()
 	{
 		this->mTileSize = (screenHeight * this->mZoomPct / 100) / this->mHeight;
 		this->mTileInset = this->mTileSize / 10;
-		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2);
-		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2);
+		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.x;
+		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.y;
 	}
+
+	float fallDelay = this->cFallDelay * this->mApp->GetDeltaTime() * 30.0f;
+	
+	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
+	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 
 	if (this->mCascadeDelay > 0.0f)
 	{
@@ -60,6 +67,7 @@ void Cyrey::Board::Update()
 			this->UpdateMatchSets();
 		}
 	}
+	this->mUpdateCnt++;
 }
 
 void Cyrey::Board::Draw() const
@@ -82,16 +90,16 @@ void Cyrey::Board::UpdateInput()
 	switch (key)
 	{
 	case KeyboardKey::KEY_W:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x, hoveredTile.y - 1);
+		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Up);
 		break;
 	case KeyboardKey::KEY_A:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x - 1, hoveredTile.y);
+		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Left);
 		break;
 	case KeyboardKey::KEY_S:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x, hoveredTile.y + 1);
+		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Down);
 		break;
 	case KeyboardKey::KEY_D:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, hoveredTile.x + 1, hoveredTile.y);
+		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Right);
 		break;
 	case KeyboardKey::KEY_R:
 		this->ResetBoard();
@@ -161,8 +169,8 @@ void Cyrey::Board::ResetBoard()
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
 {
-	int mouseX = raylib::Mouse::GetX() - this->mXOffset;
-	int mouseY = raylib::Mouse::GetY() - this->mYOffset;
+	int mouseX = raylib::Mouse::GetX() - (int)this->mXOffset;
+	int mouseY = raylib::Mouse::GetY() - (int)this->mYOffset;
 	if (mouseX <= 0 || mouseY <= 0 || this->mTileSize <= 0)
 		return std::nullopt;
 
@@ -272,6 +280,36 @@ bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 	return false;
 }
 
+bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
+{
+	int toRow = row;
+	int toCol = col;
+	switch (direction)
+	{
+	case Cyrey::SwapDirection::Up:
+		toCol--;
+		this->mBoardSwerve.y -= this->cSwerveCoeff * this->mTileSize;
+		break;
+	case Cyrey::SwapDirection::Down:
+		toCol++;
+		this->mBoardSwerve.y += this->cSwerveCoeff * this->mTileSize;
+		break;
+	case Cyrey::SwapDirection::Left:
+		toRow--;
+		this->mBoardSwerve.x -= this->cSwerveCoeff * this->mTileSize;
+		break;
+	case Cyrey::SwapDirection::Right:
+		toRow++;
+		this->mBoardSwerve.x += this->cSwerveCoeff * this->mTileSize;
+		break;
+	default:
+		return false;
+	}
+	
+
+	return this->TrySwap(row, col, toRow, toCol);
+}
+
 bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 {
 	if (!this->IsSwapLegal(row, col, toRow, toCol))
@@ -284,6 +322,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	this->FindSets(row, col, this->mBoard[row][col].mColor);
 	this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
 	this->UpdateMatchSets();
+
 	return true;
 }
 
@@ -333,13 +372,13 @@ void Cyrey::Board::UpdateDragging()
 
 			if (abs(xDiff) > (this->mTileSize * 0.33f))
 			{
-				this->TrySwap(xTileBegin, yTileBegin, xTileBegin + (xDiff > 0 ? -1 : 1), yTileBegin);
+				this->TrySwap(xTileBegin, yTileBegin, (xDiff > 0 ? SwapDirection::Left : SwapDirection::Right));
 				this->mDragging = false;
 				this->mTriedSwap = true;
 			}
 			else if (abs(yDiff) > (this->mTileSize * 0.33f))
 			{
-				this->TrySwap(xTileBegin, yTileBegin, xTileBegin, yTileBegin + (yDiff > 0 ? -1 : 1));
+				this->TrySwap(xTileBegin, yTileBegin, (yDiff > 0 ? SwapDirection::Up : SwapDirection::Down));
 				this->mDragging = false;
 				this->mTriedSwap = true;
 			}
@@ -359,7 +398,8 @@ void Cyrey::Board::UpdateMatchSets()
 {
 	if (this->mMatchSets.size() > 0)
 	{
-		this->mCascadeDelay = 0.20f;
+		this->mCascadeDelay = this->cFallDelay;
+		this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize;
 		this->mCascadeNumber++;
 	}
 	for ( auto& matchSet : this->mMatchSets )
@@ -498,6 +538,7 @@ void Cyrey::Board::DrawHoverSquare() const
 
 void Cyrey::Board::DrawScore() const
 {
+	raylib::DrawText(std::to_string(this->mUpdateCnt), 0, 100, 16, raylib::Color::White());
 	std::string score = "Score: " + std::to_string(this->mScore);
 	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
 	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);

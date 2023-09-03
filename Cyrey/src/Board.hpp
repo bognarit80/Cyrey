@@ -11,13 +11,22 @@ namespace Cyrey
 {
 	class CyreyApp;
 
+	enum class SwapDirection
+	{
+		None,
+		Up,
+		Down,
+		Left,
+		Right
+	};
+
 	class Board
 	{
 	public:
 		int mWidth;
 		int mHeight;
-		int mXOffset;
-		int mYOffset;
+		float mXOffset;
+		float mYOffset;
 		int mTileSize;
 		int mTileInset;
 		float mBoardAlpha;
@@ -36,6 +45,11 @@ namespace Cyrey
 		int mPiecesCleared;
 		int mCascadeNumber;
 		int mPiecesClearedInMove;
+		raylib::Vector2 mBoardSwerve;
+		constexpr static float cSwerveCoeff = 0.1f;
+		constexpr static int cMaxCascadesSwerve = 8;
+		constexpr static float cFallDelay = 0.2f;
+		int mUpdateCnt;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -54,6 +68,7 @@ namespace Cyrey
 		bool FindSets();
 		bool FindSets(int pieceRow, int pieceCol, PieceColor color, bool first = true);
 		bool IsPieceBeingMatched(unsigned int pieceID) const;
+		bool TrySwap(int row, int col, SwapDirection direction);
 		bool TrySwap(int row, int col, int toRow, int toCol);
 		bool IsSwapLegal(int row, int col, int toRow, int toCol) const;
 		constexpr bool IsPositionLegal(int row, int col) const;
