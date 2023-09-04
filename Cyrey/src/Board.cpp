@@ -520,33 +520,58 @@ void Cyrey::Board::DrawPieces() const
 		for (int j = 0; j < this->mBoard[0].size(); j++)
 		{
 			Color color;
+			int sides;
+			float rotation = 0;
+			float radius = (this->mTileSize / 2) - this->mTileInset;
+			raylib::Vector2 center { (float)((i * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
+									(float)((j * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
+			};
+
 			switch (this->mBoard[i][j].mColor)
 			{
 			case PieceColor::Red:
-				color = raylib::Color::Red(); break;
+				color = raylib::Color::Red(); 
+				sides = 4; 
+				rotation = 45.0f; 
+				radius += this->mTileInset; break;
 			case PieceColor::Green:
-				color = raylib::Color::Green(); break;
+				color = raylib::Color::Green();
+				sides = 8; break;
 			case PieceColor::Blue:
-				color = raylib::Color::Blue(); break;
+				color = raylib::Color::Blue(); 
+				sides = 3; 
+				center.y -= this->mTileSize / 10.0f; 
+				radius += this->mTileInset; break;
 			case PieceColor::Yellow:
-				color = raylib::Color::Yellow(); break;
+				color = raylib::Color::Yellow();
+				sides = 4;
+				break;
 			case PieceColor::Orange:
-				color = raylib::Color::Orange(); break;
+				color = raylib::Color::Orange();
+				sides = 6; 
+				rotation = 90.0f; break;
 			case PieceColor::White:
-				color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::DarkGray(); break;
+				color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::DarkGray();
+				sides = 12; break;
 			case PieceColor::Purple:
-				color = raylib::Color::Purple(); break;
+				color = raylib::Color::Purple(); 
+				sides = 3; 
+				rotation = 180.0f; 
+				center.y += this->mTileSize / 10.0f; 
+				radius += this->mTileInset; break;
 			case PieceColor::Uncolored:
 			default:
 				continue;
 			}
 
-			raylib::Rectangle(
+			::DrawPoly(center, sides, radius, rotation, color);
+
+			/*raylib::Rectangle(
 				(float)((i * this->mTileSize) + this->mXOffset + this->mTileInset) + (this->mBoard[i][j].mDragging ? this->mBoard[i][j].mXDiff : 0),
 				(float)((j * this->mTileSize) + this->mYOffset + this->mTileInset) + (this->mBoard[i][j].mDragging ? this->mBoard[i][j].mYDiff : 0),
 				(float)this->mTileSize - (this->mTileInset * 2),
 				(float)this->mTileSize - (this->mTileInset * 2)
-			).Draw(color);
+			).Draw(color);*/
 		}
 	}
 }
