@@ -40,7 +40,8 @@ namespace Cyrey
 		bool mTriedSwap;
 		std::vector<MatchSet> mMatchSets;
 		std::unique_ptr<MatchSet> mCurrentMatchSet;
-		float mCascadeDelay;
+		float mFallDelay;
+		float mMissDelay;
 		__int64 mScore;
 		int mPiecesCleared;
 		int mCascadeNumber;
@@ -49,7 +50,9 @@ namespace Cyrey
 		constexpr static float cSwerveCoeff = 0.1f;
 		constexpr static int cMaxCascadesSwerve = 8;
 		constexpr static float cFallDelay = 0.2f;
+		constexpr static float cMissPenalty = 3 * cFallDelay;
 		int mUpdateCnt;
+
 
 		Board() = default;
 		Board(int width, int height) :
@@ -71,6 +74,7 @@ namespace Cyrey
 		bool TrySwap(int row, int col, SwapDirection direction);
 		bool TrySwap(int row, int col, int toRow, int toCol);
 		bool IsSwapLegal(int row, int col, int toRow, int toCol) const;
+		bool CanSwap() const;
 		constexpr bool IsPositionLegal(int row, int col) const;
 
 	private:

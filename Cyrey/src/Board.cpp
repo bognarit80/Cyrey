@@ -17,6 +17,8 @@ void Cyrey::Board::Init()
 	this->mPiecesClearedInMove = 0;
 	this->mBoardSwerve = { 0,0 };
 	this->mUpdateCnt = 0;
+	this->mFallDelay = 0.0f;
+	this->mMissDelay = 0.0f;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -53,20 +55,28 @@ void Cyrey::Board::Update()
 	}
 
 	float fallDelay = this->cFallDelay * this->mApp->GetDeltaTime() * 30.0f;
-	
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 
-	if (this->mCascadeDelay > 0.0f)
+	if (this->mFallDelay > 0.0f)
 	{
-		this->mCascadeDelay -= this->mApp->GetDeltaTime();
-		if (this->mCascadeDelay <= 0.0f)
+		this->mFallDelay -= this->mApp->GetDeltaTime();
+		if (this->mFallDelay <= 0.0f)
 		{
-			this->mCascadeDelay = 0.0f;
+			this->mFallDelay = 0.0f;
 			this->UpdateFalling();
 			this->UpdateMatchSets();
 		}
 	}
+	if (this->mMissDelay > 0.0f)
+	{
+		this->mMissDelay -= this->mApp->GetDeltaTime();
+		if (this->mMissDelay <= 0.0f)
+		{
+			this->mMissDelay = 0.0f;
+		}
+	}
+
 	this->mUpdateCnt++;
 }
 
@@ -80,7 +90,7 @@ void Cyrey::Board::Draw() const
 
 void Cyrey::Board::UpdateInput()
 {
-	if (!this->GetHoveredTile() || this->mCascadeDelay > 0.0)
+	if (!this->GetHoveredTile() || !this->CanSwap())
 	{
 		return; //change this once more functionality is implemented
 	}
@@ -318,9 +328,13 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	Cyrey::Piece temp = this->mBoard[row][col];
 	this->mBoard[row][col] = this->mBoard[toRow][toCol];
 	this->mBoard[toRow][toCol] = temp;
+
 	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
-	this->FindSets(row, col, this->mBoard[row][col].mColor);
-	this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
+	bool foundSet1 = this->FindSets(row, col, this->mBoard[row][col].mColor);
+	bool foundSet2 = this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
+	if (!foundSet1 && !foundSet2)
+		this->mMissDelay = this->cMissPenalty;
+
 	this->UpdateMatchSets();
 
 	return true;
@@ -339,6 +353,11 @@ bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
 		return false;
 
 	return true;
+}
+
+bool Cyrey::Board::CanSwap() const
+{
+	return this->mFallDelay <= 0.0 && this->mMissDelay <= 0.0;
 }
 
 constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
@@ -360,7 +379,7 @@ void Cyrey::Board::UpdateDragging()
 			this->mDragMouseBegin = mousePos;
 			this->mDragTileBegin = *this->GetHoveredTile(); //we're guaranteed to have a value here
 		}
-		else if (this->mDragging && this->mCascadeDelay <= 0.0f)
+		else if (this->mDragging && this->mFallDelay <= 0.0f)
 		{
 			//this->mBoard[this->mDragTileBegin.row][this->mDragTileBegin.col].mDragging = true;
 
@@ -398,7 +417,7 @@ void Cyrey::Board::UpdateMatchSets()
 {
 	if (this->mMatchSets.size() > 0)
 	{
-		this->mCascadeDelay = this->cFallDelay;
+		this->mFallDelay = this->cFallDelay;
 		this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize;
 		this->mCascadeNumber++;
 	}
@@ -470,12 +489,16 @@ void Cyrey::Board::DrawCheckerboard() const
 	}
 
 	//draw the outline
+	raylib::Color outlineColor = this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray();
+	if (this->mMissDelay > 0.0)
+		outlineColor = raylib::Color::Red();
+
 	raylib::Rectangle(
 		(float)(this->mXOffset - 1),
 		(float)(this->mYOffset - 1),
 		(float)((this->mTileSize * this->mWidth) + 2),
 		(float)((this->mTileSize * this->mHeight) + 2)
-	).DrawRoundedLines(0.0f, 1, 3, this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray());
+	).DrawRoundedLines(0.0f, 1, this->mTileInset, outlineColor);
 }
 
 void Cyrey::Board::DrawPieces() const
@@ -525,7 +548,7 @@ void Cyrey::Board::DrawHoverSquare() const
 	raylib::Color rectColor = raylib::Color::Orange();
 	if (this->mDragging)
 		rectColor = raylib::Color::Green();
-	if (this->mCascadeDelay > 0.0f)
+	if (!this->CanSwap())
 		rectColor = raylib::Color::Red();
 
 	raylib::Rectangle(
