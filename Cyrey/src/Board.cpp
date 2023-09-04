@@ -19,6 +19,7 @@ void Cyrey::Board::Init()
 	this->mUpdateCnt = 0;
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
+	this->mWantBoardSwerve = true;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -113,6 +114,12 @@ void Cyrey::Board::UpdateInput()
 		break;
 	case KeyboardKey::KEY_R:
 		this->ResetBoard();
+		break;
+	case KeyboardKey::KEY_L:
+		this->mApp->mDarkMode ^= 1;
+		break;
+	case KeyboardKey::KEY_M:
+		this->mWantBoardSwerve ^= 1;
 		break;
 	default:
 		break;
@@ -294,28 +301,31 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 {
 	int toRow = row;
 	int toCol = col;
+	raylib::Vector2 swerve = { 0,0 };
+	float swerveAmount = this->cSwerveCoeff * this->mTileSize;
 	switch (direction)
 	{
 	case Cyrey::SwapDirection::Up:
 		toCol--;
-		this->mBoardSwerve.y -= this->cSwerveCoeff * this->mTileSize;
+		swerve.y -= swerveAmount;
 		break;
 	case Cyrey::SwapDirection::Down:
 		toCol++;
-		this->mBoardSwerve.y += this->cSwerveCoeff * this->mTileSize;
+		swerve.y += swerveAmount;
 		break;
 	case Cyrey::SwapDirection::Left:
 		toRow--;
-		this->mBoardSwerve.x -= this->cSwerveCoeff * this->mTileSize;
+		swerve.x -= swerveAmount;
 		break;
 	case Cyrey::SwapDirection::Right:
 		toRow++;
-		this->mBoardSwerve.x += this->cSwerveCoeff * this->mTileSize;
+		swerve.x += swerveAmount;
 		break;
 	default:
 		return false;
 	}
-	
+	if (this->mWantBoardSwerve)
+		this->mBoardSwerve += swerve;
 
 	return this->TrySwap(row, col, toRow, toCol);
 }
@@ -418,7 +428,8 @@ void Cyrey::Board::UpdateMatchSets()
 	if (this->mMatchSets.size() > 0)
 	{
 		this->mFallDelay = this->cFallDelay;
-		this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize;
+		if (this->mWantBoardSwerve)
+			this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize;
 		this->mCascadeNumber++;
 	}
 	for ( auto& matchSet : this->mMatchSets )
@@ -521,7 +532,7 @@ void Cyrey::Board::DrawPieces() const
 			case PieceColor::Orange:
 				color = raylib::Color::Orange(); break;
 			case PieceColor::White:
-				color = raylib::Color::White(); break;
+				color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::DarkGray(); break;
 			case PieceColor::Purple:
 				color = raylib::Color::Purple(); break;
 			case PieceColor::Uncolored:

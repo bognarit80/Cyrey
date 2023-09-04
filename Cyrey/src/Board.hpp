@@ -51,6 +51,7 @@ namespace Cyrey
 		constexpr static int cMaxCascadesSwerve = 8;
 		constexpr static float cFallDelay = 0.2f;
 		constexpr static float cMissPenalty = 3 * cFallDelay;
+		bool mWantBoardSwerve;
 		int mUpdateCnt;
 
 
