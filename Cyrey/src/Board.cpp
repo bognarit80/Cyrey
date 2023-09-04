@@ -20,6 +20,7 @@ void Cyrey::Board::Init()
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
 	this->mWantBoardSwerve = true;
+	this->mColorCount = static_cast<int>(PieceColor::Count) - 1;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -55,7 +56,7 @@ void Cyrey::Board::Update()
 		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.y;
 	}
 
-	float fallDelay = this->cFallDelay * this->mApp->GetDeltaTime() * 30.0f;
+	float fallDelay = 1 - std::pow(this->cFallDelay * 0.003f, this->mApp->GetDeltaTime());
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 
@@ -165,7 +166,7 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 	{
 		for (int j = 0; j < this->mWidth; j++)
 		{
-			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, static_cast<int>(PieceColor::Count) - 1))));
+			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
 		}
 		board.push_back(row);
 		row.clear();
@@ -429,7 +430,7 @@ void Cyrey::Board::UpdateMatchSets()
 	{
 		this->mFallDelay = this->cFallDelay;
 		if (this->mWantBoardSwerve)
-			this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize;
+			this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f;
 		this->mCascadeNumber++;
 	}
 	for ( auto& matchSet : this->mMatchSets )
@@ -472,7 +473,7 @@ void Cyrey::Board::FillInBlanks()
 		for (auto &piece : row)
 		{
 			if (piece.mID == 0)
-				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, static_cast<int>(PieceColor::Count) - 1))));
+				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
 		}
 	}
 	if (!this->FindSets())

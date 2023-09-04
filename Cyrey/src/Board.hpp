@@ -53,7 +53,7 @@ namespace Cyrey
 		constexpr static float cMissPenalty = 3 * cFallDelay;
 		bool mWantBoardSwerve;
 		int mUpdateCnt;
-
+		int mColorCount;
 
 		Board() = default;
 		Board(int width, int height) :
