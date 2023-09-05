@@ -15,7 +15,7 @@ void Cyrey::Board::Init()
 	this->mPiecesCleared = 0;
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
-	this->mBoardSwerve = { 0,0 };
+	this->mBoardSwerve = 0;
 	this->mUpdateCnt = 0;
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;

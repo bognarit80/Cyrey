@@ -42,7 +42,7 @@ namespace Cyrey
 		std::unique_ptr<MatchSet> mCurrentMatchSet;
 		float mFallDelay;
 		float mMissDelay;
-		__int64 mScore;
+		int64_t mScore;
 		int mPiecesCleared;
 		int mCascadeNumber;
 		int mPiecesClearedInMove;
