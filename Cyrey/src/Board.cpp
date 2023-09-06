@@ -100,32 +100,31 @@ void Cyrey::Board::Draw() const
 void Cyrey::Board::UpdateInput()
 {
 	KeyboardKey key = (KeyboardKey)::GetKeyPressed();
-	if (key == KeyboardKey::KEY_R) //temp fix for being unable to reset on timeup
-	{
-		this->ResetBoard();
-		return;
-	}
 
-	if (!this->GetHoveredTile() || !this->CanSwap())
+	if (this->GetHoveredTile())
 	{
-		return; //change this once more functionality is implemented
+		Vector2 hoveredTile = *this->GetHoveredTile();
+		switch (key)
+		{
+		case KeyboardKey::KEY_W:
+			this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Up);
+			return;
+		case KeyboardKey::KEY_A:
+			this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Left);
+			return;
+		case KeyboardKey::KEY_S:
+			this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Down);
+			return;
+		case KeyboardKey::KEY_D:
+			this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Right);
+			return;
+		default:
+			break;
+		}
 	}
-	Vector2 hoveredTile = *this->GetHoveredTile();
 	
-	switch (key)
+	switch(key)
 	{
-	case KeyboardKey::KEY_W:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Up);
-		break;
-	case KeyboardKey::KEY_A:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Left);
-		break;
-	case KeyboardKey::KEY_S:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Down);
-		break;
-	case KeyboardKey::KEY_D:
-		this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Right);
-		break;
 	case KeyboardKey::KEY_R:
 		this->ResetBoard();
 		break;
@@ -201,8 +200,9 @@ void Cyrey::Board::ResetBoard()
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
 {
-	int mouseX = raylib::Mouse::GetX() - (int)this->mXOffset;
-	int mouseY = raylib::Mouse::GetY() - (int)this->mYOffset;
+	int mouseX = raylib::Touch::GetX() - (int)this->mXOffset;
+	int mouseY = raylib::Touch::GetY() - (int)this->mYOffset;
+
 	if (mouseX <= 0 || mouseY <= 0 || this->mTileSize <= 0)
 		return std::nullopt;
 
@@ -314,6 +314,9 @@ bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 
 bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 {
+	if (!this->CanSwap())
+		return false;
+
 	int toRow = row;
 	int toCol = col;
 	raylib::Vector2 swerve = { 0,0 };
@@ -396,7 +399,7 @@ void Cyrey::Board::UpdateDragging()
 	if (raylib::Mouse::IsButtonDown(MouseButton::MOUSE_BUTTON_LEFT))
 	{
 		if (!this->mDragging 
-			&& raylib::Mouse::GetDelta() != raylib::Vector2::Zero()
+			//&& raylib::Mouse::GetDelta() != raylib::Vector2::Zero()
 			&& this->IsMouseInBoard()
 			&& !this->mTriedSwap)
 		{
@@ -516,7 +519,7 @@ void Cyrey::Board::DrawCheckerboard() const
 
 	//draw the outline
 	raylib::Color outlineColor = this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray();
-	if (this->mMissDelay > 0.0)
+	if (this->mMissDelay > 0.0 || this->mSecondsRemaining <= 0.0f)
 		outlineColor = raylib::Color::Red();
 
 	raylib::Rectangle(
