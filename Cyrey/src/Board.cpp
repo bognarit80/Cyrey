@@ -8,7 +8,7 @@ void Cyrey::Board::Init()
 	this->mTileSize = 30;
 	this->mTileInset = 3;
 	this->mBoardAlpha = 0.25f;
-	this->mZoomPct = 90;
+	this->mZoomPct = 80;
 	this->mDragging = false;
 	this->mTriedSwap = false;
 	this->mScore = 0;
@@ -21,6 +21,9 @@ void Cyrey::Board::Init()
 	this->mMissDelay = 0.0f;
 	this->mWantBoardSwerve = true;
 	this->mColorCount = static_cast<int>(PieceColor::Count) - 1;
+	this->mBaseScore = 50;
+	this->mScoreMultiplier = 1;
+	this->mSwapDeadZone = 0.33f;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -400,13 +403,13 @@ void Cyrey::Board::UpdateDragging()
 			float xTileBegin = this->mDragTileBegin.x;
 			float yTileBegin = this->mDragTileBegin.y;
 
-			if (abs(xDiff) > (this->mTileSize * 0.33f))
+			if (abs(xDiff) > (this->mTileSize * this->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (xDiff > 0 ? SwapDirection::Left : SwapDirection::Right));
 				this->mDragging = false;
 				this->mTriedSwap = true;
 			}
-			else if (abs(yDiff) > (this->mTileSize * 0.33f))
+			else if (abs(yDiff) > (this->mTileSize * this->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (yDiff > 0 ? SwapDirection::Up : SwapDirection::Down));
 				this->mDragging = false;
@@ -442,7 +445,7 @@ void Cyrey::Board::UpdateMatchSets()
 			piecesPerSet++;
 		}
 		this->mPiecesCleared += piecesPerSet;
-		this->mScore += (piecesPerSet - 2) * 50 * this->mCascadeNumber;
+		this->mScore += (piecesPerSet - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesPerSet;
 	}
 	this->mMatchSets.clear();

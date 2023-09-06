@@ -54,6 +54,9 @@ namespace Cyrey
 		bool mWantBoardSwerve;
 		int mUpdateCnt;
 		int mColorCount;
+		int mBaseScore; //score for one match
+		int mScoreMultiplier;
+		float mSwapDeadZone; //percentage of tile width before the drag turns into a swap
 
 		Board() = default;
 		Board(int width, int height) :
