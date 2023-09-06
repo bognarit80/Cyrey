@@ -24,6 +24,7 @@ void Cyrey::Board::Init()
 	this->mBaseScore = 50;
 	this->mScoreMultiplier = 1;
 	this->mSwapDeadZone = 0.33f;
+	this->mSecondsRemaining = Board::cStartingTime;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -82,6 +83,9 @@ void Cyrey::Board::Update()
 		}
 	}
 
+	if ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f)
+		this->mSecondsRemaining = 0.0f;
+
 	this->mUpdateCnt++;
 }
 
@@ -95,13 +99,19 @@ void Cyrey::Board::Draw() const
 
 void Cyrey::Board::UpdateInput()
 {
+	KeyboardKey key = (KeyboardKey)::GetKeyPressed();
+	if (key == KeyboardKey::KEY_R) //temp fix for being unable to reset on timeup
+	{
+		this->ResetBoard();
+		return;
+	}
+
 	if (!this->GetHoveredTile() || !this->CanSwap())
 	{
 		return; //change this once more functionality is implemented
 	}
 	Vector2 hoveredTile = *this->GetHoveredTile();
 	
-	KeyboardKey key = (KeyboardKey)::GetKeyPressed();
 	switch (key)
 	{
 	case KeyboardKey::KEY_W:
@@ -186,6 +196,7 @@ void Cyrey::Board::ResetBoard()
 	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
+	this->mSecondsRemaining = Board::cStartingTime;
 }
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
@@ -371,7 +382,7 @@ bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
 
 bool Cyrey::Board::CanSwap() const
 {
-	return this->mFallDelay <= 0.0 && this->mMissDelay <= 0.0;
+	return this->mFallDelay <= 0.0f && this->mMissDelay <= 0.0f && this->mSecondsRemaining > 0.0f;
 }
 
 constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
@@ -606,11 +617,13 @@ void Cyrey::Board::DrawScore() const
 	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
 	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);
 	std::string piecesInMove = "Pieces: " + std::to_string(this->mPiecesClearedInMove);
+	std::string timeRemaining = ::TextFormat("%.2f", this->mSecondsRemaining);
 	int fontSize = this->mApp->mWindow->GetHeight() / 30;
 	int fontWidthScore = raylib::MeasureText(score, fontSize);
 	int fontWidthPieces = raylib::MeasureText(pieces, fontSize);
 	int fontWidthCascades = raylib::MeasureText(cascades, fontSize);
 	int fontWidthPiecesInMove = raylib::MeasureText(piecesInMove, fontSize);
+	int fontWidthTimeRemaining = raylib::MeasureText(timeRemaining, fontSize * 2);
 	raylib::Color color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::Black();
 
 	raylib::DrawText(score, 
@@ -639,4 +652,9 @@ void Cyrey::Board::DrawScore() const
 			fontSize,
 			this->mApp->mDarkMode ? raylib::Color::SkyBlue() : raylib::Color::DarkBlue());
 	}
+	raylib::DrawText(timeRemaining,
+		this->mXOffset - (this->mTileSize / 2) - fontWidthTimeRemaining,
+		(this->mApp->mWindow->GetHeight() / 2) + fontSize * 5,
+		fontSize * 2,
+		this->mSecondsRemaining < 10 ? raylib::Color::Red() : color);
 }

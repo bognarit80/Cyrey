@@ -57,6 +57,8 @@ namespace Cyrey
 		int mBaseScore; //score for one match
 		int mScoreMultiplier;
 		float mSwapDeadZone; //percentage of tile width before the drag turns into a swap
+		float mSecondsRemaining;
+		constexpr static float cStartingTime = 60.0f;
 
 		Board() = default;
 		Board(int width, int height) :
