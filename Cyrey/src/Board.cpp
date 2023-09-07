@@ -532,6 +532,10 @@ void Cyrey::Board::DrawCheckerboard() const
 
 void Cyrey::Board::DrawPieces() const
 {
+	//don't draw the pieces on gameover
+	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f)
+		return;
+
 	for (int i = 0; i < this->mBoard.size(); i++)
 	{
 		for (int j = 0; j < this->mBoard[0].size(); j++)
@@ -660,4 +664,16 @@ void Cyrey::Board::DrawScore() const
 		(this->mApp->mWindow->GetHeight() / 2) + fontSize * 5,
 		fontSize * 2,
 		this->mSecondsRemaining < 10 ? raylib::Color::Red() : color);
+
+	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f)
+	{
+		const char* restartText = "Press R to restart the game!";
+		int rrTextSize = this->mTileSize / 2;
+		int rrTextWidth = raylib::MeasureText(restartText, rrTextSize);
+		raylib::DrawText(restartText,
+			this->mXOffset + (this->mWidth / 2 * this->mTileSize) - rrTextWidth / 2,
+			this->mYOffset + (this->mHeight / 2 * this->mTileSize),
+			this->mTileSize / 2, 
+			color);
+	}
 }
