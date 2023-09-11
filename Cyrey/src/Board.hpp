@@ -59,6 +59,7 @@ namespace Cyrey
 		float mSwapDeadZone; //percentage of tile width before the drag turns into a swap
 		float mSecondsRemaining;
 		constexpr static float cStartingTime = 60.0f;
+		constexpr static int cLightningPiecesAmount = 10;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -82,6 +83,8 @@ namespace Cyrey
 		bool IsSwapLegal(int row, int col, int toRow, int toCol) const;
 		bool CanSwap() const;
 		constexpr bool IsPositionLegal(int row, int col) const;
+		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece); //returns the amount of pieces cleared, if the piece was special
+		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
 
 	private:
 		void UpdateDragging();

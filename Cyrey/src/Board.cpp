@@ -179,6 +179,8 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 		for (int j = 0; j < this->mWidth; j++)
 		{
 			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
+			row[j].mBoardX = i;
+			row[j].mBoardY = j;
 		}
 		board.push_back(row);
 		row.clear();
@@ -228,6 +230,7 @@ bool Cyrey::Board::FindSets()
 		for (int j = 0; j < this->mWidth; j++)
 		{
 			this->FindSets(i, j, this->mBoard[i][j].mColor);
+			this->mBoard[i][j].mImmunity = false; //temp until better measures are implemented
 			if (this->mMatchSets.size() > 0)
 				foundSet = true;
 		}
@@ -289,12 +292,18 @@ bool Cyrey::Board::FindSets(int pieceRow, int pieceCol, PieceColor color, bool f
 	if (this->mCurrentMatchSet->mPieces.size() >= 3)
 	{
 		foundSet = true;
-		if(first)
+		if (first)
+		{
+			this->mCurrentMatchSet->mAddedPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
 			this->mMatchSets.push_back(*this->mCurrentMatchSet);
+		}
 	}
 
 	if (first)
+	{
 		this->mCurrentMatchSet->mPieces.clear();
+		this->mCurrentMatchSet->mAddedPieces.clear();
+	}
 
 	return foundSet;
 }
@@ -354,12 +363,27 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 		return false;
 
 	Cyrey::Piece temp = this->mBoard[row][col];
+	if (temp.IsFlagSet(PieceFlag::Hypercube))
+	{
+		int piecesCleared = this->DoHypercube(this->mBoard[row][col], this->mBoard[toRow][toCol]);
+		this->mPiecesCleared += piecesCleared;
+		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		this->mPiecesClearedInMove += piecesCleared;
+		this->mFallDelay = Board::cFallDelay;
+		this->mCascadeNumber++;
+		this->mBoard[row][col] = Cyrey::gNullPiece; //temp until I make a proper sequence
+		return true;
+	}
 	this->mBoard[row][col] = this->mBoard[toRow][toCol];
 	this->mBoard[toRow][toCol] = temp;
+	this->mBoard[row][col].mBoardX = row;
+	this->mBoard[row][col].mBoardY = col;
+	this->mBoard[toRow][toCol].mBoardX = toRow;
+	this->mBoard[toRow][toCol].mBoardY = toCol;
 
 	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
-	bool foundSet1 = this->FindSets(row, col, this->mBoard[row][col].mColor);
-	bool foundSet2 = this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
+	bool foundSet1 = this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
+	bool foundSet2 = this->FindSets(row, col, this->mBoard[row][col].mColor);
 	if (!foundSet1 && !foundSet2)
 		this->mMissDelay = this->cMissPenalty;
 
@@ -391,6 +415,91 @@ bool Cyrey::Board::CanSwap() const
 constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
 {
 	return !(row < 0 || col < 0 || row >= this->mWidth || col >= this->mHeight);
+}
+
+int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
+{
+	//do nothing if the parameter is the nullPiece
+	if (piece.mID == 0)
+		return 0;
+
+	if (piece.mImmunity)
+		return 1; //this ensures no infinite recursions, but swapping in a special piece to make a match makes it not explode, fix this
+
+	Piece pieceCopy = piece;
+	piece = Cyrey::gNullPiece;
+
+	int piecesCleared = 1;
+	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
+	{
+		for (int i = -1; i <= 1; i++)
+		{
+			for (int j = -1; j <= 1; j++)
+			{
+				if (i == 0 && j == 0)
+					continue; //skip the bomb itself
+
+				if (this->IsPositionLegal(pieceCopy.mBoardX + i, pieceCopy.mBoardY + j))
+				{
+					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardX + i][pieceCopy.mBoardY + j], pieceCopy);
+				}
+			}
+		}
+		this->mFallDelay += Board::cFallDelay / 2;
+	}
+	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
+	{
+		for (int i = 0; i < Board::cLightningPiecesAmount; i++)
+		{
+			int x, y, count = 0;
+			do
+			{
+				count++;
+				x = ::GetRandomValue(0, this->mWidth - 1);
+				y = ::GetRandomValue(0, this->mHeight - 1);
+				
+				if (count > (this->mWidth * this->mHeight * 10)) [[unlikely]]
+				{
+						printf("Lightning piece activation couldn't find a vacant piece\n");
+						break; //no need to set x and y to anything as calling MatchPiece on a nullPiece is fine
+				}
+			} while (this->mBoard[x][y].mID == 0);
+
+			piecesCleared += this->MatchPiece(this->mBoard[x][y], pieceCopy);
+		}
+		this->mFallDelay += Board::cFallDelay * 3;
+	}
+	else if (pieceCopy.IsFlagSet(PieceFlag::Hypercube))
+	{
+		this->DoHypercube(pieceCopy, byPiece);
+		this->mFallDelay += Board::cFallDelay * 3;
+	}
+
+	return piecesCleared;
+}
+
+int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
+{
+	//if called on a piece that isn't a hypercube for some reason, don't resolve
+	if (!cubePiece.IsFlagSet(PieceFlag::Hypercube))
+		return 0;
+
+	int piecesCleared = 1;
+	PieceColor targetColor = byPiece.mColor != PieceColor::Uncolored ? byPiece.mColor : cubePiece.mOldColor;
+	bool wantDHR = byPiece.IsFlagSet(PieceFlag::Hypercube);
+
+	for ( auto &row : this->mBoard )
+	{
+		for (auto &piece : row )
+		{
+			if (piece.mColor == targetColor || wantDHR)
+			{
+				piecesCleared += this->MatchPiece(piece, cubePiece);
+			}
+		}
+	}
+
+	return piecesCleared;
 }
 
 void Cyrey::Board::UpdateDragging()
@@ -452,15 +561,31 @@ void Cyrey::Board::UpdateMatchSets()
 	}
 	for ( auto& matchSet : this->mMatchSets )
 	{
-		int piecesPerSet = 0;
+		int piecesPerSet = matchSet.mPieces.size();
+		int addedPiecesPerSet = matchSet.mAddedPieces.size();
+		Piece* addedPiece = matchSet.mAddedPieces[addedPiecesPerSet / 2];
+		int piecesCleared = 0;
+
 		for ( auto piece : matchSet.mPieces )
 		{
-			*piece = Cyrey::gNullPiece;
-			piecesPerSet++;
+			if (piece == addedPiece && piecesPerSet == 4)
+			{
+				addedPiece->Bombify();
+			}
+			else if (piece == addedPiece && piecesPerSet == 5)
+			{
+				addedPiece->Lightningify();
+			}
+			else if (piece == addedPiece && piecesPerSet >= 6)
+			{
+				addedPiece->Hypercubify();
+			}
+			
+			piecesCleared += this->MatchPiece(*piece);
 		}
-		this->mPiecesCleared += piecesPerSet;
-		this->mScore += (piecesPerSet - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
-		this->mPiecesClearedInMove += piecesPerSet;
+		this->mPiecesCleared += piecesCleared;
+		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		this->mPiecesClearedInMove += piecesCleared;
 	}
 	this->mMatchSets.clear();
 }
@@ -475,6 +600,7 @@ void Cyrey::Board::UpdateFalling()
 			while (this->IsPositionLegal(i, j + k) && this->mBoard[i][j + k].mID == 0)
 			{
 				this->mBoard[i][j + k] = this->mBoard[i][j + k - 1];
+				this->mBoard[i][j + k].mBoardY = j + k;
 				this->mBoard[i][j + k - 1] = Cyrey::gNullPiece;
 				k++;
 			}
@@ -485,12 +611,17 @@ void Cyrey::Board::UpdateFalling()
 
 void Cyrey::Board::FillInBlanks()
 {
-	for (auto &row : this->mBoard)
+	for (int i = 0; i < this->mHeight; i++)
 	{
-		for (auto &piece : row)
+		for (int j = 0; j < this->mWidth; j++)
 		{
+			Piece& piece = this->mBoard[i][j];
 			if (piece.mID == 0)
+			{
 				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
+				piece.mBoardX = i;
+				piece.mBoardY = j;
+			}
 		}
 	}
 	if (!this->FindSets())
@@ -540,8 +671,8 @@ void Cyrey::Board::DrawPieces() const
 	{
 		for (int j = 0; j < this->mBoard[0].size(); j++)
 		{
-			Color color;
-			int sides;
+			Color color = raylib::Color::Blank();
+			int sides = 3;
 			float rotation = 0;
 			float radius = (this->mTileSize / 2) - this->mTileInset;
 			raylib::Vector2 center { (float)((i * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
@@ -580,12 +711,18 @@ void Cyrey::Board::DrawPieces() const
 				rotation = 180.0f; 
 				center.y += this->mTileSize / 10.0f; 
 				radius += this->mTileInset; break;
-			case PieceColor::Uncolored:
-			default:
-				continue;
 			}
 
 			::DrawPoly(center, sides, radius, rotation, color);
+			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Bomb))
+				::DrawPolyLinesEx(center, sides, radius + (float)this->mTileInset / 2, rotation, (float)this->mTileSize / 10, raylib::Color::Orange());
+			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Lightning))
+				::DrawPolyLinesEx(center, sides, radius + (float)this->mTileInset / 2, rotation, (float)this->mTileSize / 10, raylib::Color::SkyBlue());
+			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Hypercube))
+			{
+				::DrawCircleV(center, radius, raylib::Color::Pink());
+				::DrawPolyLinesEx(center, 4, radius, rotation, this->mTileSize / 5, raylib::Color::Blue());
+			}
 
 			/*raylib::Rectangle(
 				(float)((i * this->mTileSize) + this->mXOffset + this->mTileInset) + (this->mBoard[i][j].mDragging ? this->mBoard[i][j].mXDiff : 0),

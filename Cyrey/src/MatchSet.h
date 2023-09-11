@@ -9,6 +9,8 @@ namespace Cyrey
 	{
 	public:
 		std::vector<Piece*> mPieces;
+		//the swapped in piece(s), or the ones that falled in, important for deciding where specials are created
+		std::vector<Piece*> mAddedPieces;
 	};
 }
 
