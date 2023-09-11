@@ -118,6 +118,35 @@ void Cyrey::Board::UpdateInput()
 		case KeyboardKey::KEY_D:
 			this->TrySwap(hoveredTile.x, hoveredTile.y, SwapDirection::Right);
 			return;
+#ifdef _DEBUG
+		case KeyboardKey::KEY_F:
+			this->mBoard[hoveredTile.x][hoveredTile.y].Bombify();
+			return;
+		case KeyboardKey::KEY_Z:
+			this->mBoard[hoveredTile.x][hoveredTile.y].Lightningify();
+			return;
+		case KeyboardKey::KEY_C:
+			this->mBoard[hoveredTile.x][hoveredTile.y].Hypercubify();
+			return;
+		case KeyboardKey::KEY_KP_1:
+		case KeyboardKey::KEY_KP_2:
+		case KeyboardKey::KEY_KP_3:
+		case KeyboardKey::KEY_KP_4:
+		case KeyboardKey::KEY_KP_5:
+		case KeyboardKey::KEY_KP_6:
+		case KeyboardKey::KEY_KP_7:
+			this->mBoard[hoveredTile.x][hoveredTile.y].mColor = static_cast<PieceColor>(key - 320);
+			break;
+		case KeyboardKey::KEY_ONE:
+		case KeyboardKey::KEY_TWO:
+		case KeyboardKey::KEY_THREE:
+		case KeyboardKey::KEY_FOUR:
+		case KeyboardKey::KEY_FIVE:
+		case KeyboardKey::KEY_SIX:
+		case KeyboardKey::KEY_SEVEN:
+			this->mBoard[hoveredTile.x][hoveredTile.y].mColor = static_cast<PieceColor>(key - 48);
+			break;
+#endif
 		default:
 			break;
 		}
@@ -369,7 +398,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 		this->mPiecesCleared += piecesCleared;
 		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesCleared;
-		this->mFallDelay = Board::cFallDelay;
+		this->mFallDelay = Board::cFallDelay * 2;
 		this->mCascadeNumber++;
 		this->mBoard[row][col] = Cyrey::gNullPiece; //temp until I make a proper sequence
 		return true;
@@ -445,7 +474,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
 				}
 			}
 		}
-		this->mFallDelay += Board::cFallDelay / 2;
+		this->mFallDelay += Board::cFallDelay * 0.25;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
@@ -467,12 +496,12 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
 
 			piecesCleared += this->MatchPiece(this->mBoard[x][y], pieceCopy);
 		}
-		this->mFallDelay += Board::cFallDelay * 3;
+		this->mFallDelay += Board::cFallDelay;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Hypercube))
 	{
 		this->DoHypercube(pieceCopy, byPiece);
-		this->mFallDelay += Board::cFallDelay * 3;
+		this->mFallDelay += Board::cFallDelay;
 	}
 
 	return piecesCleared;
