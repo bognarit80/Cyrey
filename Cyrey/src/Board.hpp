@@ -7,6 +7,7 @@
 #include "MatchSet.h"
 #include <memory>
 #include "PieceMatchAnim.hpp"
+#include "PieceDropAnim.hpp"
 
 namespace Cyrey
 {
@@ -62,6 +63,7 @@ namespace Cyrey
 		constexpr static float cStartingTime = 60.0f;
 		constexpr static int cLightningPiecesAmount = 10;
 		std::vector<PieceMatchAnim> mMatchedPieceAnims;
+		std::vector<PieceDropAnim> mDroppedPieceAnims;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -96,6 +98,7 @@ namespace Cyrey
 		void DrawCheckerboard() const;
 		void DrawPieces() const;
 		void DrawPieceMatchAnims() const;
+		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;
 		void DrawScore() const;
 	};

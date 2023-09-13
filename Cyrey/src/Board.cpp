@@ -8,7 +8,7 @@ void Cyrey::Board::Init()
 	this->mTileSize = 30;
 	this->mTileInset = 3;
 	this->mBoardAlpha = 0.25f;
-	this->mZoomPct = 80;
+	this->mZoomPct = 70;
 	this->mDragging = false;
 	this->mTriedSwap = false;
 	this->mScore = 0;
@@ -26,6 +26,7 @@ void Cyrey::Board::Init()
 	this->mSwapDeadZone = 0.33f;
 	this->mSecondsRemaining = Board::cStartingTime;
 	this->mMatchedPieceAnims = {};
+	this->mDroppedPieceAnims = {};
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -96,6 +97,15 @@ void Cyrey::Board::Update()
 		}
 	}
 
+	for (auto &anim : this->mDroppedPieceAnims)
+	{
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		if (anim.mOpacity <= 0.0f)
+		{
+			this->mDroppedPieceAnims.clear();
+		}
+	}
+
 	this->mUpdateCnt++;
 }
 
@@ -104,6 +114,7 @@ void Cyrey::Board::Draw() const
 	this->DrawCheckerboard();
 	this->DrawPieces();
 	this->DrawPieceMatchAnims();
+	this->DrawPieceDropAnims();
 	this->DrawHoverSquare();
 	this->DrawScore();
 }
@@ -671,6 +682,7 @@ void Cyrey::Board::FillInBlanks()
 				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
 				piece.mBoardX = i;
 				piece.mBoardY = j;
+				this->mDroppedPieceAnims.emplace_back(i);
 			}
 		}
 	}
@@ -832,6 +844,19 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		color = color.Alpha(anim.mOpacity);
 
 		::DrawPoly(center, sides, radius, rotation, color);
+	}
+}
+
+void Cyrey::Board::DrawPieceDropAnims() const
+{
+	for (auto &anim : this->mDroppedPieceAnims)
+	{
+		float x = this->mXOffset + (anim.mBoardCol * this->mTileSize) + this->mTileInset;
+		float y = this->mYOffset - (this->mTileSize * 3);
+		raylib::Color from = this->mApp->mDarkMode ? raylib::Color::RayWhite().Alpha(anim.mOpacity) : raylib::Color::Black().Alpha(anim.mOpacity);
+		raylib::Color to = this->mApp->mDarkMode ? raylib::Color::Black().Alpha(anim.mOpacity) : raylib::Color::RayWhite().Alpha(anim.mOpacity);
+
+		raylib::Rectangle(x, y, this->mTileSize - (this->mTileInset * 2), (float)this->mTileSize * 2.75f).DrawGradientV(from, to);
 	}
 }
 
