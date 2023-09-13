@@ -416,6 +416,7 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	Cyrey::Piece temp = this->mBoard[row][col];
 	if (temp.IsFlagSet(PieceFlag::Hypercube))
 	{
+		this->mCascadeNumber++;
 		int piecesCleared = this->DoHypercube(this->mBoard[row][col], this->mBoard[toRow][toCol]);
 		this->mPiecesCleared += piecesCleared;
 		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
@@ -529,7 +530,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Hypercube))
 	{
-		this->DoHypercube(pieceCopy, byPiece);
+		piecesCleared += this->DoHypercube(pieceCopy, byPiece);
 		this->mFallDelay += Board::cFallDelay;
 	}
 
