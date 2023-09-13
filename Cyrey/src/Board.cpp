@@ -383,7 +383,7 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 			this->mMissDelay < Board::cQueueSwapTolerance && 
 			this->mSecondsRemaining > 0)
 		{
-			this->mQueuedSwapPos = { (float)row, (float)col };
+			this->mQueuedSwapPos = raylib::Vector2{ (float)row, (float)col };
 			this->mQueuedSwapDirection = direction;
 		}
 		return false;
