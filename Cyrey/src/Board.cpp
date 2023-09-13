@@ -25,6 +25,7 @@ void Cyrey::Board::Init()
 	this->mScoreMultiplier = 1;
 	this->mSwapDeadZone = 0.33f;
 	this->mSecondsRemaining = Board::cStartingTime;
+	this->mMatchedPieceAnims = {};
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -86,6 +87,15 @@ void Cyrey::Board::Update()
 	if ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f)
 		this->mSecondsRemaining = 0.0f;
 
+	for (auto &anim : this->mMatchedPieceAnims)
+	{
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		if (anim.mOpacity <= 0.0f)
+		{
+			this->mMatchedPieceAnims.clear();
+		}
+	}
+
 	this->mUpdateCnt++;
 }
 
@@ -93,6 +103,7 @@ void Cyrey::Board::Draw() const
 {
 	this->DrawCheckerboard();
 	this->DrawPieces();
+	this->DrawPieceMatchAnims();
 	this->DrawHoverSquare();
 	this->DrawScore();
 }
@@ -446,16 +457,23 @@ constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
 	return !(row < 0 || col < 0 || row >= this->mWidth || col >= this->mHeight);
 }
 
-int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
+int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 {
 	//do nothing if the parameter is the nullPiece
 	if (piece.mID == 0)
 		return 0;
 
-	if (piece.mImmunity)
-		return 1; //this ensures no infinite recursions, but swapping in a special piece to make a match makes it not explode, fix this
-
 	Piece pieceCopy = piece;
+	if (piece.mImmunity && destroy)
+	{
+		return 0;
+	}
+	else if (piece.mImmunity)
+	{
+		//no infinite recursions of special pieces destroying each other
+		return 1;
+	}
+	this->mMatchedPieceAnims.push_back(PieceMatchAnim(piece.mBoardX, piece.mBoardY, piece.mColor, destroy));
 	piece = Cyrey::gNullPiece;
 
 	int piecesCleared = 1;
@@ -470,7 +488,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
 
 				if (this->IsPositionLegal(pieceCopy.mBoardX + i, pieceCopy.mBoardY + j))
 				{
-					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardX + i][pieceCopy.mBoardY + j], pieceCopy);
+					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardX + i][pieceCopy.mBoardY + j], pieceCopy, true);
 				}
 			}
 		}
@@ -494,7 +512,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece)
 				}
 			} while (this->mBoard[x][y].mID == 0);
 
-			piecesCleared += this->MatchPiece(this->mBoard[x][y], pieceCopy);
+			piecesCleared += this->MatchPiece(this->mBoard[x][y], pieceCopy, true);
 		}
 		this->mFallDelay += Board::cFallDelay;
 	}
@@ -523,7 +541,7 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 		{
 			if (piece.mColor == targetColor || wantDHR)
 			{
-				piecesCleared += this->MatchPiece(piece, cubePiece);
+				piecesCleared += this->MatchPiece(piece, cubePiece, true);
 			}
 		}
 	}
@@ -592,7 +610,10 @@ void Cyrey::Board::UpdateMatchSets()
 	{
 		int piecesPerSet = matchSet.mPieces.size();
 		int addedPiecesPerSet = matchSet.mAddedPieces.size();
-		Piece* addedPiece = matchSet.mAddedPieces[addedPiecesPerSet / 2];
+		//make the special at the added piece, or in the middle of the set if no pieces were added
+		Piece* addedPiece = addedPiecesPerSet > 0 ? 
+			matchSet.mAddedPieces[addedPiecesPerSet / 2] : 
+			matchSet.mPieces[piecesPerSet / 2];
 		int piecesCleared = 0;
 
 		for ( auto piece : matchSet.mPieces )
@@ -760,6 +781,57 @@ void Cyrey::Board::DrawPieces() const
 				(float)this->mTileSize - (this->mTileInset * 2)
 			).Draw(color);*/
 		}
+	}
+}
+
+void Cyrey::Board::DrawPieceMatchAnims() const
+{
+	for (auto &anim : this->mMatchedPieceAnims)
+	{
+		raylib::Color color = raylib::Color::Blank();
+		int sides = 3;
+		float rotation = 0;
+		float radius = (this->mTileSize / 2) - this->mTileInset;
+		raylib::Vector2 center{ (float)((anim.mBoardX * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
+								(float)((anim.mBoardY * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
+		};
+
+		switch (anim.mColor)
+		{
+		case PieceColor::Red:
+			color = raylib::Color::Red();
+			sides = 4;
+			rotation = 45.0f;
+			radius += this->mTileInset; break;
+		case PieceColor::Green:
+			color = raylib::Color::Green();
+			sides = 8; break;
+		case PieceColor::Blue:
+			color = raylib::Color::Blue();
+			sides = 3;
+			center.y -= this->mTileSize / 10.0f;
+			radius += this->mTileInset; break;
+		case PieceColor::Yellow:
+			color = raylib::Color::Yellow();
+			sides = 4;
+			break;
+		case PieceColor::Orange:
+			color = raylib::Color::Orange();
+			sides = 6;
+			rotation = 90.0f; break;
+		case PieceColor::White:
+			color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::DarkGray();
+			sides = 12; break;
+		case PieceColor::Purple:
+			color = raylib::Color::Purple();
+			sides = 3;
+			rotation = 180.0f;
+			center.y += this->mTileSize / 10.0f;
+			radius += this->mTileInset; break;
+		}
+		color = color.Alpha(anim.mOpacity);
+
+		::DrawPoly(center, sides, radius, rotation, color);
 	}
 }
 

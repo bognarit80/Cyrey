@@ -6,6 +6,7 @@
 #include <optional>
 #include "MatchSet.h"
 #include <memory>
+#include "PieceMatchAnim.hpp"
 
 namespace Cyrey
 {
@@ -60,6 +61,7 @@ namespace Cyrey
 		float mSecondsRemaining;
 		constexpr static float cStartingTime = 60.0f;
 		constexpr static int cLightningPiecesAmount = 10;
+		std::vector<PieceMatchAnim> mMatchedPieceAnims;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -83,7 +85,7 @@ namespace Cyrey
 		bool IsSwapLegal(int row, int col, int toRow, int toCol) const;
 		bool CanSwap() const;
 		constexpr bool IsPositionLegal(int row, int col) const;
-		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece); //returns the amount of pieces cleared, if the piece was special
+		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); //returns the amount of pieces cleared, if the piece was special
 		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
 
 	private:
@@ -93,6 +95,7 @@ namespace Cyrey
 		void FillInBlanks();
 		void DrawCheckerboard() const;
 		void DrawPieces() const;
+		void DrawPieceMatchAnims() const;
 		void DrawHoverSquare() const;
 		void DrawScore() const;
 	};
