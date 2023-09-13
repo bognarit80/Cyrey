@@ -1,4 +1,5 @@
 ﻿#include "CyreyApp.hpp"
+#include "raygui.h"
 
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()

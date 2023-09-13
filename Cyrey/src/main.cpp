@@ -1,3 +1,4 @@
+#define RAYGUI_IMPLEMENTATION
 #include "raylib-cpp.hpp"
 #include "CyreyApp.hpp"
 
