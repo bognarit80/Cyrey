@@ -64,6 +64,9 @@ namespace Cyrey
 		constexpr static int cLightningPiecesAmount = 10;
 		std::vector<PieceMatchAnim> mMatchedPieceAnims;
 		std::vector<PieceDropAnim> mDroppedPieceAnims;
+		raylib::Vector2 mQueuedSwapPos;
+		SwapDirection mQueuedSwapDirection;
+		static constexpr float cQueueSwapTolerance = 0.15f;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -92,7 +95,7 @@ namespace Cyrey
 
 	private:
 		void UpdateDragging();
-		void UpdateMatchSets();
+		int UpdateMatchSets(); //returns the amount of match sets processed
 		void UpdateFalling();
 		void FillInBlanks();
 		void DrawCheckerboard() const;

@@ -73,7 +73,10 @@ void Cyrey::Board::Update()
 		{
 			this->mFallDelay = 0.0f;
 			this->UpdateFalling();
-			this->UpdateMatchSets();
+			if (!this->UpdateMatchSets() && this->mQueuedSwapDirection != SwapDirection::None)
+				this->TrySwap(this->mQueuedSwapPos.x, this->mQueuedSwapPos.y, this->mQueuedSwapDirection);
+
+			this->mQueuedSwapDirection = SwapDirection::None;
 		}
 	}
 	if (this->mMissDelay > 0.0f)
@@ -375,7 +378,16 @@ bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 {
 	if (!this->CanSwap())
+	{
+		if (this->mFallDelay < Board::cQueueSwapTolerance && 
+			this->mMissDelay < Board::cQueueSwapTolerance && 
+			this->mSecondsRemaining > 0)
+		{
+			this->mQueuedSwapPos = { (float)row, (float)col };
+			this->mQueuedSwapDirection = direction;
+		}
 		return false;
+	}
 
 	int toRow = row;
 	int toCol = col;
@@ -609,9 +621,10 @@ void Cyrey::Board::UpdateDragging()
 	}
 }
 
-void Cyrey::Board::UpdateMatchSets()
+int Cyrey::Board::UpdateMatchSets()
 {
-	if (this->mMatchSets.size() > 0)
+	int matchSets = this->mMatchSets.size();
+	if (matchSets > 0)
 	{
 		this->mFallDelay = this->cFallDelay;
 		if (this->mWantBoardSwerve)
@@ -650,6 +663,7 @@ void Cyrey::Board::UpdateMatchSets()
 		this->mPiecesClearedInMove += piecesCleared;
 	}
 	this->mMatchSets.clear();
+	return matchSets;
 }
 
 void Cyrey::Board::UpdateFalling()
