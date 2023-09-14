@@ -55,7 +55,6 @@ namespace Cyrey
 		constexpr static float cFallDelay = 0.2f;
 		constexpr static float cMissPenalty = 3 * cFallDelay;
 		bool mWantBoardSwerve;
-		int mUpdateCnt;
 		int mColorCount;
 		int mBaseScore; //score for one match
 		int mScoreMultiplier;

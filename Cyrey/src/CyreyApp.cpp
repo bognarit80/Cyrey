@@ -7,6 +7,7 @@ void Cyrey::CyreyApp::Init()
 	this->mWidth = 1280;
 	this->mHeight = 720;
     this->mDarkMode = true;
+    this->mUpdateCnt = 0;
 
     this->mWindow = std::make_unique<raylib::Window>(
         this->mWidth,
@@ -29,11 +30,17 @@ void Cyrey::CyreyApp::GameLoop()
     this->Update();
     this->Draw();
     this->mWindow->DrawFPS();
+#ifdef _DEBUG
+    raylib::DrawText(std::to_string(this->mUpdateCnt), 10, 100, 16, 
+        this->mDarkMode ? raylib::Color::White() : raylib::Color::Black());
+#endif // _DEBUG
+
 }
 
 void Cyrey::CyreyApp::Update()
 {
     this->mBoard->Update();
+    this->mUpdateCnt++;
 }
 
 void Cyrey::CyreyApp::Draw() const

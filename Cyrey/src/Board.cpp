@@ -16,7 +16,6 @@ void Cyrey::Board::Init()
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
 	this->mBoardSwerve = raylib::Vector2{0, -(float)this->mTileSize * 8};
-	this->mUpdateCnt = 0;
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
 	this->mWantBoardSwerve = true;
@@ -94,8 +93,6 @@ void Cyrey::Board::Update()
 
 	if ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f)
 		this->mSecondsRemaining = 0.0f;
-
-	this->mUpdateCnt++;
 }
 
 void Cyrey::Board::Draw() const
@@ -1002,7 +999,6 @@ void Cyrey::Board::DrawHoverSquare() const
 
 void Cyrey::Board::DrawScore() const
 {
-	raylib::DrawText(std::to_string(this->mUpdateCnt), 0, 100, 16, raylib::Color::White());
 	std::string score = "Score: " + std::to_string(this->mScore);
 	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
 	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);

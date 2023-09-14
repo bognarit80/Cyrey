@@ -24,6 +24,7 @@ namespace Cyrey
 		std::unique_ptr<Board> mBoard;
 		std::unique_ptr<raylib::Window> mWindow;
 		bool mDarkMode;
+		int mUpdateCnt;
 
 		void Init();
 		void GameLoop();
