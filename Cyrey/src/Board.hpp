@@ -100,6 +100,7 @@ namespace Cyrey
 		void UpdateFalling();
 		void FillInBlanks();
 		void DrawCheckerboard() const;
+		void DrawBorder() const;
 		void DrawPieces() const;
 		void DrawPieceMatchAnims() const;
 		void DrawPieceDropAnims() const;

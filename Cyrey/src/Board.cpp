@@ -118,6 +118,7 @@ void Cyrey::Board::Update()
 void Cyrey::Board::Draw() const
 {
 	this->DrawCheckerboard();
+	this->DrawBorder();
 	this->DrawPieces();
 	this->DrawPieceMatchAnims();
 	this->DrawPieceDropAnims();
@@ -728,10 +729,13 @@ void Cyrey::Board::DrawCheckerboard() const
 				raylib::Color::Gray().Alpha(this->mBoardAlpha));
 		}
 	}
+}
 
+void Cyrey::Board::DrawBorder() const
+{
 	//draw the outline
 	raylib::Color outlineColor = this->mApp->mDarkMode ? raylib::Color::Gray() : raylib::Color::DarkGray();
-	if (this->mMissDelay > 0.0 || this->mSecondsRemaining <= 0.0f)
+	if (this->mMissDelay > 0.0f || this->mSecondsRemaining <= 0.0f)
 		outlineColor = raylib::Color::Red();
 
 	raylib::Rectangle(
@@ -740,6 +744,89 @@ void Cyrey::Board::DrawCheckerboard() const
 		(float)((this->mTileSize * this->mWidth) + 2),
 		(float)((this->mTileSize * this->mHeight) + 2)
 	).DrawRoundedLines(0.0f, 1, this->mTileInset, outlineColor);
+
+	//draw the timer - way more complicated than I thought it would be. definitely review and simplify later.
+	float thick = this->mTileInset * 2;
+	float offset = thick / 2; //Rectangle draws thickness outwards, Line draws it in the middle, shift it to fit somewhat
+	raylib::Color timerColor = this->mSecondsRemaining < 10 ? raylib::Color::Red() : raylib::Color::Green();
+
+	int halfCircumference = ((this->mWidth * this->mTileSize) + (this->mHeight * this->mTileSize) + thick * 2 + offset);
+	float fillPct = this->mSecondsRemaining / Board::cStartingTime;
+	if (this->mMissDelay > 0.0f)
+	{
+		fillPct = 1;
+		timerColor = raylib::Color::Red();
+	}
+
+	float fillLength = static_cast<float>(halfCircumference) * fillPct;
+	float firstCurveLen = (static_cast<float>(this->mWidth * this->mTileSize) / 2) + thick;
+	float secondCurveLen = firstCurveLen + static_cast<float>(this->mHeight * this->mTileSize) + thick;
+
+	raylib::Vector2 startPos{ this->mXOffset + (static_cast<float>(this->mWidth) / 2 * this->mTileSize) , this->mYOffset + (this->mHeight * this->mTileSize) + offset};
+	raylib::Vector2 firstCurvePointLeft{ this->mXOffset - offset, this->mYOffset + (this->mHeight * this->mTileSize) + offset };
+	raylib::Vector2 firstCurvePointRight{ this->mXOffset + (this->mWidth * this->mTileSize) + offset, this->mYOffset + (this->mHeight * this->mTileSize) + offset };
+	raylib::Vector2 secondCurvePointLeft{ this->mXOffset - offset, this->mYOffset - offset };
+	raylib::Vector2 secondCurvePointRight{ this->mXOffset + (this->mWidth * this->mTileSize) + offset, this->mYOffset - offset };
+
+	bool wantFirstCurve = fillLength >= firstCurveLen;
+	bool wantSecondCurve = fillLength >= secondCurveLen;
+
+	float leftX = wantSecondCurve ?
+		secondCurvePointLeft.x + fillLength - secondCurveLen :
+		wantFirstCurve ? firstCurvePointLeft.x :
+		startPos.x - fillLength;
+	float leftY = wantSecondCurve ?
+		secondCurvePointLeft.y :
+		wantFirstCurve ? firstCurvePointLeft.y - (fillLength - firstCurveLen) :
+		firstCurvePointLeft.y;
+	float rightX = wantSecondCurve ?
+		secondCurvePointRight.x - (fillLength - secondCurveLen) :
+		wantFirstCurve ? firstCurvePointRight.x :
+		startPos.x + fillLength;
+	float rightY = wantSecondCurve ?
+		secondCurvePointRight.y :
+		wantFirstCurve ? firstCurvePointRight.y - (fillLength - firstCurveLen) :
+		firstCurvePointRight.y;
+	raylib::Vector2 lastLeft{ leftX, leftY };
+	raylib::Vector2 lastRight{ rightX, rightY };
+
+	int edgeCircleSegments = 6;
+	if (wantSecondCurve)
+	{
+		//left
+		::DrawLineEx(startPos, firstCurvePointLeft, thick, timerColor);
+		::DrawCircleSector(firstCurvePointLeft, offset, 270, 360, edgeCircleSegments, timerColor);
+		::DrawLineEx(firstCurvePointLeft, secondCurvePointLeft, thick, timerColor);
+		::DrawCircleSector(secondCurvePointLeft, offset, 180, 270, edgeCircleSegments, timerColor);
+		::DrawLineEx(secondCurvePointLeft, lastLeft, thick, timerColor);
+
+		//right
+		::DrawLineEx(startPos, firstCurvePointRight, thick, timerColor);
+		::DrawCircleSector(firstCurvePointRight, offset, 90, 0, edgeCircleSegments, timerColor);
+		::DrawLineEx(firstCurvePointRight, secondCurvePointRight, thick, timerColor);
+		::DrawCircleSector(secondCurvePointRight, offset, 180, 90, edgeCircleSegments, timerColor);
+		::DrawLineEx(secondCurvePointRight, lastRight, thick, timerColor);
+	}
+	else if (wantFirstCurve)
+	{
+		//left
+		::DrawLineEx(startPos, firstCurvePointLeft, thick, timerColor);
+		::DrawCircleSector(firstCurvePointLeft, offset, 270, 360, edgeCircleSegments, timerColor);
+		::DrawLineEx(firstCurvePointLeft, lastLeft, thick, timerColor);
+
+		//right
+		::DrawLineEx(startPos, firstCurvePointRight, thick, timerColor);
+		::DrawCircleSector(firstCurvePointRight, offset, 90, 0, edgeCircleSegments, timerColor);
+		::DrawLineEx(firstCurvePointRight, lastRight, thick, timerColor);
+	}
+	else
+	{
+		//left
+		::DrawLineEx(startPos, lastLeft, thick, timerColor);
+
+		//right
+		::DrawLineEx(startPos, lastRight, thick, timerColor);
+	}
 }
 
 void Cyrey::Board::DrawPieces() const
@@ -906,7 +993,7 @@ void Cyrey::Board::DrawScore() const
 	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
 	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);
 	std::string piecesInMove = "Pieces: " + std::to_string(this->mPiecesClearedInMove);
-	std::string timeRemaining = ::TextFormat("%.2f", this->mSecondsRemaining);
+	std::string timeRemaining = ::TextFormat("%.1f", this->mSecondsRemaining);
 	int fontSize = this->mApp->mWindow->GetHeight() / 30;
 	int fontWidthScore = raylib::MeasureText(score, fontSize);
 	int fontWidthPieces = raylib::MeasureText(pieces, fontSize);
