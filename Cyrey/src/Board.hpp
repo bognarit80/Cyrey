@@ -67,6 +67,9 @@ namespace Cyrey
 		raylib::Vector2 mQueuedSwapPos;
 		SwapDirection mQueuedSwapDirection;
 		static constexpr float cQueueSwapTolerance = 0.15f;
+		float mNewGameAnimProgress;
+		bool mDroppedNewGamePieces;
+		static constexpr float cNewGameAnimDuration = 1.0f;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -97,6 +100,7 @@ namespace Cyrey
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
 		void UpdateBoardSwerve();
+		bool UpdateNewGameAnim(); //increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
 		void UpdateDragging();
 		int UpdateMatchSets(); //returns the amount of match sets processed
 		void UpdateFalling();

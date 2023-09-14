@@ -23,9 +23,11 @@ void Cyrey::Board::Init()
 	this->mBaseScore = 50;
 	this->mScoreMultiplier = 1;
 	this->mSwapDeadZone = 0.33f;
-	this->mSecondsRemaining = Board::cStartingTime;
+	this->mSecondsRemaining = 0.0f;
 	this->mMatchedPieceAnims = {};
 	this->mDroppedPieceAnims = {};
+	this->mNewGameAnimProgress = 0.0f;
+	this->mDroppedNewGamePieces = false;
 
 	/*auto boardMock = ParseBoardString(
 R"(brygyrgr
@@ -91,7 +93,7 @@ void Cyrey::Board::Update()
 		}
 	}
 
-	if ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f)
+	if (!this->UpdateNewGameAnim() && ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f))
 		this->mSecondsRemaining = 0.0f;
 }
 
@@ -235,8 +237,10 @@ void Cyrey::Board::ResetBoard()
 	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
-	this->mSecondsRemaining = Board::cStartingTime;
+	this->mSecondsRemaining = 0.0f;
 	this->mBoardSwerve = raylib::Vector2{ 0, -(float)this->mTileSize * 8 };
+	this->mNewGameAnimProgress = 0.0f;
+	this->mDroppedNewGamePieces = false;
 }
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
@@ -365,7 +369,8 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 	if (!this->CanSwap())
 	{
 		if (this->mFallDelay < Board::cQueueSwapTolerance && 
-			this->mMissDelay < Board::cQueueSwapTolerance && 
+			this->mMissDelay < Board::cQueueSwapTolerance &&
+			Board::cNewGameAnimDuration - this->mNewGameAnimProgress < Board::cQueueSwapTolerance &&
 			this->mSecondsRemaining > 0)
 		{
 			this->mQueuedSwapPos = raylib::Vector2{ (float)row, (float)col };
@@ -458,7 +463,10 @@ bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
 
 bool Cyrey::Board::CanSwap() const
 {
-	return this->mFallDelay <= 0.0f && this->mMissDelay <= 0.0f && this->mSecondsRemaining > 0.0f;
+	return this->mFallDelay <= 0.0f && 
+		this->mMissDelay <= 0.0f && 
+		this->mSecondsRemaining > 0.0f && 
+		this->mNewGameAnimProgress >= Board::cNewGameAnimDuration;
 }
 
 constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
@@ -587,6 +595,32 @@ void Cyrey::Board::UpdateBoardSwerve()
 	float fallDelay = 1 - std::pow(this->cFallDelay * 0.003f, this->mApp->GetDeltaTime());
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
+}
+
+bool Cyrey::Board::UpdateNewGameAnim()
+{
+	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+		return false;
+
+	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * Board::cStartingTime;
+	this->mNewGameAnimProgress += this->mApp->GetDeltaTime();
+
+	if (this->mNewGameAnimProgress >= (Board::cNewGameAnimDuration * 0.75f) && !this->mDroppedNewGamePieces)
+	{
+		for (int i = 0; i < this->mWidth; i++)
+			this->mDroppedPieceAnims.emplace_back(i);
+		this->mDroppedNewGamePieces = true;
+		if (this->mWantBoardSwerve)
+			this->mBoardSwerve.y += this->mTileSize * Board::cSwerveCoeff * 3;
+	}
+
+	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+		this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
+
+	if (this->mSecondsRemaining > Board::cStartingTime)
+		this->mSecondsRemaining = Board::cStartingTime;
+
+	return true;
 }
 
 void Cyrey::Board::UpdateDragging()
@@ -843,7 +877,7 @@ void Cyrey::Board::DrawBorder() const
 void Cyrey::Board::DrawPieces() const
 {
 	//don't draw the pieces on gameover
-	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f)
+	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f || !this->mDroppedNewGamePieces)
 		return;
 
 	for (int i = 0; i < this->mBoard.size(); i++)
