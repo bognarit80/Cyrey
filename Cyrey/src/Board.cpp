@@ -54,6 +54,9 @@ void Cyrey::Board::Update()
 	this->UpdateDragging();
 	this->UpdateInput();
 
+	this->UpdateMatchedPieceAnims();
+	this->UpdateDroppedPieceAnims();
+
 	int screenWidth = this->mApp->mWindow->GetWidth();
 	int screenHeight = this->mApp->mWindow->GetHeight();
 
@@ -65,9 +68,7 @@ void Cyrey::Board::Update()
 		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.y;
 	}
 
-	float fallDelay = 1 - std::pow(this->cFallDelay * 0.003f, this->mApp->GetDeltaTime());
-	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
-	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
+	this->UpdateBoardSwerve();
 
 	if (this->mFallDelay > 0.0f)
 	{
@@ -93,24 +94,6 @@ void Cyrey::Board::Update()
 
 	if ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f)
 		this->mSecondsRemaining = 0.0f;
-
-	for (auto &anim : this->mMatchedPieceAnims)
-	{
-		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
-		if (anim.mOpacity <= 0.0f)
-		{
-			this->mMatchedPieceAnims.clear();
-		}
-	}
-
-	for (auto &anim : this->mDroppedPieceAnims)
-	{
-		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
-		if (anim.mOpacity <= 0.0f)
-		{
-			this->mDroppedPieceAnims.clear();
-		}
-	}
 
 	this->mUpdateCnt++;
 }
@@ -576,6 +559,37 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 	}
 
 	return piecesCleared;
+}
+
+void Cyrey::Board::UpdateMatchedPieceAnims()
+{
+	for (auto& anim : this->mMatchedPieceAnims)
+	{
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		if (anim.mOpacity <= 0.0f)
+		{
+			this->mMatchedPieceAnims.clear();
+		}
+	}
+}
+
+void Cyrey::Board::UpdateDroppedPieceAnims()
+{
+	for (auto& anim : this->mDroppedPieceAnims)
+	{
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		if (anim.mOpacity <= 0.0f)
+		{
+			this->mDroppedPieceAnims.clear();
+		}
+	}
+}
+
+void Cyrey::Board::UpdateBoardSwerve()
+{
+	float fallDelay = 1 - std::pow(this->cFallDelay * 0.003f, this->mApp->GetDeltaTime());
+	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
+	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 }
 
 void Cyrey::Board::UpdateDragging()

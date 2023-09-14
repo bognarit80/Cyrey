@@ -95,6 +95,9 @@ namespace Cyrey
 		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
 
 	private:
+		void UpdateMatchedPieceAnims();
+		void UpdateDroppedPieceAnims();
+		void UpdateBoardSwerve();
 		void UpdateDragging();
 		int UpdateMatchSets(); //returns the amount of match sets processed
 		void UpdateFalling();
