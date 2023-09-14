@@ -35,6 +35,7 @@ namespace Cyrey
 		std::vector<std::vector<Piece>> mBoard;
 		CyreyApp* mApp;
 		int mZoomPct;
+		static constexpr int cDefaultZoomPct = 70;
 		bool mDragging;
 		raylib::Vector2 mDragMouseBegin;
 		raylib::Vector2 mDragTileBegin;

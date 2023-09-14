@@ -8,14 +8,14 @@ void Cyrey::Board::Init()
 	this->mTileSize = 30;
 	this->mTileInset = 3;
 	this->mBoardAlpha = 0.25f;
-	this->mZoomPct = 70;
+	this->mZoomPct = Board::cDefaultZoomPct;
 	this->mDragging = false;
 	this->mTriedSwap = false;
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
-	this->mBoardSwerve = 0;
+	this->mBoardSwerve = raylib::Vector2{0, -(float)this->mTileSize * 8};
 	this->mUpdateCnt = 0;
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
@@ -48,6 +48,9 @@ pprpprpr
 void Cyrey::Board::Update()
 {
 	this->mZoomPct += raylib::Mouse::GetWheelMove(); //perhaps change this to the Camera functionality in raylib? seems a lot more versatile
+	if (raylib::Mouse::IsButtonPressed(MouseButton::MOUSE_BUTTON_MIDDLE))
+		this->mZoomPct = Board::cDefaultZoomPct;
+
 	this->UpdateDragging();
 	this->UpdateInput();
 
@@ -252,6 +255,7 @@ void Cyrey::Board::ResetBoard()
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
 	this->mSecondsRemaining = Board::cStartingTime;
+	this->mBoardSwerve = raylib::Vector2{ 0, -(float)this->mTileSize * 8 };
 }
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
