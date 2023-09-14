@@ -238,9 +238,17 @@ void Cyrey::Board::ResetBoard()
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
 	this->mSecondsRemaining = 0.0f;
-	this->mBoardSwerve = raylib::Vector2{ 0, -(float)this->mTileSize * 8 };
+	this->mBoardSwerve = raylib::Vector2{ 0, static_cast<float>(-this->mTileSize * 8) };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
+}
+
+void Cyrey::Board::AddSwerve(raylib::Vector2 swerve)
+{
+	if (!this->mWantBoardSwerve)
+		return;
+
+	this->mBoardSwerve += swerve;
 }
 
 std::optional<raylib::Vector2> Cyrey::Board::GetHoveredTile() const
@@ -404,8 +412,7 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 	default:
 		return false;
 	}
-	if (this->mWantBoardSwerve)
-		this->mBoardSwerve += swerve;
+	this->AddSwerve(swerve);
 
 	return this->TrySwap(row, col, toRow, toCol);
 }
@@ -609,16 +616,20 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	{
 		for (int i = 0; i < this->mWidth; i++)
 			this->mDroppedPieceAnims.emplace_back(i);
+
 		this->mDroppedNewGamePieces = true;
 		if (this->mWantBoardSwerve)
 			this->mBoardSwerve.y += this->mTileSize * Board::cSwerveCoeff * 3;
 	}
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
+		this->mSecondsRemaining = Board::cStartingTime; //failsafe
+	}
 
 	if (this->mSecondsRemaining > Board::cStartingTime)
-		this->mSecondsRemaining = Board::cStartingTime;
+		this->mSecondsRemaining = Board::cStartingTime; //failsafe
 
 	return true;
 }
@@ -677,8 +688,7 @@ int Cyrey::Board::UpdateMatchSets()
 	if (matchSets > 0)
 	{
 		this->mFallDelay = this->cFallDelay;
-		if (this->mWantBoardSwerve)
-			this->mBoardSwerve.y += this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f;
+		this->AddSwerve({ 0, this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f });
 		this->mCascadeNumber++;
 	}
 	for ( auto& matchSet : this->mMatchSets )
@@ -1078,7 +1088,7 @@ void Cyrey::Board::DrawScore() const
 		fontSize * 2,
 		this->mSecondsRemaining < 10 ? raylib::Color::Red() : color);
 
-	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f)
+	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f && this->mDroppedNewGamePieces)
 	{
 		const char* restartText = "Press R to restart the game!";
 		int rrTextSize = this->mTileSize / 2;

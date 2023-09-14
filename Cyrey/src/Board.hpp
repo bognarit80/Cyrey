@@ -83,6 +83,7 @@ namespace Cyrey
 		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
 		std::vector<std::vector<Piece>> GenerateStartingBoard() const;
 		void ResetBoard();
+		void AddSwerve(raylib::Vector2 swerve); //Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
 		std::optional<raylib::Vector2> GetHoveredTile() const;
 		bool IsMouseInBoard() const;
 		bool FindSets();
