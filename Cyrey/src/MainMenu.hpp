@@ -12,14 +12,19 @@ namespace Cyrey
 	public:
 		CyreyApp &mApp;
 		bool mIsPlayBtnPressed;
+		static constexpr char cTitleName[] = "Cyrey";
+		static constexpr char cPlayBtnText[] = "Play";
+		static constexpr char cSettingsBtnText[] = "Settings";
+		static constexpr char cQuitBtnText[] = "Quit";
 
 		MainMenu() = default;
 		MainMenu(CyreyApp& app) : mApp(app) {};
 		MainMenu(const MainMenu&) = default;
 		MainMenu& operator=(const MainMenu&) = default;
 
+		void Init();
 		void Update();
-		void Draw() const;
+		void Draw(); //not const because we want raygui functions to modify the members
 	};
 }
 

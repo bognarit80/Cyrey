@@ -35,7 +35,9 @@ namespace Cyrey
 		bool mDarkMode;
 		int mUpdateCnt;
 		CyreyAppState mState;
+		CyreyAppState mChangeToState; //to prevent drawing a state before updating it at least once
 		std::unique_ptr<MainMenu> mMainMenu;
+		bool mWantExit;
 
 		void Init();
 		void GameLoop();

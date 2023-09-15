@@ -9,6 +9,8 @@ void Cyrey::CyreyApp::Init()
     this->mDarkMode = true;
     this->mUpdateCnt = 0;
     this->mState = CyreyAppState::Loading;
+    this->mChangeToState = CyreyAppState::Loading;
+    this->mWantExit = false;
 
     this->mWindow = std::make_unique<raylib::Window>(
         this->mWidth,
@@ -25,6 +27,7 @@ void Cyrey::CyreyApp::Init()
     this->mBoard->Init();
     this->mBoard->mApp = this;
     this->mMainMenu = std::make_unique<MainMenu>(*this);
+    this->mMainMenu->Init();
 }
 
 void Cyrey::CyreyApp::GameLoop()
@@ -41,17 +44,22 @@ void Cyrey::CyreyApp::GameLoop()
 
 void Cyrey::CyreyApp::Update()
 {
+    this->mWidth = this->mWindow->GetWidth();
+    this->mHeight = this->mWindow->GetHeight();
+
+    this->mState = this->mChangeToState;
+
     switch (this->mState)
     {
     case CyreyAppState::Loading:
         if (this->LoadingThread())
-            this->mState = CyreyAppState::MainMenu;
+            this->mChangeToState = CyreyAppState::MainMenu;
         break;
 
     case CyreyAppState::MainMenu:
         this->mMainMenu->Update();
         if (this->mMainMenu->mIsPlayBtnPressed)
-            this->mState = CyreyAppState::InGame;
+            this->mChangeToState = CyreyAppState::InGame;
         break;
 
     case CyreyAppState::InGame:
