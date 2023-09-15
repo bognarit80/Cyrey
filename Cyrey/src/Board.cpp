@@ -174,6 +174,13 @@ void Cyrey::Board::UpdateInput()
 	case KeyboardKey::KEY_M:
 		this->mWantBoardSwerve ^= 1;
 		break;
+	case KeyboardKey::KEY_SPACE:
+		if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration)
+		{
+			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
+			this->mBoardSwerve = { 0 };
+		}
+		break;
 	default:
 		break;
 	}
@@ -383,6 +390,11 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 		{
 			this->mQueuedSwapPos = raylib::Vector2{ (float)row, (float)col };
 			this->mQueuedSwapDirection = direction;
+		}
+		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) //skip anim if user tries to swap during it
+		{
+			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
+			this->mBoardSwerve = { 0 };
 		}
 		return false;
 	}
@@ -606,7 +618,7 @@ void Cyrey::Board::UpdateBoardSwerve()
 
 bool Cyrey::Board::UpdateNewGameAnim()
 {
-	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+	if (this->mNewGameAnimProgress > Board::cNewGameAnimDuration)
 		return false;
 
 	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * Board::cStartingTime;
@@ -624,7 +636,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
 	{
-		this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
+		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
 		this->mSecondsRemaining = Board::cStartingTime; //failsafe
 	}
 
