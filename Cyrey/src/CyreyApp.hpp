@@ -3,11 +3,20 @@
 
 #include "raylib-cpp.hpp"
 #include "Board.hpp"
+#include "MainMenu.hpp"
 #include <memory>
 
 namespace Cyrey 
 {
 	class Board;
+	class MainMenu;
+
+	enum class CyreyAppState
+	{
+		Loading,
+		MainMenu,
+		InGame
+	};
 
 	class CyreyApp
 	{
@@ -25,12 +34,16 @@ namespace Cyrey
 		std::unique_ptr<raylib::Window> mWindow;
 		bool mDarkMode;
 		int mUpdateCnt;
+		CyreyAppState mState;
+		std::unique_ptr<MainMenu> mMainMenu;
 
 		void Init();
 		void GameLoop();
 		void Update();
 		void Draw() const;
 		float GetDeltaTime() const;
+
+		bool LoadingThread();
 	};
 } // namespace Cyrey 
 

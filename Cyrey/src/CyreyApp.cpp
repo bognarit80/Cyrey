@@ -1,5 +1,5 @@
 ﻿#include "CyreyApp.hpp"
-#include "raygui.h"
+#include "MainMenu.hpp"
 
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
@@ -8,6 +8,7 @@ void Cyrey::CyreyApp::Init()
 	this->mHeight = 720;
     this->mDarkMode = true;
     this->mUpdateCnt = 0;
+    this->mState = CyreyAppState::Loading;
 
     this->mWindow = std::make_unique<raylib::Window>(
         this->mWidth,
@@ -23,6 +24,7 @@ void Cyrey::CyreyApp::Init()
     this->mBoard = std::make_unique<Board>(8, 8);
     this->mBoard->Init();
     this->mBoard->mApp = this;
+    this->mMainMenu = std::make_unique<MainMenu>(*this);
 }
 
 void Cyrey::CyreyApp::GameLoop()
@@ -39,18 +41,51 @@ void Cyrey::CyreyApp::GameLoop()
 
 void Cyrey::CyreyApp::Update()
 {
-    this->mBoard->Update();
+    switch (this->mState)
+    {
+    case CyreyAppState::Loading:
+        if (this->LoadingThread())
+            this->mState = CyreyAppState::MainMenu;
+        break;
+
+    case CyreyAppState::MainMenu:
+        this->mMainMenu->Update();
+        if (this->mMainMenu->mIsPlayBtnPressed)
+            this->mState = CyreyAppState::InGame;
+        break;
+
+    case CyreyAppState::InGame:
+        this->mBoard->Update();
+        break;
+
+    default:
+        break;
+    }
     this->mUpdateCnt++;
 }
 
 void Cyrey::CyreyApp::Draw() const
 {
     this->mWindow->BeginDrawing();
+    {
+        this->mWindow->ClearBackground(this->mDarkMode ? raylib::Color::Black() : raylib::Color::RayWhite());
+        switch (this->mState)
+        {
+        case CyreyAppState::Loading:
+            break;
 
-    this->mWindow->ClearBackground(this->mDarkMode ? raylib::Color::Black() : raylib::Color::RayWhite());
+        case CyreyAppState::MainMenu:
+            this->mMainMenu->Draw();
+            break;
 
-    this->mBoard->Draw();
+        case CyreyAppState::InGame:
+            this->mBoard->Draw();
+            break;
 
+        default:
+            break;
+        }
+    }
     this->mWindow->EndDrawing();
 }
 
@@ -61,4 +96,9 @@ float Cyrey::CyreyApp::GetDeltaTime() const
 #else
     return this->mWindow->GetFrameTime();
 #endif // _DEBUG
+}
+
+bool Cyrey::CyreyApp::LoadingThread()
+{
+    return true;
 }
