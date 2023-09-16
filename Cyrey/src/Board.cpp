@@ -178,7 +178,7 @@ void Cyrey::Board::UpdateInput()
 		if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration)
 		{
 			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
-			this->mBoardSwerve = { 0 };
+			this->mBoardSwerve = raylib::Vector2::Zero();
 		}
 		break;
 	default:
@@ -394,14 +394,14 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) //skip anim if user tries to swap during it
 		{
 			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
-			this->mBoardSwerve = { 0 };
+			this->mBoardSwerve = raylib::Vector2::Zero();
 		}
 		return false;
 	}
 
 	int toRow = row;
 	int toCol = col;
-	raylib::Vector2 swerve = { 0,0 };
+	raylib::Vector2 swerve = raylib::Vector2::Zero();
 	float swerveAmount = this->cSwerveCoeff * this->mTileSize;
 	switch (direction)
 	{
