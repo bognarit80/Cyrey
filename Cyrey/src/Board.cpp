@@ -1,5 +1,6 @@
 #include "Board.hpp"
 #include <map>
+#include "raygui.h"
 
 void Cyrey::Board::Init()
 {
@@ -1055,60 +1056,64 @@ void Cyrey::Board::DrawHoverSquare() const
 
 void Cyrey::Board::DrawScore() const
 {
-	std::string score = "Score: " + std::to_string(this->mScore);
-	std::string pieces = "Pieces cleared: " + std::to_string(this->mPiecesCleared);
-	std::string cascades = "Cascades: " + std::to_string(this->mCascadeNumber);
-	std::string piecesInMove = "Pieces: " + std::to_string(this->mPiecesClearedInMove);
-	std::string timeRemaining = ::TextFormat("%.1f", this->mSecondsRemaining);
-	int fontSize = this->mApp->mWindow->GetHeight() / 30;
-	int fontWidthScore = raylib::MeasureText(score, fontSize);
-	int fontWidthPieces = raylib::MeasureText(pieces, fontSize);
-	int fontWidthCascades = raylib::MeasureText(cascades, fontSize);
-	int fontWidthPiecesInMove = raylib::MeasureText(piecesInMove, fontSize);
-	int fontWidthTimeRemaining = raylib::MeasureText(timeRemaining, fontSize * 2);
-	raylib::Color color = this->mApp->mDarkMode ? raylib::Color::White() : raylib::Color::Black();
+	int fontSize = this->mApp->mHeight / 25;
+	int defaultColor = ::GuiGetStyle(::GuiControl::DEFAULT, GuiControlProperty::TEXT_COLOR_NORMAL);
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_RIGHT);
+	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
 
-	raylib::DrawText(score, 
-		this->mXOffset - (this->mTileSize / 2) - fontWidthScore,
-		this->mApp->mWindow->GetHeight() / 2,
-		fontSize, 
-		color);
-	raylib::DrawText(pieces,
-		this->mXOffset - (this->mTileSize / 2) - fontWidthPieces,
-		(this->mApp->mWindow->GetHeight() / 2) + fontSize,
-		fontSize,
-		color);
+	::GuiLabel(
+		raylib::Rectangle{ 0, static_cast<float>(this->mApp->mHeight) / 2, 
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::TextFormat("Score: %lld", this->mScore)
+	);
+	::GuiLabel(
+		raylib::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize,
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::TextFormat("Pieces cleared: %d", this->mPiecesCleared)
+	);
+
 	if (this->mCascadeNumber >= 3)
 	{
-		raylib::DrawText(cascades,
-			this->mXOffset - (this->mTileSize / 2) - fontWidthCascades,
-			(this->mApp->mWindow->GetHeight() / 2) + fontSize * 3,
-			fontSize,
-			this->mApp->mDarkMode ? raylib::Color::Green() : raylib::Color::DarkGreen());
+		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, raylib::Color::Green());
+		::GuiLabel(
+			raylib::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 3,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::TextFormat("Cascades: %d", this->mCascadeNumber)
+		);
+		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 	}
 	if (this->mPiecesClearedInMove >= 10)
 	{
-		raylib::DrawText(piecesInMove,
-			this->mXOffset - (this->mTileSize / 2) - fontWidthPiecesInMove,
-			(this->mApp->mWindow->GetHeight() / 2) + fontSize * 4,
-			fontSize,
-			this->mApp->mDarkMode ? raylib::Color::SkyBlue() : raylib::Color::DarkBlue());
+		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, raylib::Color::Pink());
+		::GuiLabel(
+			raylib::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 4,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::TextFormat("Pieces: %d", this->mPiecesClearedInMove)
+		);
+		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 	}
-	raylib::DrawText(timeRemaining,
-		this->mXOffset - (this->mTileSize / 2) - fontWidthTimeRemaining,
-		(this->mApp->mWindow->GetHeight() / 2) + fontSize * 5,
-		fontSize * 2,
-		this->mSecondsRemaining < 10 ? raylib::Color::Red() : color);
+
+	::GuiSetStyle(::GuiControl::LABEL, 
+		::GuiControlProperty::TEXT_COLOR_NORMAL, 
+		this->mSecondsRemaining < 10 ? raylib::Color::Red() : raylib::Color::White());
+	::GuiSetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, fontSize * 2);
+	::GuiLabel(
+		raylib::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 5,
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::TextFormat("%.1f", this->mSecondsRemaining)
+	);
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 
 	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f && this->mDroppedNewGamePieces)
 	{
-		const char* restartText = "Press R to restart the game!";
-		int rrTextSize = this->mTileSize / 2;
-		int rrTextWidth = raylib::MeasureText(restartText, rrTextSize);
-		raylib::DrawText(restartText,
-			this->mXOffset + (this->mWidth / 2 * this->mTileSize) - rrTextWidth / 2,
-			this->mYOffset + (this->mHeight / 2 * this->mTileSize),
-			this->mTileSize / 2, 
-			color);
+		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
+		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
+		::GuiLabel(
+			raylib::Rectangle{ this->mXOffset, 
+				this->mYOffset + this->mTileSize / 2,
+				static_cast<float>(this->mWidth * this->mTileSize), 
+				static_cast<float>(this->mHeight * this->mTileSize) },
+			"Press R to restart the game!"
+		);
 	}
 }
