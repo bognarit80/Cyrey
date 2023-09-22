@@ -89,11 +89,11 @@ namespace Cyrey
 		bool FindSets();
 		bool FindSets(int pieceRow, int pieceCol, PieceColor color, bool first = true);
 		bool IsPieceBeingMatched(unsigned int pieceID) const;
-		bool TrySwap(int row, int col, SwapDirection direction);
-		bool TrySwap(int row, int col, int toRow, int toCol);
-		bool IsSwapLegal(int row, int col, int toRow, int toCol) const;
+		bool TrySwap(int col, int row, SwapDirection direction);
+		bool TrySwap(int col, int row, int toCol, int toRow);
+		bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
 		bool CanSwap() const;
-		constexpr bool IsPositionLegal(int row, int col) const;
+		constexpr bool IsPositionLegal(int col, int row) const;
 		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); //returns the amount of pieces cleared, if the piece was special
 		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
 

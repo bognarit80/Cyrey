@@ -66,7 +66,7 @@ void Cyrey::Board::Update()
 		this->mTileSize = (screenHeight * this->mZoomPct / 100) / this->mHeight;
 		this->mTileInset = this->mTileSize / 10;
 		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.x;
-		this->mYOffset = (screenHeight / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.y;
+		this->mYOffset = (screenHeight / 2) - (this->mHeight * mTileSize / 2) + this->mBoardSwerve.y;
 	}
 
 	this->UpdateBoardSwerve();
@@ -131,13 +131,13 @@ void Cyrey::Board::UpdateInput()
 			return;
 #ifdef _DEBUG
 		case KeyboardKey::KEY_F:
-			this->mBoard[hoveredTile.x][hoveredTile.y].Bombify();
+			this->mBoard[hoveredTile.y][hoveredTile.x].Bombify();
 			return;
 		case KeyboardKey::KEY_Z:
-			this->mBoard[hoveredTile.x][hoveredTile.y].Lightningify();
+			this->mBoard[hoveredTile.y][hoveredTile.x].Lightningify();
 			return;
 		case KeyboardKey::KEY_C:
-			this->mBoard[hoveredTile.x][hoveredTile.y].Hypercubify();
+			this->mBoard[hoveredTile.y][hoveredTile.x].Hypercubify();
 			return;
 		case KeyboardKey::KEY_KP_1:
 		case KeyboardKey::KEY_KP_2:
@@ -146,7 +146,7 @@ void Cyrey::Board::UpdateInput()
 		case KeyboardKey::KEY_KP_5:
 		case KeyboardKey::KEY_KP_6:
 		case KeyboardKey::KEY_KP_7:
-			this->mBoard[hoveredTile.x][hoveredTile.y].mColor = static_cast<PieceColor>(key - 320);
+			this->mBoard[hoveredTile.y][hoveredTile.x].mColor = static_cast<PieceColor>(key - 320);
 			break;
 		case KeyboardKey::KEY_ONE:
 		case KeyboardKey::KEY_TWO:
@@ -155,7 +155,7 @@ void Cyrey::Board::UpdateInput()
 		case KeyboardKey::KEY_FIVE:
 		case KeyboardKey::KEY_SIX:
 		case KeyboardKey::KEY_SEVEN:
-			this->mBoard[hoveredTile.x][hoveredTile.y].mColor = static_cast<PieceColor>(key - 48);
+			this->mBoard[hoveredTile.y][hoveredTile.x].mColor = static_cast<PieceColor>(key - 48);
 			break;
 #endif
 		default:
@@ -226,8 +226,8 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 		for (int j = 0; j < this->mWidth; j++)
 		{
 			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
-			row[j].mBoardX = i;
-			row[j].mBoardY = j;
+			row[j].mBoardX = j;
+			row[j].mBoardY = i;
 		}
 		board.push_back(row);
 		row.clear();
@@ -287,7 +287,7 @@ bool Cyrey::Board::FindSets()
 	{
 		for (int j = 0; j < this->mWidth; j++)
 		{
-			this->FindSets(i, j, this->mBoard[i][j].mColor);
+			this->FindSets(j, i, this->mBoard[i][j].mColor);
 			this->mBoard[i][j].mImmunity = false; //temp until better measures are implemented
 			if (this->mMatchSets.size() > 0)
 				foundSet = true;
@@ -297,7 +297,7 @@ bool Cyrey::Board::FindSets()
 	return foundSet;
 }
 
-bool Cyrey::Board::FindSets(int pieceRow, int pieceCol, PieceColor color, bool first)
+bool Cyrey::Board::FindSets(int pieceCol, int pieceRow, PieceColor color, bool first)
 {
 	if (this->mBoard[pieceRow][pieceCol].mColor == PieceColor::Uncolored)
 		return false; //don't check uncolored pieces at all
@@ -319,31 +319,31 @@ bool Cyrey::Board::FindSets(int pieceRow, int pieceCol, PieceColor color, bool f
 	}
 
 	if ((pieceRow - 1) >= 0 &&
-		(pieceRow - 1) < this->mWidth &&
+		(pieceRow - 1) < this->mHeight &&
 		this->mBoard[pieceRow - 1][pieceCol].mColor == color)
 	{
-		this->FindSets(pieceRow - 1, pieceCol, color, false);
+		this->FindSets(pieceCol, pieceRow - 1, color, false);
 	}
 
 	if ((pieceRow + 1) >= 0 &&
-		(pieceRow + 1) < this->mWidth &&
+		(pieceRow + 1) < this->mHeight &&
 		this->mBoard[pieceRow + 1][pieceCol].mColor == color)
 	{
-		this->FindSets(pieceRow + 1, pieceCol, color, false);
+		this->FindSets(pieceCol, pieceRow + 1, color, false);
 	}
 
 	if ((pieceCol - 1) >= 0 &&
-		(pieceCol - 1) < this->mHeight &&
+		(pieceCol - 1) < this->mWidth &&
 		this->mBoard[pieceRow][pieceCol - 1].mColor == color)
 	{
-		this->FindSets(pieceRow, pieceCol - 1, color, false);
+		this->FindSets(pieceCol - 1, pieceRow, color, false);
 	}
 
 	if ((pieceCol + 1) >= 0 &&
-		(pieceCol + 1) < this->mHeight &&
+		(pieceCol + 1) < this->mWidth &&
 		this->mBoard[pieceRow][pieceCol + 1].mColor == color)
 	{
-		this->FindSets(pieceRow, pieceCol + 1, color, false);
+		this->FindSets(pieceCol + 1, pieceRow, color, false);
 	}
 
 	bool foundSet = false;
@@ -379,7 +379,7 @@ bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 	return false;
 }
 
-bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
+bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 {
 	if (!this->CanSwap())
 	{
@@ -388,7 +388,7 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 			Board::cNewGameAnimDuration - this->mNewGameAnimProgress < Board::cQueueSwapTolerance &&
 			this->mSecondsRemaining > 0)
 		{
-			this->mQueuedSwapPos = raylib::Vector2{ (float)row, (float)col };
+			this->mQueuedSwapPos = raylib::Vector2{ (float)col, (float)row };
 			this->mQueuedSwapDirection = direction;
 		}
 		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) //skip anim if user tries to swap during it
@@ -399,8 +399,8 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 		return false;
 	}
 
-	int toRow = row;
-	int toCol = col;
+	int toRow = col;
+	int toCol = row;
 	raylib::Vector2 swerve = raylib::Vector2::Zero();
 	float swerveAmount = this->cSwerveCoeff * this->mTileSize;
 	switch (direction)
@@ -426,12 +426,12 @@ bool Cyrey::Board::TrySwap(int row, int col, SwapDirection direction)
 	}
 	this->AddSwerve(swerve);
 
-	return this->TrySwap(row, col, toRow, toCol);
+	return this->TrySwap(col, row, toRow, toCol);
 }
 
-bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
+bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 {
-	if (!this->IsSwapLegal(row, col, toRow, toCol))
+	if (!this->IsSwapLegal(col, row, toCol, toRow))
 		return false;
 
 	Cyrey::Piece temp = this->mBoard[row][col];
@@ -449,14 +449,14 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	}
 	this->mBoard[row][col] = this->mBoard[toRow][toCol];
 	this->mBoard[toRow][toCol] = temp;
-	this->mBoard[row][col].mBoardX = row;
-	this->mBoard[row][col].mBoardY = col;
-	this->mBoard[toRow][toCol].mBoardX = toRow;
-	this->mBoard[toRow][toCol].mBoardY = toCol;
+	this->mBoard[row][col].mBoardX = col;
+	this->mBoard[row][col].mBoardY = row;
+	this->mBoard[toRow][toCol].mBoardX = toCol;
+	this->mBoard[toRow][toCol].mBoardY = toRow;
 
 	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
-	bool foundSet1 = this->FindSets(toRow, toCol, this->mBoard[toRow][toCol].mColor);
-	bool foundSet2 = this->FindSets(row, col, this->mBoard[row][col].mColor);
+	bool foundSet1 = this->FindSets(toCol, toRow, this->mBoard[toRow][toCol].mColor);
+	bool foundSet2 = this->FindSets(col, row, this->mBoard[row][col].mColor);
 	if (!foundSet1 && !foundSet2)
 		this->mMissDelay = this->cMissPenalty;
 
@@ -465,13 +465,13 @@ bool Cyrey::Board::TrySwap(int row, int col, int toRow, int toCol)
 	return true;
 }
 
-bool Cyrey::Board::IsSwapLegal(int row, int col, int toRow, int toCol) const
+bool Cyrey::Board::IsSwapLegal(int col, int row, int toCol, int toRow) const
 {
-	if (!this->IsPositionLegal(toRow, toCol))
+	if (!this->IsPositionLegal(toCol, toRow))
 		return false; //out of bounds
 	
-	int xDiff = std::abs(row - toRow);
-	int yDiff = std::abs(col - toCol);
+	int xDiff = std::abs(col - toCol);
+	int yDiff = std::abs(row - toRow);
 
 	//swap with only adjacent squares. no diagonal swaps. swap with itself is also considered illegal
 	if (xDiff > 1 || yDiff > 1 || !(xDiff ^ yDiff))
@@ -488,9 +488,9 @@ bool Cyrey::Board::CanSwap() const
 		this->mNewGameAnimProgress >= Board::cNewGameAnimDuration;
 }
 
-constexpr bool Cyrey::Board::IsPositionLegal(int row, int col) const
+constexpr bool Cyrey::Board::IsPositionLegal(int col, int row) const
 {
-	return !(row < 0 || col < 0 || row >= this->mWidth || col >= this->mHeight);
+	return !(col < 0 || row < 0 || col >= this->mWidth || row >= this->mHeight);
 }
 
 int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
@@ -522,9 +522,9 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 				if (i == 0 && j == 0)
 					continue; //skip the bomb itself
 
-				if (this->IsPositionLegal(pieceCopy.mBoardX + i, pieceCopy.mBoardY + j))
+				if (this->IsPositionLegal(pieceCopy.mBoardX + j, pieceCopy.mBoardY + i))
 				{
-					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardX + i][pieceCopy.mBoardY + j], pieceCopy, true);
+					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardY + i][pieceCopy.mBoardX + j], pieceCopy, true);
 				}
 			}
 		}
@@ -534,21 +534,21 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	{
 		for (int i = 0; i < Board::cLightningPiecesAmount; i++)
 		{
-			int x, y, count = 0;
+			int row, col, count = 0;
 			do
 			{
 				count++;
-				x = ::GetRandomValue(0, this->mWidth - 1);
-				y = ::GetRandomValue(0, this->mHeight - 1);
+				row = ::GetRandomValue(0, this->mHeight - 1);
+				col = ::GetRandomValue(0, this->mWidth - 1);
 				
 				if (count > (this->mWidth * this->mHeight * 10)) [[unlikely]]
 				{
 						printf("Lightning piece activation couldn't find a vacant piece\n");
 						break; //no need to set x and y to anything as calling MatchPiece on a nullPiece is fine
 				}
-			} while (this->mBoard[x][y].mID == 0);
+			} while (this->mBoard[row][col].mID == 0);
 
-			piecesCleared += this->MatchPiece(this->mBoard[x][y], pieceCopy, true);
+			piecesCleared += this->MatchPiece(this->mBoard[row][col], pieceCopy, true);
 		}
 		this->mFallDelay += Board::cFallDelay;
 	}
@@ -745,11 +745,11 @@ void Cyrey::Board::UpdateFalling()
 		for (int j = this->mWidth - 1; j >= 0; j--)
 		{
 			int k = 1;
-			while (this->IsPositionLegal(i, j + k) && this->mBoard[i][j + k].mID == 0)
+			while (this->IsPositionLegal(j, i + k) && this->mBoard[i + k][j].mID == 0)
 			{
-				this->mBoard[i][j + k] = this->mBoard[i][j + k - 1];
-				this->mBoard[i][j + k].mBoardY = j + k;
-				this->mBoard[i][j + k - 1] = Cyrey::gNullPiece;
+				this->mBoard[i + k][j] = this->mBoard[i + k - 1][j];
+				this->mBoard[i + k][j].mBoardY = i + k;
+				this->mBoard[i + k - 1][j] = Cyrey::gNullPiece;
 				k++;
 			}
 		}
@@ -767,9 +767,9 @@ void Cyrey::Board::FillInBlanks()
 			if (piece.mID == 0)
 			{
 				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
-				piece.mBoardX = i;
-				piece.mBoardY = j;
-				this->mDroppedPieceAnims.emplace_back(i);
+				piece.mBoardX = j;
+				piece.mBoardY = i;
+				this->mDroppedPieceAnims.emplace_back(j);
 			}
 		}
 	}
@@ -902,16 +902,16 @@ void Cyrey::Board::DrawPieces() const
 	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f || !this->mDroppedNewGamePieces)
 		return;
 
-	for (int i = 0; i < this->mBoard.size(); i++)
+	for (int i = 0; i < this->mHeight; i++)
 	{
-		for (int j = 0; j < this->mBoard[0].size(); j++)
+		for (int j = 0; j < this->mWidth; j++)
 		{
 			Color color = raylib::Color::Blank();
 			int sides = 3;
 			float rotation = 0;
 			float radius = (this->mTileSize / 2) - this->mTileInset;
-			raylib::Vector2 center { (float)((i * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
-									(float)((j * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
+			raylib::Vector2 center { (float)((j * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
+									(float)((i * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
 			};
 
 			switch (this->mBoard[i][j].mColor)
