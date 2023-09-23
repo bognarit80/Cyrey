@@ -54,11 +54,9 @@ namespace Cyrey
 		constexpr static int cMaxCascadesSwerve = 8;
 		constexpr static float cFallDelay = 0.2f;
 		constexpr static float cMissPenalty = 3 * cFallDelay;
-		bool mWantBoardSwerve;
 		int mColorCount;
 		int mBaseScore; //score for one match
 		int mScoreMultiplier;
-		float mSwapDeadZone; //percentage of tile width before the drag turns into a swap
 		float mSecondsRemaining;
 		constexpr static float cStartingTime = 60.0f;
 		constexpr static int cLightningPiecesAmount = 10;
@@ -66,7 +64,6 @@ namespace Cyrey
 		std::vector<PieceDropAnim> mDroppedPieceAnims;
 		raylib::Vector2 mQueuedSwapPos;
 		SwapDirection mQueuedSwapDirection;
-		static constexpr float cQueueSwapTolerance = 0.15f;
 		float mNewGameAnimProgress;
 		bool mDroppedNewGamePieces;
 		static constexpr float cNewGameAnimDuration = 1.0f;

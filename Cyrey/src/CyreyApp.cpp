@@ -4,8 +4,8 @@
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
 {
-	this->mWidth = 1280;
-	this->mHeight = 720;
+    this->mWidth = 1280;
+    this->mHeight = 720;
     this->mDarkMode = true;
     this->mUpdateCnt = 0;
     this->mState = CyreyAppState::Loading;
@@ -28,6 +28,7 @@ void Cyrey::CyreyApp::Init()
     this->mBoard->mApp = this;
     this->mMainMenu = std::make_unique<MainMenu>(*this);
     this->mMainMenu->Init();
+    this->mCurrentUser = std::make_unique<User>();
 }
 
 void Cyrey::CyreyApp::GameLoop()

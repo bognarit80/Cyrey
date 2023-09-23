@@ -4,12 +4,14 @@
 #include "raylib-cpp.hpp"
 #include "Board.hpp"
 #include "MainMenu.hpp"
+#include "User.hpp"
 #include <memory>
 
 namespace Cyrey 
 {
 	class Board;
 	class MainMenu;
+	class User;
 
 	enum class CyreyAppState
 	{
@@ -38,6 +40,7 @@ namespace Cyrey
 		CyreyAppState mChangeToState; //to prevent drawing a state before updating it at least once
 		std::unique_ptr<MainMenu> mMainMenu;
 		bool mWantExit;
+		std::unique_ptr<User> mCurrentUser;
 
 		void Init();
 		void GameLoop();

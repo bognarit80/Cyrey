@@ -19,11 +19,9 @@ void Cyrey::Board::Init()
 	this->mBoardSwerve = raylib::Vector2{0, -(float)this->mTileSize * 8};
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
-	this->mWantBoardSwerve = true;
 	this->mColorCount = static_cast<int>(PieceColor::Count) - 1;
 	this->mBaseScore = 50;
 	this->mScoreMultiplier = 1;
-	this->mSwapDeadZone = 0.33f;
 	this->mSecondsRemaining = 0.0f;
 	this->mMatchedPieceAnims = {};
 	this->mDroppedPieceAnims = {};
@@ -173,7 +171,7 @@ void Cyrey::Board::UpdateInput()
 		this->mApp->mDarkMode ^= 1;
 		break;
 	case KeyboardKey::KEY_M:
-		this->mWantBoardSwerve ^= 1;
+		this->mApp->mCurrentUser->mWantBoardSwerve ^= 1;
 		break;
 	case KeyboardKey::KEY_SPACE:
 		if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration)
@@ -253,7 +251,7 @@ void Cyrey::Board::ResetBoard()
 
 void Cyrey::Board::AddSwerve(raylib::Vector2 swerve)
 {
-	if (!this->mWantBoardSwerve)
+	if (!this->mApp->mCurrentUser->mWantBoardSwerve)
 		return;
 
 	this->mBoardSwerve += swerve;
@@ -384,9 +382,10 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 {
 	if (!this->CanSwap())
 	{
-		if (this->mFallDelay < Board::cQueueSwapTolerance && 
-			this->mMissDelay < Board::cQueueSwapTolerance &&
-			Board::cNewGameAnimDuration - this->mNewGameAnimProgress < Board::cQueueSwapTolerance &&
+		float queueSwapTolerance = this->mApp->mCurrentUser->mQueueSwapTolerance;
+		if (this->mFallDelay < queueSwapTolerance && 
+			this->mMissDelay < queueSwapTolerance &&
+			Board::cNewGameAnimDuration - this->mNewGameAnimProgress < queueSwapTolerance &&
 			this->mSecondsRemaining > 0)
 		{
 			this->mQueuedSwapPos = raylib::Vector2{ (float)col, (float)row };
@@ -631,8 +630,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 			this->mDroppedPieceAnims.emplace_back(i);
 
 		this->mDroppedNewGamePieces = true;
-		if (this->mWantBoardSwerve)
-			this->mBoardSwerve.y += this->mTileSize * Board::cSwerveCoeff * 3;
+		this->AddSwerve(raylib::Vector2{ 0, this->mTileSize * Board::cSwerveCoeff * 3 });
 	}
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
@@ -671,13 +669,13 @@ void Cyrey::Board::UpdateDragging()
 			float xTileBegin = this->mDragTileBegin.x;
 			float yTileBegin = this->mDragTileBegin.y;
 
-			if (abs(xDiff) > (this->mTileSize * this->mSwapDeadZone))
+			if (abs(xDiff) > (this->mTileSize * this->mApp->mCurrentUser->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (xDiff > 0 ? SwapDirection::Left : SwapDirection::Right));
 				this->mDragging = false;
 				this->mTriedSwap = true;
 			}
-			else if (abs(yDiff) > (this->mTileSize * this->mSwapDeadZone))
+			else if (abs(yDiff) > (this->mTileSize * this->mApp->mCurrentUser->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (yDiff > 0 ? SwapDirection::Up : SwapDirection::Down));
 				this->mDragging = false;
