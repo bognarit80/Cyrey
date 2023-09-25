@@ -62,7 +62,10 @@ void Cyrey::CyreyApp::Update()
     case CyreyAppState::MainMenu:
         this->mMainMenu->Update();
         if (this->mMainMenu->mIsPlayBtnPressed)
+        {
             this->ChangeToState(CyreyAppState::InGame);
+            this->mBoard->Init();
+        }
         break;
 
     case CyreyAppState::InGame:

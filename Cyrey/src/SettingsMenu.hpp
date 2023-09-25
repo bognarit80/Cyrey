@@ -46,6 +46,7 @@ namespace Cyrey
 		static constexpr char cBoardSwerveCheckText[] = "Enable Board swerve";
 		static constexpr char cFullscreenCheckText[] = "Enable Fullscreen";
 		static constexpr char cDefaultsButtonText[] = "Reset to default";
+		static constexpr char cMainMenuButtonText[] = "Main Menu";
 		static constexpr char cOff[] = "Off";
 		static constexpr char cInf[] = "Inf";
 	};

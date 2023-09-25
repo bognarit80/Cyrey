@@ -68,6 +68,11 @@ void Cyrey::SettingsMenu::Draw()
 		sliderWidth,
 		fontSize
 	};
+	Rectangle mainMenuBtnPos = Rectangle{ windowAnchor.x + linePadding,
+		windowAnchor.y + windowPaddingY + (controlOffset * 7),
+		sliderWidth * 0.9f,
+		fontSize
+	};
 
 	if (::GuiWindowBox(windowRect, cWindowText))
 		this->mApp.ChangeToState(this->mApp.mPrevState);
@@ -98,5 +103,13 @@ void Cyrey::SettingsMenu::Draw()
 		this->mSwapDeadZone = SettingsMenu::cSwapDeadZone;
 		this->mQueueSwapTolerance = SettingsMenu::cQueueSwapTolerance;
 		this->mWantBoardSwerve = SettingsMenu::cQueueSwapTolerance;
+	}
+	if (this->mApp.mPrevState == CyreyAppState::InGame)
+	{
+		if (::GuiButton(mainMenuBtnPos, cMainMenuButtonText))
+		{
+			//TODO: Save the game, or add XP or something
+			this->mApp.ChangeToState(CyreyAppState::MainMenu);
+		}
 	}
 }

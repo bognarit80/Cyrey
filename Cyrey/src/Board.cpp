@@ -1113,6 +1113,15 @@ void Cyrey::Board::DrawScore() const
 	);
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 
+	if (::GuiButton(Rectangle{ this->mXOffset - (::MeasureText("Menu", fontSize * 2) + (this->mTileSize / 2)),
+		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
+		static_cast<float>(::MeasureText("Menu", fontSize * 2)), 
+		static_cast<float>(fontSize * 2)}, 
+		"Menu"))
+	{
+		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
+	}
+
 	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f && this->mDroppedNewGamePieces)
 	{
 		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
