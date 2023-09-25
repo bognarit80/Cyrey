@@ -1,5 +1,5 @@
 #define RAYGUI_IMPLEMENTATION
-#include "raylib-cpp.hpp"
+#include "raylib.h"
 #include "CyreyApp.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -22,7 +22,7 @@ int main(void)
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(web_loop, 0, 1);
 #else
-    while (!gApp.mWindow->ShouldClose() && !gApp.mWantExit)
+    while (!::WindowShouldClose() && !gApp.mWantExit)
     {
         gApp.GameLoop();
     }

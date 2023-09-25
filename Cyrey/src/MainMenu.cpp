@@ -5,7 +5,7 @@
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include "style_cyber.h"
 #pragma GCC diagnostic pop
-#include "raylib-cpp.hpp"
+#include "raylib.h"
 
 void Cyrey::MainMenu::Init()
 {
@@ -33,7 +33,7 @@ void Cyrey::MainMenu::Draw()
 	int fontSize = ::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE);
 
 	::GuiLabel(
-		raylib::Rectangle{ 0, this->mApp.mHeight * 0.125f,
+		::Rectangle{ 0, this->mApp.mHeight * 0.125f,
 			static_cast<float>(this->mApp.mWidth), static_cast<float>(fontSize) },
 		MainMenu::cTitleName
 	);
@@ -48,7 +48,7 @@ void Cyrey::MainMenu::Draw()
 	fontSize = ::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE);
 
 	this->mIsPlayBtnPressed = ::GuiButton(
-		raylib::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle{ appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.50f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.1f
@@ -57,7 +57,7 @@ void Cyrey::MainMenu::Draw()
 	);
 
 	if (::GuiButton(
-		raylib::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle{ appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.65f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.1f
@@ -70,7 +70,7 @@ void Cyrey::MainMenu::Draw()
 
 #ifndef __EMSCRIPTEN__ //no quit button on web version
 	if (::GuiButton(
-		raylib::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle{ appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.80f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.1f

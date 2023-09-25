@@ -13,17 +13,11 @@ void Cyrey::CyreyApp::Init()
     this->mPrevState = CyreyAppState::Loading;
     this->mWantExit = false;
 
-    this->mWindow = std::make_unique<raylib::Window>(
-        this->mWidth,
-        this->mHeight,
-        "Cyrey",
-        ConfigFlags::FLAG_WINDOW_RESIZABLE |
-        ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
+    ::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
+    ::SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
     int currentMonitor = ::GetCurrentMonitor();
     this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
-    this->mWindow->SetTargetFPS(this->mRefreshRate);
-    /*this->mWindow->SetPosition((::GetMonitorWidth(currentMonitor) / 2) - (this->mWindow->GetWidth() / 2),
-        (::GetMonitorHeight(currentMonitor) / 2) - (this->mWindow->GetHeight() / 2));*/
+    ::SetTargetFPS(this->mRefreshRate);
     this->mBoard = std::make_unique<Board>(8, 8);
     this->mBoard->Init();
     this->mBoard->mApp = this;
@@ -37,18 +31,18 @@ void Cyrey::CyreyApp::GameLoop()
 {
     this->Update();
     this->Draw();
-    this->mWindow->DrawFPS();
+    ::DrawFPS(10, 10);
 #ifdef _DEBUG
-    raylib::DrawText(std::to_string(this->mUpdateCnt), 10, 100, 16, 
-        this->mDarkMode ? raylib::Color::White() : raylib::Color::Black());
+    ::DrawText(::TextFormat("%d", this->mUpdateCnt), 10, 100, 16,
+        this->mDarkMode ? ::WHITE : ::BLACK);
 #endif // _DEBUG
 
 }
 
 void Cyrey::CyreyApp::Update()
 {
-    this->mWidth = this->mWindow->GetWidth();
-    this->mHeight = this->mWindow->GetHeight();
+    this->mWidth = ::GetScreenWidth();
+    this->mHeight = ::GetScreenHeight();
 
     this->mState = this->mChangeToState;
 
@@ -84,9 +78,9 @@ void Cyrey::CyreyApp::Update()
 
 void Cyrey::CyreyApp::Draw() const
 {
-    this->mWindow->BeginDrawing();
+    ::BeginDrawing();
     {
-        this->mWindow->ClearBackground(this->mDarkMode ? raylib::Color::Black() : raylib::Color::RayWhite());
+        ::ClearBackground(this->mDarkMode ? ::BLACK : ::RAYWHITE);
         switch (this->mState)
         {
         case CyreyAppState::Loading:
@@ -108,7 +102,7 @@ void Cyrey::CyreyApp::Draw() const
             break;
         }
     }
-    this->mWindow->EndDrawing();
+    ::EndDrawing();
 }
 
 float Cyrey::CyreyApp::GetDeltaTime() const
@@ -116,7 +110,7 @@ float Cyrey::CyreyApp::GetDeltaTime() const
 #ifdef _DEBUG
     return 1.0f / this->mRefreshRate; //fixed frametime for debugging
 #else
-    return this->mWindow->GetFrameTime();
+    return ::GetFrameTime();
 #endif // _DEBUG
 }
 

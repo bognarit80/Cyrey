@@ -2,6 +2,7 @@
 #define _MATCHSET_CYREY_HEADER
 
 #include "Piece.hpp"
+#include <vector>
 
 namespace Cyrey
 {

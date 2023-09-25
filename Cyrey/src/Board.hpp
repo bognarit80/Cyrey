@@ -6,6 +6,7 @@
 #include <optional>
 #include "MatchSet.h"
 #include <memory>
+#include <vector>
 #include "PieceMatchAnim.hpp"
 #include "PieceDropAnim.hpp"
 
@@ -37,8 +38,8 @@ namespace Cyrey
 		int mZoomPct;
 		static constexpr int cDefaultZoomPct = 70;
 		bool mDragging;
-		raylib::Vector2 mDragMouseBegin;
-		raylib::Vector2 mDragTileBegin;
+		::Vector2 mDragMouseBegin;
+		::Vector2 mDragTileBegin;
 		//used for disabling swaps until the mouse is released
 		bool mTriedSwap;
 		std::vector<MatchSet> mMatchSets;
@@ -49,7 +50,7 @@ namespace Cyrey
 		int mPiecesCleared;
 		int mCascadeNumber;
 		int mPiecesClearedInMove;
-		raylib::Vector2 mBoardSwerve;
+		::Vector2 mBoardSwerve;
 		constexpr static float cSwerveCoeff = 0.1f;
 		constexpr static int cMaxCascadesSwerve = 8;
 		constexpr static float cFallDelay = 0.2f;
@@ -62,7 +63,7 @@ namespace Cyrey
 		constexpr static int cLightningPiecesAmount = 10;
 		std::vector<PieceMatchAnim> mMatchedPieceAnims;
 		std::vector<PieceDropAnim> mDroppedPieceAnims;
-		raylib::Vector2 mQueuedSwapPos;
+		::Vector2 mQueuedSwapPos;
 		SwapDirection mQueuedSwapDirection;
 		float mNewGameAnimProgress;
 		bool mDroppedNewGamePieces;
@@ -80,8 +81,8 @@ namespace Cyrey
 		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
 		std::vector<std::vector<Piece>> GenerateStartingBoard() const;
 		void ResetBoard();
-		void AddSwerve(raylib::Vector2 swerve); //Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
-		std::optional<raylib::Vector2> GetHoveredTile() const;
+		void AddSwerve(::Vector2 swerve); //Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
+		std::optional<::Vector2> GetHoveredTile() const;
 		bool IsMouseInBoard() const;
 		bool FindSets();
 		bool FindSets(int pieceRow, int pieceCol, PieceColor color, bool first = true);

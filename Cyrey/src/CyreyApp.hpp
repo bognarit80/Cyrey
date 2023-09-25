@@ -1,7 +1,7 @@
 ﻿#ifndef _CYREY_APP_HEADER
 #define _CYREY_APP_HEADER
 
-#include "raylib-cpp.hpp"
+#include "raylib.h"
 #include "Board.hpp"
 #include "MainMenu.hpp"
 #include "User.hpp"
@@ -36,7 +36,6 @@ namespace Cyrey
 		int mHeight;
 		int mRefreshRate;
 		std::unique_ptr<Board> mBoard;
-		std::unique_ptr<raylib::Window> mWindow;
 		bool mDarkMode;
 		int mUpdateCnt;
 		CyreyAppState mState;
@@ -46,6 +45,8 @@ namespace Cyrey
 		bool mWantExit;
 		std::unique_ptr<User> mCurrentUser;
 		std::unique_ptr<SettingsMenu> mSettings;
+
+		static constexpr char cTitle[] = "Cyrey";
 
 		void Init();
 		void GameLoop();
