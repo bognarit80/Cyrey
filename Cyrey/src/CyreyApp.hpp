@@ -5,6 +5,7 @@
 #include "Board.hpp"
 #include "MainMenu.hpp"
 #include "User.hpp"
+#include "SettingsMenu.hpp"
 #include <memory>
 
 namespace Cyrey 
@@ -12,12 +13,14 @@ namespace Cyrey
 	class Board;
 	class MainMenu;
 	class User;
+	class SettingsMenu;
 
 	enum class CyreyAppState
 	{
 		Loading,
 		MainMenu,
-		InGame
+		InGame,
+		SettingsMenu
 	};
 
 	class CyreyApp
@@ -38,15 +41,18 @@ namespace Cyrey
 		int mUpdateCnt;
 		CyreyAppState mState;
 		CyreyAppState mChangeToState; //to prevent drawing a state before updating it at least once
+		CyreyAppState mPrevState;
 		std::unique_ptr<MainMenu> mMainMenu;
 		bool mWantExit;
 		std::unique_ptr<User> mCurrentUser;
+		std::unique_ptr<SettingsMenu> mSettings;
 
 		void Init();
 		void GameLoop();
 		void Update();
 		void Draw() const;
 		float GetDeltaTime() const;
+		void ChangeToState(CyreyAppState state); //Change to the state at the beginning of the next update
 
 		bool LoadingThread();
 	};

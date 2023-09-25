@@ -10,6 +10,7 @@ void Cyrey::CyreyApp::Init()
     this->mUpdateCnt = 0;
     this->mState = CyreyAppState::Loading;
     this->mChangeToState = CyreyAppState::Loading;
+    this->mPrevState = CyreyAppState::Loading;
     this->mWantExit = false;
 
     this->mWindow = std::make_unique<raylib::Window>(
@@ -29,6 +30,7 @@ void Cyrey::CyreyApp::Init()
     this->mMainMenu = std::make_unique<MainMenu>(*this);
     this->mMainMenu->Init();
     this->mCurrentUser = std::make_unique<User>();
+    this->mSettings = std::make_unique<SettingsMenu>(*this);
 }
 
 void Cyrey::CyreyApp::GameLoop()
@@ -54,17 +56,21 @@ void Cyrey::CyreyApp::Update()
     {
     case CyreyAppState::Loading:
         if (this->LoadingThread())
-            this->mChangeToState = CyreyAppState::MainMenu;
+            this->ChangeToState(CyreyAppState::MainMenu);
         break;
 
     case CyreyAppState::MainMenu:
         this->mMainMenu->Update();
         if (this->mMainMenu->mIsPlayBtnPressed)
-            this->mChangeToState = CyreyAppState::InGame;
+            this->ChangeToState(CyreyAppState::InGame);
         break;
 
     case CyreyAppState::InGame:
         this->mBoard->Update();
+        break;
+
+    case CyreyAppState::SettingsMenu:
+        this->mSettings->Update();
         break;
 
     default:
@@ -91,6 +97,10 @@ void Cyrey::CyreyApp::Draw() const
             this->mBoard->Draw();
             break;
 
+        case CyreyAppState::SettingsMenu:
+            this->mSettings->Draw();
+            break;
+
         default:
             break;
         }
@@ -105,6 +115,12 @@ float Cyrey::CyreyApp::GetDeltaTime() const
 #else
     return this->mWindow->GetFrameTime();
 #endif // _DEBUG
+}
+
+void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
+{
+    this->mChangeToState = state;
+    this->mPrevState = this->mState;
 }
 
 bool Cyrey::CyreyApp::LoadingThread()

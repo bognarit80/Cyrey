@@ -53,14 +53,17 @@ void Cyrey::MainMenu::Draw()
 		MainMenu::cPlayBtnText
 	);
 
-	::GuiButton(
+	if (::GuiButton(
 		raylib::Rectangle{ appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.65f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.1f
 		},
 		MainMenu::cSettingsBtnText
-	);
+	))
+	{
+		this->mApp.ChangeToState(CyreyAppState::SettingsMenu);
+	}
 
 #ifndef __EMSCRIPTEN__ //no quit button on web version
 	if (::GuiButton(
