@@ -27,6 +27,7 @@ int main(void)
         gApp.GameLoop();
     }
 #endif
+    ::CloseWindow();
 
     return 0;
 }

@@ -24,8 +24,6 @@ void Cyrey::SettingsMenu::Draw()
 	float controlOffset = fontSize * 1.3f;
 	float sliderWidth = windowWidth - (windowPaddingX * 1.3f);
 
-	bool isFullscreen = ::IsWindowFullscreen();
-
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
 
 	Rectangle musicSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
@@ -79,17 +77,24 @@ void Cyrey::SettingsMenu::Draw()
 
 	::GuiSlider(musicSliderPos, cMusicSliderText, ::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)), &this->mMusicVolume, 0, 1);
 	::GuiSlider(soundSliderPos, cSoundSliderText, ::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)), &this->mSoundVolume, 0, 1);
+
+#ifndef __EMSCRIPTEN__ //TODO: Implement proper fullscreen on Web
+	bool isFullscreen = ::IsWindowFullscreen();
 	::GuiCheckBox(fullscreenCheckPos, cFullscreenCheckText, &isFullscreen);
 	if (isFullscreen != this->mIsFullscreen)
 	{
-		::ToggleFullscreen();
+		this->mApp.ToggleFullscreen();
 		this->mIsFullscreen ^= 1;
 	}
+#endif // __EMSCRIPTEN__
+
 	::GuiLine(linePos, NULL);
+
 	::GuiSlider(swapDeadZoneSliderPos, 
 		cSwapDeadZoneSliderText, 
 		::TextFormat("%d%%", static_cast<int>(this->mSwapDeadZone * 100)), 
 		&this->mSwapDeadZone, 0.1f, 1.0f);
+
 	::GuiSlider(queueSwapToleranceSliderPos,
 		cQueueSwapToleranceSliderText,
 		this->mQueueSwapTolerance > 0.0f ?
@@ -97,13 +102,16 @@ void Cyrey::SettingsMenu::Draw()
 		SettingsMenu::cInf :
 		SettingsMenu::cOff,
 		&this->mQueueSwapTolerance, 0, 1);
+
 	::GuiCheckBox(swerveCheckPos, cBoardSwerveCheckText, &this->mWantBoardSwerve);
+
 	if (::GuiButton(defaultsBtnPos, cDefaultsButtonText))
 	{
 		this->mSwapDeadZone = SettingsMenu::cSwapDeadZone;
 		this->mQueueSwapTolerance = SettingsMenu::cQueueSwapTolerance;
 		this->mWantBoardSwerve = SettingsMenu::cQueueSwapTolerance;
 	}
+
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
 	{
 		if (::GuiButton(mainMenuBtnPos, cMainMenuButtonText))

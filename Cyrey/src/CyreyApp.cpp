@@ -12,9 +12,10 @@ void Cyrey::CyreyApp::Init()
     this->mChangeToState = CyreyAppState::Loading;
     this->mPrevState = CyreyAppState::Loading;
     this->mWantExit = false;
+    this->mOldWindowSize = ::Vector2{ static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
 
+    ::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
     ::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
-    ::SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
     int currentMonitor = ::GetCurrentMonitor();
     this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
     ::SetTargetFPS(this->mRefreshRate);
@@ -118,6 +119,22 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 {
     this->mChangeToState = state;
     this->mPrevState = this->mState;
+}
+
+void Cyrey::CyreyApp::ToggleFullscreen()
+{
+    if (::IsWindowFullscreen())
+    {
+        ::ToggleFullscreen();
+        ::SetWindowSize(this->mOldWindowSize.x, this->mOldWindowSize.y);
+    }
+    else
+    {
+        this->mOldWindowSize = ::Vector2{ static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
+        int currentMonitor = ::GetCurrentMonitor();
+        ::SetWindowSize(::GetMonitorWidth(currentMonitor), ::GetMonitorHeight(currentMonitor));
+        ::ToggleFullscreen();
+    }
 }
 
 bool Cyrey::CyreyApp::LoadingThread()

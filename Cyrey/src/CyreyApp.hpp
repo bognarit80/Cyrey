@@ -45,6 +45,7 @@ namespace Cyrey
 		bool mWantExit;
 		std::unique_ptr<User> mCurrentUser;
 		std::unique_ptr<SettingsMenu> mSettings;
+		::Vector2 mOldWindowSize;
 
 		static constexpr char cTitle[] = "Cyrey";
 
@@ -54,6 +55,7 @@ namespace Cyrey
 		void Draw() const;
 		float GetDeltaTime() const;
 		void ChangeToState(CyreyAppState state); //Change to the state at the beginning of the next update
+		void ToggleFullscreen();
 
 		bool LoadingThread();
 	};

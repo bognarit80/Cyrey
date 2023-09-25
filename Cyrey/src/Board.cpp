@@ -29,17 +29,6 @@ void Cyrey::Board::Init()
 	this->mDroppedPieceAnims = {};
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
-
-	/*auto boardMock = ParseBoardString(
-R"(brygyrgr
-ygbpwpwg
-gygwygyw
-gwygwywg
-gwywgygy
-rwprpwrw
-ryygbgbb
-pprpprpr
-)");*/
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
 	this->ResetBoard();
 
@@ -875,7 +864,7 @@ void Cyrey::Board::DrawBorder() const
 	{
 		//left
 		::DrawLineEx(startPos, firstCurvePointLeft, thick, timerColor);
-		::DrawCircleSector(firstCurvePointLeft, offset, 270, 360, edgeCircleSegments, timerColor);
+		::DrawCircleSector(firstCurvePointLeft, offset, 90, 180, edgeCircleSegments, timerColor);
 		::DrawLineEx(firstCurvePointLeft, secondCurvePointLeft, thick, timerColor);
 		::DrawCircleSector(secondCurvePointLeft, offset, 180, 270, edgeCircleSegments, timerColor);
 		::DrawLineEx(secondCurvePointLeft, lastLeft, thick, timerColor);
@@ -884,14 +873,14 @@ void Cyrey::Board::DrawBorder() const
 		::DrawLineEx(startPos, firstCurvePointRight, thick, timerColor);
 		::DrawCircleSector(firstCurvePointRight, offset, 90, 0, edgeCircleSegments, timerColor);
 		::DrawLineEx(firstCurvePointRight, secondCurvePointRight, thick, timerColor);
-		::DrawCircleSector(secondCurvePointRight, offset, 180, 90, edgeCircleSegments, timerColor);
+		::DrawCircleSector(secondCurvePointRight, offset, 270, 360, edgeCircleSegments, timerColor);
 		::DrawLineEx(secondCurvePointRight, lastRight, thick, timerColor);
 	}
 	else if (wantFirstCurve)
 	{
 		//left
 		::DrawLineEx(startPos, firstCurvePointLeft, thick, timerColor);
-		::DrawCircleSector(firstCurvePointLeft, offset, 270, 360, edgeCircleSegments, timerColor);
+		::DrawCircleSector(firstCurvePointLeft, offset, 90, 180, edgeCircleSegments, timerColor);
 		::DrawLineEx(firstCurvePointLeft, lastLeft, thick, timerColor);
 
 		//right
@@ -941,22 +930,24 @@ void Cyrey::Board::DrawPieces() const
 				color = ::BLUE; 
 				sides = 3; 
 				center.y -= this->mTileSize / 10.0f; 
+				rotation = 210.0f;
 				radius += this->mTileInset; break;
 			case PieceColor::Yellow:
 				color = ::YELLOW;
-				sides = 4;
+				sides = 4; 
 				break;
 			case PieceColor::Orange:
 				color = ::ORANGE;
 				sides = 6; 
-				rotation = 90.0f; break;
+				//rotation = 90.0f; 
+				break;
 			case PieceColor::White:
 				color = this->mApp->mDarkMode ? ::WHITE : ::DARKGRAY;
 				sides = 12; break;
 			case PieceColor::Purple:
 				color = ::PURPLE; 
 				sides = 3; 
-				rotation = 180.0f; 
+				rotation = 150.0f; 
 				center.y += this->mTileSize / 10.0f; 
 				radius += this->mTileInset; break;
 			}
@@ -971,13 +962,6 @@ void Cyrey::Board::DrawPieces() const
 				::DrawCircleV(center, radius, ::PINK);
 				::DrawPolyLinesEx(center, 4, radius, rotation, this->mTileSize / 5, ::BLUE);
 			}
-
-			/*raylib::Rectangle(
-				(float)((i * this->mTileSize) + this->mXOffset + this->mTileInset) + (this->mBoard[i][j].mDragging ? this->mBoard[i][j].mXDiff : 0),
-				(float)((j * this->mTileSize) + this->mYOffset + this->mTileInset) + (this->mBoard[i][j].mDragging ? this->mBoard[i][j].mYDiff : 0),
-				(float)this->mTileSize - (this->mTileInset * 2),
-				(float)this->mTileSize - (this->mTileInset * 2)
-			).Draw(color);*/
 		}
 	}
 }
@@ -1007,6 +991,7 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		case PieceColor::Blue:
 			color = ::BLUE;
 			sides = 3;
+			rotation = 210.0f;
 			center.y -= this->mTileSize / 10.0f;
 			radius += this->mTileInset; break;
 		case PieceColor::Yellow:
@@ -1016,14 +1001,15 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		case PieceColor::Orange:
 			color = ::ORANGE;
 			sides = 6;
-			rotation = 90.0f; break;
+			//rotation = 90.0f; 
+			break;
 		case PieceColor::White:
 			color = this->mApp->mDarkMode ? ::WHITE : ::DARKGRAY;
 			sides = 12; break;
 		case PieceColor::Purple:
 			color = ::PURPLE;
 			sides = 3;
-			rotation = 180.0f;
+			rotation = 150.0f;
 			center.y += this->mTileSize / 10.0f;
 			radius += this->mTileInset; break;
 		}

@@ -10,7 +10,7 @@ if (NOT raylib_FOUND)
     FetchContent_Declare(
         raylib
         GIT_REPOSITORY https://github.com/raysan5/raylib.git
-        GIT_TAG 4.5.0
+        GIT_TAG f7c3035b8c5f7b86165ba24dfa868a4527e48a2a
     )
     FetchContent_MakeAvailable(raylib)
 endif()
