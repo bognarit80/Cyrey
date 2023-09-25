@@ -5,6 +5,7 @@
 
 namespace Cyrey
 {
+	//User preferences. Changes in settings or through keyboard shortcuts, if I decide to keep them.
 	class SettingsMenu
 	{
 	public:
