@@ -46,7 +46,7 @@ void Cyrey::SettingsMenu::Draw()
 		fontSize,
 		fontSize
 	};
-	Rectangle linePos = Rectangle{ windowAnchor.x + linePadding,
+	Rectangle firstLinePos = Rectangle{ windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 3),
 		windowWidth - (linePadding * 2),
 		fontSize
@@ -71,13 +71,24 @@ void Cyrey::SettingsMenu::Draw()
 		sliderWidth,
 		fontSize
 	};
+	Rectangle secondLinePos = Rectangle{ windowAnchor.x + linePadding,
+		windowAnchor.y + windowPaddingY + (controlOffset * 8),
+		windowWidth - (linePadding * 2),
+		fontSize
+	};
 	Rectangle mainMenuBtnPos = Rectangle{ windowAnchor.x + linePadding,
-		windowAnchor.y + windowPaddingY + (controlOffset * 7),
+		windowAnchor.y + windowPaddingY + (controlOffset * 9),
+		sliderWidth * 0.9f,
+		fontSize
+	};
+	Rectangle doneBtnPos = Rectangle{ windowAnchor.x + windowPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffset * 9),
 		sliderWidth * 0.9f,
 		fontSize
 	};
 
-	if (::GuiWindowBox(windowRect, cWindowText))
+	if (::GuiWindowBox(windowRect, SettingsMenu::cWindowText) || 
+		::GuiButton(doneBtnPos, SettingsMenu::cDoneButtonText))
 		this->mApp.ChangeToState(this->mApp.mPrevState);
 
 	::GuiSlider(musicSliderPos, cMusicSliderText, ::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)), &this->mMusicVolume, 0, 1);
@@ -92,7 +103,6 @@ void Cyrey::SettingsMenu::Draw()
 		this->mIsFullscreen ^= 1;
 	}
 
-	// enable once you figure this out
 	bool isVsync = ::IsWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
 	::GuiCheckBox(vsyncCheckPos, SettingsMenu::cVsyncCheckText, &isVsync);
 	if (isVsync != this->mIsVSync)
@@ -102,7 +112,7 @@ void Cyrey::SettingsMenu::Draw()
 	}
 #endif // __EMSCRIPTEN__
 	
-	::GuiLine(linePos, NULL);
+	::GuiLine(firstLinePos, NULL);
 
 	::GuiSlider(swapDeadZoneSliderPos, 
 		cSwapDeadZoneSliderText, 
@@ -125,6 +135,8 @@ void Cyrey::SettingsMenu::Draw()
 		this->mQueueSwapTolerance = SettingsMenu::cQueueSwapTolerance;
 		this->mWantBoardSwerve = SettingsMenu::cQueueSwapTolerance;
 	}
+
+	::GuiLine(secondLinePos, NULL);
 
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
 	{

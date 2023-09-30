@@ -52,6 +52,7 @@ namespace Cyrey
 		static constexpr char cVsyncCheckText[] = "Enable V-Sync";
 		static constexpr char cDefaultsButtonText[] = "Reset to default";
 		static constexpr char cMainMenuButtonText[] = "Main Menu";
+		static constexpr char cDoneButtonText[] = "Done";
 		static constexpr char cOff[] = "Off";
 		static constexpr char cInf[] = "Inf";
 	};
