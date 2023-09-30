@@ -25,6 +25,7 @@ void Cyrey::SettingsMenu::Draw()
 	float sliderWidth = windowWidth - (windowPaddingX * 1.3f);
 
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
+	::GuiSetIconScale(fontSize / 16);
 
 	Rectangle musicSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY,
@@ -88,11 +89,18 @@ void Cyrey::SettingsMenu::Draw()
 	};
 
 	if (::GuiWindowBox(windowRect, SettingsMenu::cWindowText) || 
-		::GuiButton(doneBtnPos, SettingsMenu::cDoneButtonText))
+		::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_OK_TICK, SettingsMenu::cDoneButtonText)))
 		this->mApp.ChangeToState(this->mApp.mPrevState);
 
-	::GuiSlider(musicSliderPos, cMusicSliderText, ::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)), &this->mMusicVolume, 0, 1);
-	::GuiSlider(soundSliderPos, cSoundSliderText, ::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)), &this->mSoundVolume, 0, 1);
+	::GuiSlider(musicSliderPos, 
+		::GuiIconText(::GuiIconName::ICON_AUDIO, SettingsMenu::cMusicSliderText), 
+		::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)), 
+		&this->mMusicVolume, 0, 1);
+
+	::GuiSlider(soundSliderPos, 
+		::GuiIconText(::GuiIconName::ICON_FX, SettingsMenu::cSoundSliderText), 
+		::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)), 
+		&this->mSoundVolume, 0, 1);
 
 #ifndef __EMSCRIPTEN__ //TODO: Implement proper fullscreen on Web
 	bool isFullscreen = ::IsWindowFullscreen();
@@ -140,7 +148,7 @@ void Cyrey::SettingsMenu::Draw()
 
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
 	{
-		if (::GuiButton(mainMenuBtnPos, cMainMenuButtonText))
+		if (::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, SettingsMenu::cMainMenuButtonText)))
 		{
 			//TODO: Save the game, or add XP or something
 			this->mApp.ChangeToState(CyreyAppState::MainMenu);
