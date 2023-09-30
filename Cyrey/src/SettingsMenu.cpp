@@ -41,6 +41,11 @@ void Cyrey::SettingsMenu::Draw()
 		fontSize,
 		fontSize 
 	};
+	Rectangle vsyncCheckPos = Rectangle{ windowAnchor.x + linePadding,
+		windowAnchor.y + windowPaddingY + (controlOffset * 2),
+		fontSize,
+		fontSize
+	};
 	Rectangle linePos = Rectangle{ windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 3),
 		windowWidth - (linePadding * 2),
@@ -80,14 +85,23 @@ void Cyrey::SettingsMenu::Draw()
 
 #ifndef __EMSCRIPTEN__ //TODO: Implement proper fullscreen on Web
 	bool isFullscreen = ::IsWindowFullscreen();
-	::GuiCheckBox(fullscreenCheckPos, cFullscreenCheckText, &isFullscreen);
+	::GuiCheckBox(fullscreenCheckPos, SettingsMenu::cFullscreenCheckText, &isFullscreen);
 	if (isFullscreen != this->mIsFullscreen)
 	{
 		this->mApp.ToggleFullscreen();
 		this->mIsFullscreen ^= 1;
 	}
-#endif // __EMSCRIPTEN__
 
+	// enable once you figure this out
+	bool isVsync = ::IsWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
+	::GuiCheckBox(vsyncCheckPos, SettingsMenu::cVsyncCheckText, &isVsync);
+	if (isVsync != this->mIsVSync)
+	{
+		this->mIsVSync = isVsync;
+		this->mApp.InitWindow(); // We need to reopen the window to apply VSync
+	}
+#endif // __EMSCRIPTEN__
+	
 	::GuiLine(linePos, NULL);
 
 	::GuiSlider(swapDeadZoneSliderPos, 

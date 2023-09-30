@@ -1,5 +1,11 @@
 ﻿#include "CyreyApp.hpp"
 #include "MainMenu.hpp"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++11-narrowing" // fix web build
+#include "style_cyber.h"
+#pragma GCC diagnostic pop
 
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
@@ -13,19 +19,44 @@ void Cyrey::CyreyApp::Init()
     this->mPrevState = CyreyAppState::Loading;
     this->mWantExit = false;
     this->mOldWindowSize = ::Vector2{ static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
-
-    ::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
-    ::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
-    int currentMonitor = ::GetCurrentMonitor();
-    this->mRefreshRate = ::GetMonitorRefreshRate(currentMonitor);
-    ::SetTargetFPS(this->mRefreshRate);
-    this->mBoard = std::make_unique<Board>(8, 8);
-    this->mBoard->Init();
+    this->mHasWindow = false;
+    this->mFinishedLoading = false;
+    this->InitWindow();
+    this->mGameConfig = GameConfig::GetLatestConfig();
+    this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
     this->mBoard->mApp = this;
+    this->mBoard->Init();
     this->mMainMenu = std::make_unique<MainMenu>(*this);
     this->mMainMenu->Init();
     this->mCurrentUser = std::make_unique<User>();
     this->mSettings = std::make_unique<SettingsMenu>(*this);
+}
+
+void Cyrey::CyreyApp::InitWindow()
+{
+    if (this->mHasWindow)
+    {
+        ::CloseWindow();
+
+        // We always get here through settings, so it's guaranteed that they are available.
+        this->mSettings->mIsFullscreen ?
+            ::SetConfigFlags(::ConfigFlags::FLAG_FULLSCREEN_MODE) :
+            ::ClearWindowState(::ConfigFlags::FLAG_FULLSCREEN_MODE);
+
+        this->mSettings->mIsVSync ?
+            ::SetConfigFlags(::ConfigFlags::FLAG_VSYNC_HINT) :
+            ::ClearWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
+    }
+    // TODO: Add local user configs here, for fullscreen, vsync and everything else that's added later.
+    ::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
+        
+    ::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
+    this->mRefreshRate = ::GetMonitorRefreshRate(::GetCurrentMonitor());
+    ::SetTargetFPS(this->mRefreshRate);
+    this->mHasWindow = true;
+
+    // Load all textures and sounds
+    ::GuiLoadStyleCyber();
 }
 
 void Cyrey::CyreyApp::GameLoop()
@@ -139,5 +170,6 @@ void Cyrey::CyreyApp::ToggleFullscreen()
 
 bool Cyrey::CyreyApp::LoadingThread()
 {
+    this->mFinishedLoading = true;
     return true;
 }

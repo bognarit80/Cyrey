@@ -6,6 +6,7 @@
 #include "MainMenu.hpp"
 #include "User.hpp"
 #include "SettingsMenu.hpp"
+#include "GameConfig.hpp"
 #include <memory>
 
 namespace Cyrey 
@@ -14,6 +15,7 @@ namespace Cyrey
 	class MainMenu;
 	class User;
 	class SettingsMenu;
+	class GameConfig;
 
 	enum class CyreyAppState
 	{
@@ -46,10 +48,14 @@ namespace Cyrey
 		std::unique_ptr<User> mCurrentUser;
 		std::unique_ptr<SettingsMenu> mSettings;
 		::Vector2 mOldWindowSize;
+		GameConfig mGameConfig;
+		bool mHasWindow;
+		bool mFinishedLoading;
 
 		static constexpr char cTitle[] = "Cyrey";
 
 		void Init();
+		void InitWindow();
 		void GameLoop();
 		void Update();
 		void Draw() const;

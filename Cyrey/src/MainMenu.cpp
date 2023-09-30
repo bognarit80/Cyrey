@@ -1,15 +1,9 @@
 #include "MainMenu.hpp"
-#define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++11-narrowing"
-#include "style_cyber.h"
-#pragma GCC diagnostic pop
 #include "raylib.h"
 
 void Cyrey::MainMenu::Init()
 {
-	::GuiLoadStyleCyber();
 	this->mIsPlayBtnPressed = false;
 }
 

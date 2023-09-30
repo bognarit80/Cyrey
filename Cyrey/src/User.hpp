@@ -9,8 +9,8 @@ namespace Cyrey
 	{
 	public:
 		int64_t mXP;
+		int64_t mPiecesMatched;
 		int mGamesPlayed;
-		int mGemsMatched;
 		int mBombsDetonated;
 		int mLightningsDetonated;
 		int mHypercubesDetonated;

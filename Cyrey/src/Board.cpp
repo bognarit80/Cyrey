@@ -21,8 +21,8 @@ void Cyrey::Board::Init()
 	this->mBoardSwerve = ::Vector2{0, -(float)this->mTileSize * 8};
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
-	this->mColorCount = static_cast<int>(PieceColor::Count) - 1;
-	this->mBaseScore = 50;
+	this->mColorCount = this->mApp->mGameConfig.mPieceColorAmount;
+	this->mBaseScore = this->mApp->mGameConfig.mBaseScore;
 	this->mScoreMultiplier = 1;
 	this->mSecondsRemaining = 0.0f;
 	this->mMatchedPieceAnims = {};
@@ -444,7 +444,7 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 		this->mPiecesCleared += piecesCleared;
 		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesCleared;
-		this->mFallDelay = Board::cFallDelay * 2;
+		this->mFallDelay = this->mApp->mGameConfig.mFallDelay * 2;
 		this->mCascadeNumber++;
 		this->mBoard[row][col] = Cyrey::gNullPiece; //temp until I make a proper sequence
 		return true;
@@ -530,11 +530,11 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 				}
 			}
 		}
-		this->mFallDelay += Board::cFallDelay * 0.25;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 0.25;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
-		for (int i = 0; i < Board::cLightningPiecesAmount; i++)
+		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
 			int row, col, count = 0;
 			do
@@ -552,12 +552,12 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 
 			piecesCleared += this->MatchPiece(this->mBoard[row][col], pieceCopy, true);
 		}
-		this->mFallDelay += Board::cFallDelay;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Hypercube))
 	{
 		piecesCleared += this->DoHypercube(pieceCopy, byPiece);
-		this->mFallDelay += Board::cFallDelay;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
 	}
 
 	return piecesCleared;
@@ -591,7 +591,7 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 {
 	for (auto& anim : this->mMatchedPieceAnims)
 	{
-		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
 		if (anim.mOpacity <= 0.0f)
 		{
 			this->mMatchedPieceAnims.clear();
@@ -603,7 +603,7 @@ void Cyrey::Board::UpdateDroppedPieceAnims()
 {
 	for (auto& anim : this->mDroppedPieceAnims)
 	{
-		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / Board::cFallDelay);
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
 		if (anim.mOpacity <= 0.0f)
 		{
 			this->mDroppedPieceAnims.clear();
@@ -613,7 +613,7 @@ void Cyrey::Board::UpdateDroppedPieceAnims()
 
 void Cyrey::Board::UpdateBoardSwerve()
 {
-	float fallDelay = 1 - std::pow(this->cFallDelay * 0.003f, this->mApp->GetDeltaTime());
+	float fallDelay = 1 - std::pow(this->mApp->mGameConfig.mFallDelay * 0.003f, this->mApp->GetDeltaTime());
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 }
@@ -623,7 +623,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress > Board::cNewGameAnimDuration)
 		return false;
 
-	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * Board::cStartingTime;
+	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mApp->mGameConfig.mStartingTime;
 	this->mNewGameAnimProgress += this->mApp->GetDeltaTime();
 
 	if (this->mNewGameAnimProgress >= (Board::cNewGameAnimDuration * 0.75f) && !this->mDroppedNewGamePieces)
@@ -638,11 +638,11 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
 	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
-		this->mSecondsRemaining = Board::cStartingTime; //failsafe
+		this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime; //failsafe
 	}
 
-	if (this->mSecondsRemaining > Board::cStartingTime)
-		this->mSecondsRemaining = Board::cStartingTime; //failsafe
+	if (this->mSecondsRemaining > this->mApp->mGameConfig.mStartingTime)
+		this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime; //failsafe
 
 	return true;
 }
@@ -700,7 +700,7 @@ int Cyrey::Board::UpdateMatchSets()
 	int matchSets = this->mMatchSets.size();
 	if (matchSets > 0)
 	{
-		this->mFallDelay = this->cFallDelay;
+		this->mFallDelay = this->mApp->mGameConfig.mFallDelay;
 		this->AddSwerve(::Vector2{ 0.0f, this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f });
 		this->mCascadeNumber++;
 	}
@@ -819,15 +819,15 @@ void Cyrey::Board::DrawBorder() const
 	float offset = thick / 2; //Rectangle draws thickness outwards, Line draws it in the middle, shift it to fit somewhat
 	::Color timerColor = this->mSecondsRemaining < 10 ? ::RED : ::GREEN;
 
-	int halfCircumference = ((this->mWidth * this->mTileSize) + (this->mHeight * this->mTileSize) + thick * 2 + offset);
-	float fillPct = this->mSecondsRemaining / Board::cStartingTime;
+	int halfPerimeter = ((this->mWidth * this->mTileSize) + (this->mHeight * this->mTileSize) + thick * 2 + offset);
+	float fillPct = this->mSecondsRemaining / this->mApp->mGameConfig.mStartingTime;
 	if (this->mMissDelay > 0.0f)
 	{
 		fillPct = 1;
 		timerColor = ::RED;
 	}
 
-	float fillLength = static_cast<float>(halfCircumference) * fillPct;
+	float fillLength = static_cast<float>(halfPerimeter) * fillPct;
 	float firstCurveLen = (static_cast<float>(this->mWidth * this->mTileSize) / 2) + thick;
 	float secondCurveLen = firstCurveLen + static_cast<float>(this->mHeight * this->mTileSize) + thick;
 
