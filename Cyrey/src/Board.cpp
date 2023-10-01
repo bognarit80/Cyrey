@@ -48,15 +48,15 @@ void Cyrey::Board::Update()
 	this->UpdateMatchedPieceAnims();
 	this->UpdateDroppedPieceAnims();
 
-	int screenWidth = this->mApp->mWidth;
-	int screenHeight = this->mApp->mHeight;
+	float screenWidth = static_cast<float>(this->mApp->mWidth);
+	float screenHeight = static_cast<float>(this->mApp->mHeight);
 
 	if (screenWidth > 0 && screenHeight > 0)
 	{
 		this->mTileSize = (screenHeight * this->mZoomPct / 100) / this->mHeight;
 		this->mTileInset = this->mTileSize / 10;
-		this->mXOffset = (screenWidth / 2) - (this->mWidth * mTileSize / 2) + this->mBoardSwerve.x;
-		this->mYOffset = (screenHeight / 2) - (this->mHeight * mTileSize / 2) + this->mBoardSwerve.y;
+		this->mXOffset = (screenWidth / 2) - (this->mWidth * static_cast<float>(this->mTileSize) / 2) + this->mBoardSwerve.x;
+		this->mYOffset = (screenHeight / 2) - (this->mHeight * static_cast<float>(this->mTileSize) / 2) + this->mBoardSwerve.y;
 	}
 
 	this->UpdateBoardSwerve();
@@ -261,8 +261,8 @@ void Cyrey::Board::AddSwerve(::Vector2 swerve)
 
 std::optional<::Vector2> Cyrey::Board::GetHoveredTile() const
 {
-	int mouseX = ::GetTouchX() - (int)this->mXOffset;
-	int mouseY = ::GetTouchY() - (int)this->mYOffset;
+	int mouseX = ::GetTouchX() - static_cast<int>(this->mXOffset);
+	int mouseY = ::GetTouchY() - static_cast<int>(this->mYOffset);
 
 	if (mouseX <= 0 || mouseY <= 0 || this->mTileSize <= 0)
 		return std::nullopt;
@@ -272,7 +272,7 @@ std::optional<::Vector2> Cyrey::Board::GetHoveredTile() const
 	if (xTile >= this->mWidth || yTile >= this->mHeight)
 		return std::nullopt;
 
-	return ::Vector2(xTile, yTile);
+	return ::Vector2(static_cast<float>(xTile), static_cast<float>(yTile));
 }
 
 bool Cyrey::Board::IsMouseInBoard() const
@@ -531,7 +531,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 				}
 			}
 		}
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 0.25;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 0.25f;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
@@ -788,14 +788,16 @@ void Cyrey::Board::DrawCheckerboard() const
 	{
 		for (int j = 0; j < this->mWidth; j++)
 		{
-			::DrawRectangle(
-				static_cast<float>(((j * this->mTileSize)) + this->mXOffset),
+			::DrawRectangleRec(
+				::Rectangle{ static_cast<float>(((j * this->mTileSize)) + this->mXOffset),
 				static_cast<float>(((i * this->mTileSize)) + this->mYOffset),
 				static_cast<float>(this->mTileSize),
-				static_cast<float>(this->mTileSize),
+				static_cast<float>(this->mTileSize) },
 				(i % 2) ^ (j % 2) ?						//alternate between light and dark every row
 				::ColorAlpha(::LIGHTGRAY, this->mBoardAlpha) :
 				::ColorAlpha(::GRAY, this->mBoardAlpha));
+
+
 		}
 	}
 }
@@ -813,14 +815,14 @@ void Cyrey::Board::DrawBorder() const
 		static_cast<float>((this->mYOffset - 1)),
 		static_cast<float>(((this->mTileSize * this->mWidth) + 2)),
 		static_cast<float>(((this->mTileSize * this->mHeight) + 2)) },
-		0.0f, 1, this->mTileInset, outlineColor);
+		0.0f, 1, static_cast<float>(this->mTileInset), outlineColor);
 
 	//draw the timer - way more complicated than I thought it would be. definitely review and simplify later.
-	float thick = this->mTileInset * 2;
+	float thick = static_cast<float>(this->mTileInset) * 2;
 	float offset = thick / 2; //Rectangle draws thickness outwards, Line draws it in the middle, shift it to fit somewhat
 	::Color timerColor = this->mSecondsRemaining < 10 ? ::RED : ::GREEN;
 
-	int halfPerimeter = ((this->mWidth * this->mTileSize) + (this->mHeight * this->mTileSize) + thick * 2 + offset);
+	float halfPerimeter = ((this->mWidth * this->mTileSize) + (this->mHeight * this->mTileSize) + thick * 2 + offset);
 	float fillPct = this->mSecondsRemaining / this->mApp->mGameConfig.mStartingTime;
 	if (this->mMissDelay > 0.0f)
 	{
@@ -828,7 +830,7 @@ void Cyrey::Board::DrawBorder() const
 		timerColor = ::RED;
 	}
 
-	float fillLength = static_cast<float>(halfPerimeter) * fillPct;
+	float fillLength = halfPerimeter * fillPct;
 	float firstCurveLen = (static_cast<float>(this->mWidth * this->mTileSize) / 2) + thick;
 	float secondCurveLen = firstCurveLen + static_cast<float>(this->mHeight * this->mTileSize) + thick;
 
@@ -912,7 +914,7 @@ void Cyrey::Board::DrawPieces() const
 			::Color color = ::BLANK;
 			int sides = 3;
 			float rotation = 0;
-			float radius = (this->mTileSize / 2) - this->mTileInset;
+			float radius = (static_cast<float>(this->mTileSize) / 2) - this->mTileInset;
 			::Vector2 center { (float)((j * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
 									(float)((i * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
 			};
@@ -961,7 +963,7 @@ void Cyrey::Board::DrawPieces() const
 			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Hypercube))
 			{
 				::DrawCircleV(center, radius, ::PINK);
-				::DrawPolyLinesEx(center, 4, radius, rotation, this->mTileSize / 5, ::BLUE);
+				::DrawPolyLinesEx(center, 4, radius, rotation, static_cast<float>(this->mTileSize) / 5, ::BLUE);
 			}
 		}
 	}
@@ -974,7 +976,7 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		::Color color = ::BLANK;
 		int sides = 3;
 		float rotation = 0;
-		float radius = (this->mTileSize / 2) - this->mTileInset;
+		float radius = (static_cast<float>(this->mTileSize) / 2) - this->mTileInset;
 		::Vector2 center{ (float)((anim.mBoardX * this->mTileSize) + this->mXOffset + (float)this->mTileSize / 2),
 								(float)((anim.mBoardY * this->mTileSize) + this->mYOffset + (float)this->mTileSize / 2)
 		};

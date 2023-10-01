@@ -16,7 +16,7 @@ namespace Cyrey
 	class MainMenu;
 	class User;
 	class SettingsMenu;
-	class GameConfig;
+	struct GameConfig;
 
 	enum class CyreyAppState
 	{

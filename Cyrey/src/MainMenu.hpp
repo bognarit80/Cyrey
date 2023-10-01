@@ -17,7 +17,8 @@ namespace Cyrey
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 
-		MainMenu(CyreyApp& app) : mApp(app) {};
+		MainMenu(CyreyApp& app) : 
+			mApp(app), mIsPlayBtnPressed(false) {};
 
 		void Init();
 		void Update();
