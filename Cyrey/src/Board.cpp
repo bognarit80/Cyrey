@@ -18,6 +18,7 @@ void Cyrey::Board::Init()
 	this->mPiecesCleared = 0;
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
+	this->mScoreInMove = 0;
 	this->mBoardSwerve = ::Vector2{0, -(float)this->mTileSize * 8};
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
@@ -110,6 +111,8 @@ void Cyrey::Board::Draw() const
 	this->DrawPieceDropAnims();
 	this->DrawHoverSquare();
 	this->DrawScore();
+	if (this->mIsGameOver)
+		this->DrawResultsScreen();
 }
 
 void Cyrey::Board::UpdateInput()
@@ -251,14 +254,21 @@ void Cyrey::Board::ResetBoard()
 		this->mMatchSets.clear();
 		this->mBoard = this->GenerateStartingBoard();
 	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
-	this->mScore = 0;
-	this->mPiecesCleared = 0;
 	this->mSecondsRemaining = 0.0f;
 	this->mBoardSwerve = ::Vector2{ 0.0f, static_cast<float>(-this->mTileSize * 8) };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
+
+	this->mScore = 0;
+	this->mPiecesCleared = 0;
+	this->mMovesMade = 0;
+	this->mBombsDetonated = 0;
+	this->mLightningsDetonated = 0;
+	this->mHypercubesDetonated = 0;
+	this->mBestMovePoints = 0;
+	this->mBestMoveCascades = 0;
 }
 
 void Cyrey::Board::AddSwerve(::Vector2 swerve)
@@ -470,7 +480,9 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 	//check only the pieces swapped for matches, everything else should be untouched if we can only swap from a non-moving state
 	bool foundSet1 = this->FindSets(toCol, toRow, this->mBoard[toRow][toCol].mColor);
 	bool foundSet2 = this->FindSets(col, row, this->mBoard[row][col].mColor);
-	if (!foundSet1 && !foundSet2)
+	if (foundSet1 || foundSet2)
+		this->mMovesMade++;
+	else
 		this->mMissDelay = this->cMissPenalty;
 
 	this->UpdateMatchSets();
@@ -528,6 +540,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	int piecesCleared = 1;
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
 	{
+		this->mBombsDetonated++;
 		for (int i = -1; i <= 1; i++)
 		{
 			for (int j = -1; j <= 1; j++)
@@ -545,6 +558,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
+		this->mLightningsDetonated++;
 		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
 			int row, col, count = 0;
@@ -580,6 +594,7 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 	if (!cubePiece.IsFlagSet(PieceFlag::Hypercube))
 		return 0;
 
+	this->mHypercubesDetonated++;
 	int piecesCleared = 1;
 	PieceColor targetColor = byPiece.mColor != PieceColor::Uncolored ? byPiece.mColor : cubePiece.mOldColor;
 	bool wantDHR = byPiece.IsFlagSet(PieceFlag::Hypercube);
@@ -766,7 +781,9 @@ int Cyrey::Board::UpdateMatchSets()
 			piecesCleared += this->MatchPiece(*piece);
 		}
 		this->mPiecesCleared += piecesCleared;
-		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		int scoreForCascade = (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		this->mScore += scoreForCascade;
+		this->mScoreInMove += scoreForCascade;
 		this->mPiecesClearedInMove += piecesCleared;
 	}
 	this->mMatchSets.clear();
@@ -810,7 +827,13 @@ void Cyrey::Board::FillInBlanks()
 	}
 	if (!this->FindSets())
 	{
+		if (this->mCascadeNumber > this->mBestMoveCascades)
+			this->mBestMoveCascades = this->mCascadeNumber;
+		if (this->mScoreInMove > this->mBestMovePoints)
+			this->mBestMovePoints = this->mScoreInMove;
+
 		this->mCascadeNumber = 0;
+		this->mScoreInMove = 0;
 		this->mPiecesClearedInMove = 0;
 	}
 }
@@ -1146,17 +1169,128 @@ void Cyrey::Board::DrawScore() const
 	{
 		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
 	}
+}
 
-	if (this->mIsGameOver)
-	{
-		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
-		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
-		::GuiLabel(
-			::Rectangle{ this->mXOffset, 
-				this->mYOffset + this->mTileSize / 2,
-				static_cast<float>(this->mWidth * this->mTileSize), 
-				static_cast<float>(this->mHeight * this->mTileSize) },
-			"Press R to restart the game!"
-		);
-	}
+void Cyrey::Board::DrawResultsScreen() const
+{
+	float appWidth = static_cast<float>(this->mApp->mWidth);
+	float appHeight = static_cast<float>(this->mApp->mHeight);
+
+	float windowY = appHeight * 0.1f;
+	float windowHeight = appHeight - (windowY * 2);
+	float windowX = appWidth > appHeight ? (appWidth - windowHeight) / 2 : appWidth * 0.1f;
+	float windowWidth = windowY < windowX ? windowHeight : appWidth - (windowX * 2); //square if window is wide
+	Vector2 windowAnchor = Vector2{ windowX, windowY };
+	Rectangle windowRect = Rectangle{ windowX, windowY, windowWidth, windowHeight };
+
+	float fontSize = windowHeight > windowWidth ? windowWidth / 20 : windowHeight / 20;
+	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
+	::GuiSetIconScale(fontSize / 16);
+
+	float windowPaddingY = windowHeight * 0.1f;
+	float controlOffsetY = fontSize * 1.3f;
+	float controlPaddingX = windowWidth * 0.05f;
+
+	Rectangle movesLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY,
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle movesValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY,
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle mpsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + controlOffsetY,
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle mpsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + controlOffsetY,
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bombsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bombsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle lightningsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle lightningsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle hypercubesLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle hypercubesValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bestMoveLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bestMoveValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bestCascadeLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle bestCascadeValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+
+	// the results screen look a lot better without the window, just printed straight on the board
+	// ::GuiWindowBox(windowRect, "Results"); 
+
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_RIGHT);
+	::GuiLabel(movesLabelPos, "Moves: ");
+	::GuiLabel(mpsLabelPos, "Moves per second: ");
+	::GuiLabel(bombsLabelPos, "Bombs: ");
+	::GuiLabel(lightningsLabelPos, "Lightnings: ");
+	::GuiLabel(hypercubesLabelPos, "Hypercubes: ");
+	::GuiLabel(bestMoveLabelPos, "Best move (points): ");
+	::GuiLabel(bestCascadeLabelPos, "Highest cascade: ");
+
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
+	::GuiLabel(movesValuePos, ::TextFormat(" %d", this->mMovesMade));
+	::GuiLabel(mpsValuePos, ::TextFormat(" %.2f", static_cast<float>(this->mMovesMade) / this->mApp->mGameConfig.mStartingTime));
+	::GuiLabel(bombsValuePos, ::TextFormat(" %d", this->mBombsDetonated));
+	::GuiLabel(lightningsValuePos, ::TextFormat(" %d", this->mLightningsDetonated));
+	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", this->mHypercubesDetonated));
+	::GuiLabel(bestMoveValuePos, ::TextFormat(" %d", this->mBestMovePoints));
+	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", this->mBestMoveCascades));
+
+	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
+	::GuiLabel(
+		::Rectangle{ this->mXOffset,
+			this->mYOffset + this->mTileSize,
+			static_cast<float>(this->mWidth * this->mTileSize),
+			static_cast<float>(this->mHeight * this->mTileSize) },
+		"Press R to restart the game!"
+	);
+	
 }

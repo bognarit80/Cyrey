@@ -50,6 +50,7 @@ namespace Cyrey
 		int mPiecesCleared;
 		int mCascadeNumber;
 		int mPiecesClearedInMove;
+		int64_t mScoreInMove;
 		::Vector2 mBoardSwerve;
 		constexpr static float cSwerveCoeff = 0.1f;
 		constexpr static int cMaxCascadesSwerve = 8;
@@ -71,6 +72,14 @@ namespace Cyrey
 		float mGameOverAnimProgress;
 		bool mIsGameOver;
 		static constexpr float cGameOverAnimDuration = 1.0f;
+
+		// game stats
+		int mMovesMade;
+		int mBombsDetonated;
+		int mLightningsDetonated;
+		int mHypercubesDetonated;
+		int mBestMovePoints;
+		int mBestMoveCascades;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -115,6 +124,7 @@ namespace Cyrey
 		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;
 		void DrawScore() const;
+		void DrawResultsScreen() const;
 	};
 }
 	
