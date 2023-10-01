@@ -225,7 +225,7 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 	{
 		for (int j = 0; j < this->mWidth; j++)
 		{
-			row.push_back(Piece(static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
+			row.push_back(Piece(static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mColorCount))));
 			row[j].mBoardX = j;
 			row[j].mBoardY = i;
 		}
@@ -237,6 +237,7 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 
 void Cyrey::Board::ResetBoard()
 {
+	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", this->mApp->SeedRNG()));
 	do
 	{
 		this->mMatchSets.clear();
@@ -767,7 +768,7 @@ void Cyrey::Board::FillInBlanks()
 			Piece& piece = this->mBoard[i][j];
 			if (piece.mID == 0)
 			{
-				piece = Piece((static_cast<PieceColor>(GetRandomValue(1, this->mColorCount))));
+				piece = Piece((static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mColorCount))));
 				piece.mBoardX = j;
 				piece.mBoardY = i;
 				this->mDroppedPieceAnims.emplace_back(j);

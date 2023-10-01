@@ -21,6 +21,8 @@ void Cyrey::CyreyApp::Init()
     this->mOldWindowSize = ::Vector2{ static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
     this->mHasWindow = false;
     this->mFinishedLoading = false;
+    this->mMTInstance = std::mt19937{}; // init the object first, we will reseed for sure
+
     this->InitWindow();
     this->mGameConfig = GameConfig::GetLatestConfig();
     this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
@@ -172,4 +174,21 @@ bool Cyrey::CyreyApp::LoadingThread()
 {
     this->mFinishedLoading = true;
     return true;
+}
+
+unsigned int Cyrey::CyreyApp::SeedRNG()
+{
+    unsigned int seed = std::random_device()();
+    this->SeedRNG(seed);
+    return seed;
+}
+
+void Cyrey::CyreyApp::SeedRNG(unsigned int seed)
+{
+    this->mMTInstance.seed(seed);
+}
+
+int Cyrey::CyreyApp::GetRandomNumber(int min, int max)
+{
+    return std::uniform_int_distribution{ min, max }(this->mMTInstance);
 }

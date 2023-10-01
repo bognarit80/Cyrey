@@ -8,6 +8,7 @@
 #include "SettingsMenu.hpp"
 #include "GameConfig.hpp"
 #include <memory>
+#include <random>
 
 namespace Cyrey 
 {
@@ -64,6 +65,13 @@ namespace Cyrey
 		void ToggleFullscreen();
 
 		bool LoadingThread();
+		unsigned int SeedRNG(); // Returns the seed.
+		void SeedRNG(unsigned int seed); // For replays and games with set seed.
+		int GetRandomNumber(int min, int max);
+
+	private:
+		std::mt19937 mMTInstance;
+
 	};
 } // namespace Cyrey 
 
