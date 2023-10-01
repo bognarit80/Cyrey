@@ -68,6 +68,9 @@ namespace Cyrey
 		float mNewGameAnimProgress;
 		bool mDroppedNewGamePieces;
 		static constexpr float cNewGameAnimDuration = 1.0f;
+		float mGameOverAnimProgress;
+		bool mIsGameOver;
+		static constexpr float cGameOverAnimDuration = 1.0f;
 
 		Board() = default;
 		Board(int width, int height) :
@@ -98,6 +101,7 @@ namespace Cyrey
 	private:
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
+		void UpdateGameOverAnim();
 		void UpdateBoardSwerve();
 		bool UpdateNewGameAnim(); //increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
 		void UpdateDragging();

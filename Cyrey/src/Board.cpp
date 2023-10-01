@@ -29,6 +29,8 @@ void Cyrey::Board::Init()
 	this->mDroppedPieceAnims = {};
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
+	this->mGameOverAnimProgress = 0.0f;
+	this->mIsGameOver = false;
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
 	this->ResetBoard();
 
@@ -95,6 +97,8 @@ void Cyrey::Board::Update()
 
 	if (!this->UpdateNewGameAnim() && ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f))
 		this->mSecondsRemaining = 0.0f;
+
+	this->UpdateGameOverAnim();
 }
 
 void Cyrey::Board::Draw() const
@@ -180,6 +184,10 @@ void Cyrey::Board::UpdateInput()
 			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
 			this->mBoardSwerve = ::Vector2Zero();
 		}
+		else if (this->mGameOverAnimProgress < Board::cGameOverAnimDuration)
+		{
+			this->mGameOverAnimProgress = Board::cGameOverAnimDuration;
+		}
 		break;
 	default:
 		break;
@@ -249,6 +257,8 @@ void Cyrey::Board::ResetBoard()
 	this->mBoardSwerve = ::Vector2{ 0.0f, static_cast<float>(-this->mTileSize * 8) };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
+	this->mGameOverAnimProgress = 0.0f;
+	this->mIsGameOver = false;
 }
 
 void Cyrey::Board::AddSwerve(::Vector2 swerve)
@@ -369,7 +379,7 @@ bool Cyrey::Board::FindSets(int pieceCol, int pieceRow, PieceColor color, bool f
 
 bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 {
-	for (auto& matchSet : this->mMatchSets)
+	for (auto &matchSet : this->mMatchSets)
 	{
 		for (auto piece : matchSet.mPieces)
 		{
@@ -602,12 +612,35 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 
 void Cyrey::Board::UpdateDroppedPieceAnims()
 {
-	for (auto& anim : this->mDroppedPieceAnims)
+	for (auto &anim : this->mDroppedPieceAnims)
 	{
 		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
 		if (anim.mOpacity <= 0.0f)
 		{
 			this->mDroppedPieceAnims.clear();
+		}
+	}
+}
+
+void Cyrey::Board::UpdateGameOverAnim()
+{
+	if (this->mSecondsRemaining > 0.0f || this->mFallDelay > 0.0f || !this->mDroppedNewGamePieces || this->mIsGameOver)
+		return;
+
+	int rowsClearedBeforeUpdate = this->mHeight * (this->mGameOverAnimProgress / Board::cGameOverAnimDuration);
+	if ((this->mGameOverAnimProgress += this->mApp->GetDeltaTime()) > Board::cGameOverAnimDuration)
+	{
+		this->mGameOverAnimProgress = Board::cGameOverAnimDuration; // failsafe
+		this->mIsGameOver = true;
+	}
+	int rowsClearedAfterUpdate = this->mHeight * (this->mGameOverAnimProgress / Board::cGameOverAnimDuration);
+
+	if (rowsClearedBeforeUpdate < rowsClearedAfterUpdate)
+	{
+		for (auto& piece : this->mBoard[rowsClearedAfterUpdate - 1])
+		{
+			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, true);
+			piece = Cyrey::gNullPiece;
 		}
 	}
 }
@@ -705,7 +738,7 @@ int Cyrey::Board::UpdateMatchSets()
 		this->AddSwerve(::Vector2{ 0.0f, this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f });
 		this->mCascadeNumber++;
 	}
-	for ( auto& matchSet : this->mMatchSets )
+	for ( auto &matchSet : this->mMatchSets )
 	{
 		int piecesPerSet = matchSet.mPieces.size();
 		int addedPiecesPerSet = matchSet.mAddedPieces.size();
@@ -904,7 +937,7 @@ void Cyrey::Board::DrawBorder() const
 void Cyrey::Board::DrawPieces() const
 {
 	//don't draw the pieces on gameover
-	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f || !this->mDroppedNewGamePieces)
+	if (this->mIsGameOver || !this->mDroppedNewGamePieces)
 		return;
 
 	for (int i = 0; i < this->mHeight; i++)
@@ -1114,7 +1147,7 @@ void Cyrey::Board::DrawScore() const
 		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
 	}
 
-	if (this->mSecondsRemaining <= 0.0f && this->mFallDelay <= 0.0f && this->mDroppedNewGamePieces)
+	if (this->mIsGameOver)
 	{
 		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
 		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
