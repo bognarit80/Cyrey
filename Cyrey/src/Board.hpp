@@ -88,7 +88,7 @@ namespace Cyrey
 
 		void Init();
 		void Update();
-		void Draw() const;
+		void Draw(); // not const because we want buttons on side UI and results screen
 		void UpdateInput();
 		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
 		std::vector<std::vector<Piece>> GenerateStartingBoard() const;
@@ -123,8 +123,8 @@ namespace Cyrey
 		void DrawPieceMatchAnims() const;
 		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;
-		void DrawScore() const;
-		void DrawResultsScreen() const;
+		void DrawSideUI();
+		void DrawResultsScreen(); // not const because we want buttons
 	};
 }
 	

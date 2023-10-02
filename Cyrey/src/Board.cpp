@@ -102,7 +102,7 @@ void Cyrey::Board::Update()
 	this->UpdateGameOverAnim();
 }
 
-void Cyrey::Board::Draw() const
+void Cyrey::Board::Draw()
 {
 	this->DrawCheckerboard();
 	this->DrawBorder();
@@ -110,7 +110,7 @@ void Cyrey::Board::Draw() const
 	this->DrawPieceMatchAnims();
 	this->DrawPieceDropAnims();
 	this->DrawHoverSquare();
-	this->DrawScore();
+	this->DrawSideUI();
 	if (this->mIsGameOver)
 		this->DrawResultsScreen();
 }
@@ -1111,7 +1111,7 @@ void Cyrey::Board::DrawHoverSquare() const
 		0.0f, 1, this->mTileInset / 2.0f, rectColor);
 }
 
-void Cyrey::Board::DrawScore() const
+void Cyrey::Board::DrawSideUI()
 {
 	int fontSize = this->mApp->mHeight / 25;
 	int defaultColor = ::GuiGetStyle(::GuiControl::DEFAULT, GuiControlProperty::TEXT_COLOR_NORMAL);
@@ -1161,17 +1161,29 @@ void Cyrey::Board::DrawScore() const
 	);
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 
-	if (::GuiButton(::Rectangle{ this->mXOffset - (::MeasureText("Menu", fontSize * 2) + (this->mTileSize / 2)),
+	int iconSize = fontSize * 2;
+	int iconScale = iconSize / 16;
+	::GuiSetIconScale(iconScale);
+
+	if (::GuiButton(::Rectangle{ this->mXOffset - iconSize - (this->mTileSize / 2),
 		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
-		static_cast<float>(::MeasureText("Menu", fontSize * 2)), 
-		static_cast<float>(fontSize * 2)}, 
-		"Menu"))
+		static_cast<float>(iconSize), 
+		static_cast<float>(iconSize)}, 
+		::GuiIconText(::GuiIconName::ICON_PLAYER_PAUSE, "")))
 	{
 		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
 	}
+	if (::GuiButton(::Rectangle{ this->mXOffset - (iconSize * 2.25f) - (this->mTileSize / 2),
+		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
+		static_cast<float>(iconSize),
+		static_cast<float>(iconSize) },
+		::GuiIconText(::GuiIconName::ICON_RESTART, "")))
+	{
+		this->ResetBoard();
+	}
 }
 
-void Cyrey::Board::DrawResultsScreen() const
+void Cyrey::Board::DrawResultsScreen()
 {
 	float appWidth = static_cast<float>(this->mApp->mWidth);
 	float appHeight = static_cast<float>(this->mApp->mHeight);
@@ -1185,85 +1197,118 @@ void Cyrey::Board::DrawResultsScreen() const
 
 	float fontSize = windowHeight > windowWidth ? windowWidth / 20 : windowHeight / 20;
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
-	::GuiSetIconScale(fontSize / 16);
+	::GuiSetIconScale(std::max(fontSize / 16, 1.0f));
 
 	float windowPaddingY = windowHeight * 0.1f;
 	float controlOffsetY = fontSize * 1.3f;
 	float controlPaddingX = windowWidth * 0.05f;
 
 	Rectangle movesLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle movesValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle mpsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + controlOffsetY,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle mpsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + controlOffsetY,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bombsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bombsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle lightningsLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle lightningsValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle hypercubesLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle hypercubesValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bestMoveLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 7),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bestMoveValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 7),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bestCascadeLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 8),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
 	Rectangle bestCascadeValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
-		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 8),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
+	Rectangle piecesClearedLabelPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 9),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle piecesClearedValuePos = Rectangle{ windowAnchor.x + (windowWidth / 2),
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 9),
+		(windowWidth / 2) - controlPaddingX,
+		fontSize
+	};
+	Rectangle viewReplayBtnPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 10.5f),
+		(windowWidth / 2) - controlPaddingX * 1.5f,
+		fontSize
+	};
+	Rectangle submitBtnPos = Rectangle{ windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 10.5f),
+		(windowWidth / 2) - controlPaddingX * 1.5f,
+		fontSize
+	};
+	Rectangle mainMenuBtnPos = Rectangle{ windowAnchor.x + controlPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 12),
+		(windowWidth / 2) - controlPaddingX * 1.5f,
+		fontSize
+	};
+	Rectangle playAgainBtnPos = Rectangle{ windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
+		windowAnchor.y + windowPaddingY + (controlOffsetY * 12),
+		(windowWidth / 2) - controlPaddingX * 1.5f,
+		fontSize
+	};
 
-	// the results screen look a lot better without the window, just printed straight on the board
-	// ::GuiWindowBox(windowRect, "Results"); 
+	if (::GuiWindowBox(windowRect, "Results") ||
+		::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, "Main Menu")))
+	{
+		this->mApp->ChangeToState(CyreyAppState::MainMenu);
+	}
 
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_RIGHT);
 	::GuiLabel(movesLabelPos, "Moves: ");
@@ -1273,6 +1318,7 @@ void Cyrey::Board::DrawResultsScreen() const
 	::GuiLabel(hypercubesLabelPos, "Hypercubes: ");
 	::GuiLabel(bestMoveLabelPos, "Best move (points): ");
 	::GuiLabel(bestCascadeLabelPos, "Highest cascade: ");
+	::GuiLabel(piecesClearedLabelPos, "Pieces cleared: ");
 
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
 	::GuiLabel(movesValuePos, ::TextFormat(" %d", this->mMovesMade));
@@ -1282,15 +1328,26 @@ void Cyrey::Board::DrawResultsScreen() const
 	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", this->mHypercubesDetonated));
 	::GuiLabel(bestMoveValuePos, ::TextFormat(" %d", this->mBestMovePoints));
 	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", this->mBestMoveCascades));
+	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
 
-	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, this->mTileSize - (this->mTileSize / 2));
-	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
-	::GuiLabel(
-		::Rectangle{ this->mXOffset,
-			this->mYOffset + this->mTileSize,
-			static_cast<float>(this->mWidth * this->mTileSize),
-			static_cast<float>(this->mHeight * this->mTileSize) },
-		"Press R to restart the game!"
-	);
-	
+	::GuiDisable();
+	::GuiButton(viewReplayBtnPos, "View Replay");
+	::GuiButton(submitBtnPos, "Submit Score");
+	::GuiEnable();
+
+	if (::GuiButton(playAgainBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Play Again (R)")))
+	{
+		this->ResetBoard();
+	}
+
+	float fontSizeTitle = windowHeight > windowWidth ? windowWidth / 12 : windowHeight / 12;
+	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSizeTitle);
+	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_CENTER);
+
+	Rectangle finalScoreLabel = Rectangle{ windowAnchor.x,
+		windowAnchor.y + windowPaddingY,
+		windowWidth,
+		fontSizeTitle
+	};
+	::GuiLabel(finalScoreLabel, ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime), this->mScore));
 }
