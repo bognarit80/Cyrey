@@ -33,6 +33,8 @@ void Cyrey::Board::Init()
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
+	this->mIsInReplay = false;
+	this->mReplayData = std::make_unique<Replay>();
 	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
@@ -45,8 +47,21 @@ void Cyrey::Board::Update()
 	if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE))
 		this->mZoomPct = Board::cDefaultZoomPct;
 
-	this->UpdateDragging();
-	this->UpdateInput();
+	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration && this->mSecondsRemaining > 0.0f)
+	{
+		this->mSecondsSinceLastCommand += this->mApp->GetDeltaTime();
+	}
+
+	// simple way to disable swaps and other input when in replay, for now
+	if (this->mIsInReplay && this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+	{
+		this->UpdateReplay();
+	}
+	else
+	{
+		this->UpdateDragging();
+		this->UpdateInput();
+	}
 
 	this->UpdateMatchedPieceAnims();
 	this->UpdateDroppedPieceAnims();
@@ -173,6 +188,7 @@ void Cyrey::Board::UpdateInput()
 	switch(key)
 	{
 	case ::KeyboardKey::KEY_R:
+		this->mIsInReplay = false;
 		this->ResetBoard();
 		break;
 	case ::KeyboardKey::KEY_L:
@@ -248,7 +264,19 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 
 void Cyrey::Board::ResetBoard()
 {
-	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", this->mApp->SeedRNG()));
+	unsigned int seed;
+	if (this->mIsInReplay)
+	{
+		seed = this->mReplayData->mSeed;
+		this->mApp->SeedRNG(seed);
+	}
+	else
+	{
+		seed = this->mApp->SeedRNG();
+		this->mReplayData = std::make_unique<Replay>();
+		this->mReplayData->mSeed = seed;
+	}
+	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
 	do
 	{
 		this->mMatchSets.clear();
@@ -449,6 +477,9 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	}
 	this->AddSwerve(swerve);
 
+	this->mReplayData->mCommands.emplace_back(col, row, direction, this->mSecondsSinceLastCommand);
+	this->mSecondsSinceLastCommand = 0.0f;
+
 	return this->TrySwap(col, row, toRow, toCol);
 }
 
@@ -565,8 +596,8 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 			do
 			{
 				count++;
-				row = ::GetRandomValue(0, this->mHeight - 1);
-				col = ::GetRandomValue(0, this->mWidth - 1);
+				row = this->mApp->GetRandomNumber(0, this->mHeight - 1);
+				col = this->mApp->GetRandomNumber(0, this->mWidth - 1);
 				
 				if (count > (this->mWidth * this->mHeight * 10)) [[unlikely]]
 				{
@@ -611,6 +642,20 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 	}
 
 	return piecesCleared;
+}
+
+void Cyrey::Board::UpdateReplay()
+{
+	if (this->mReplayData->mCommands.empty())
+	{
+		return;
+	}
+	ReplayCommand nextCmd = this->mReplayData->mCommands.front();
+	if (this->mSecondsSinceLastCommand >= nextCmd.mSecondsSinceLastCmd)
+	{
+		this->TrySwap(nextCmd.mBoardCol, nextCmd.mBoardRow, nextCmd.mDirection);
+		this->mReplayData->mCommands.pop_front();
+	}
 }
 
 void Cyrey::Board::UpdateMatchedPieceAnims()
@@ -688,6 +733,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
 		this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime; //failsafe
+		this->mSecondsSinceLastCommand = 0.0f;
 	}
 
 	if (this->mSecondsRemaining > this->mApp->mGameConfig.mStartingTime)
@@ -1179,7 +1225,18 @@ void Cyrey::Board::DrawSideUI()
 		static_cast<float>(iconSize) },
 		::GuiIconText(::GuiIconName::ICON_RESTART, "")))
 	{
+		this->mIsInReplay = false;
 		this->ResetBoard();
+	}
+	if (this->mIsInReplay && std::fmod(::GetTime(), 2.0))
+	{
+		::GuiSetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, fontSize);
+		::GuiSetIconScale(fontSize / 16);
+		::GuiLabel(
+			::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 10,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::GuiIconText(::GuiIconName::ICON_PLAYER_RECORD, "Replay")
+		);
 	}
 }
 
@@ -1330,13 +1387,19 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", this->mBestMoveCascades));
 	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
 
+	if (::GuiButton(viewReplayBtnPos, "View Replay"))
+	{
+		this->mIsInReplay = true;
+		this->ResetBoard();
+	}
+
 	::GuiDisable();
-	::GuiButton(viewReplayBtnPos, "View Replay");
 	::GuiButton(submitBtnPos, "Submit Score");
 	::GuiEnable();
 
 	if (::GuiButton(playAgainBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Play Again (R)")))
 	{
+		this->mIsInReplay = false;
 		this->ResetBoard();
 	}
 

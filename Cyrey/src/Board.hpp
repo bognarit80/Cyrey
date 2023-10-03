@@ -9,6 +9,7 @@
 #include <vector>
 #include "PieceMatchAnim.hpp"
 #include "PieceDropAnim.hpp"
+#include "Replay.hpp"
 
 namespace Cyrey
 {
@@ -72,6 +73,9 @@ namespace Cyrey
 		float mGameOverAnimProgress;
 		bool mIsGameOver;
 		static constexpr float cGameOverAnimDuration = 1.0f;
+		bool mIsInReplay;
+		std::unique_ptr<Replay> mReplayData;
+		float mSecondsSinceLastCommand;
 
 		// game stats
 		int mMovesMade;
@@ -108,6 +112,7 @@ namespace Cyrey
 		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
 
 	private:
+		void UpdateReplay();
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
 		void UpdateGameOverAnim();
