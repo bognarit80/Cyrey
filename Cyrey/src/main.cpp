@@ -27,6 +27,7 @@ int main(void)
     }
 #endif
     ::CloseWindow();
+    gApp.mResMgr->UnloadResources(); // calls CloseAudioDevice
 
     return 0;
 }

@@ -29,11 +29,27 @@ if (NOT raygui_FOUND)
     FetchContent_MakeAvailable(raygui)
 endif()
 
+# nlohmann_json
+# find_package(json QUIET)
+# if (NOT json_FOUND)
+#     include(FetchContent)
+#     FetchContent_Declare(
+#         json
+#         GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+#         GIT_TAG v3.11.2
+#     )
+#     FetchContent_MakeAvailable(json)
+# endif()
+
 file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${raygui_SOURCE_DIR}/src" "${raygui_SOURCE_DIR}/styles/cyber")
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
 
 # Web Configurations
 if (EMSCRIPTEN)
@@ -41,5 +57,5 @@ if (EMSCRIPTEN)
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
 
     # Required linker flags for using Raylib with Emscripten
-    target_link_options(${PROJECT_NAME} PRIVATE -sUSE_GLFW=3 -sWASM=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sTOTAL_MEMORY=128mb --shell-file minshell.html)
+    target_link_options(${PROJECT_NAME} PRIVATE -sUSE_GLFW=3 -sWASM=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sTOTAL_MEMORY=128mb --shell-file minshell.html --preload-file "../../../resources")
 endif()

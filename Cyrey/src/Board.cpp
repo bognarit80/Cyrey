@@ -115,6 +115,12 @@ void Cyrey::Board::Update()
 		this->mSecondsRemaining = 0.0f;
 
 	this->UpdateGameOverAnim();
+	// perhaps add PlayMusicStream to each of these, in case we reset the context during gameplay?
+	if (this->mIsGameOver)
+		::UpdateMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
+	else
+		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
+
 }
 
 void Cyrey::Board::Draw()
@@ -277,6 +283,7 @@ void Cyrey::Board::ResetBoard()
 		this->mReplayData->mSeed = seed;
 	}
 	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
+	::PlaySound(this->mApp->mResMgr->mSounds["boardAppear.ogg"]);
 	do
 	{
 		this->mMatchSets.clear();
@@ -297,6 +304,8 @@ void Cyrey::Board::ResetBoard()
 	this->mHypercubesDetonated = 0;
 	this->mBestMovePoints = 0;
 	this->mBestMoveCascades = 0;
+	::StopMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
+	::PlayMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 }
 
 void Cyrey::Board::AddSwerve(::Vector2 swerve)
@@ -512,9 +521,14 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 	bool foundSet1 = this->FindSets(toCol, toRow, this->mBoard[toRow][toCol].mColor);
 	bool foundSet2 = this->FindSets(col, row, this->mBoard[row][col].mColor);
 	if (foundSet1 || foundSet2)
+	{
 		this->mMovesMade++;
+	}
 	else
+	{
 		this->mMissDelay = this->cMissPenalty;
+		::PlaySound(this->mApp->mResMgr->mSounds["badMove.ogg"]);
+	}
 
 	this->UpdateMatchSets();
 
@@ -572,6 +586,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
 	{
 		this->mBombsDetonated++;
+		::PlaySound(this->mApp->mResMgr->mSounds["bombExplode.ogg"]);
 		for (int i = -1; i <= 1; i++)
 		{
 			for (int j = -1; j <= 1; j++)
@@ -590,6 +605,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
 		this->mLightningsDetonated++;
+		::PlaySound(this->mApp->mResMgr->mSounds["lightningExplode.ogg"]);
 		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
 			int row, col, count = 0;
@@ -625,6 +641,7 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 	if (!cubePiece.IsFlagSet(PieceFlag::Hypercube))
 		return 0;
 
+	::PlaySound(this->mApp->mResMgr->mSounds["hypercubeExplode.ogg"]);
 	this->mHypercubesDetonated++;
 	int piecesCleared = 1;
 	PieceColor targetColor = byPiece.mColor != PieceColor::Uncolored ? byPiece.mColor : cubePiece.mOldColor;
@@ -692,6 +709,8 @@ void Cyrey::Board::UpdateGameOverAnim()
 	{
 		this->mGameOverAnimProgress = Board::cGameOverAnimDuration; // failsafe
 		this->mIsGameOver = true;
+		::StopMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
+		::PlayMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
 	}
 	int rowsClearedAfterUpdate = this->mHeight * (this->mGameOverAnimProgress / Board::cGameOverAnimDuration);
 
@@ -702,6 +721,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, true);
 			piece = Cyrey::gNullPiece;
 		}
+		::PlaySound(this->mApp->mResMgr->mSounds["rowBlow.ogg"]);
 	}
 }
 
@@ -798,6 +818,15 @@ int Cyrey::Board::UpdateMatchSets()
 		this->mFallDelay = this->mApp->mGameConfig.mFallDelay;
 		this->AddSwerve(::Vector2{ 0.0f, this->cSwerveCoeff * std::min(this->mCascadeNumber, cMaxCascadesSwerve) * this->mTileSize * 0.75f });
 		this->mCascadeNumber++;
+		if (this->mCascadeNumber <= 1)
+		{
+			::PlaySound(this->mApp->mResMgr->mSounds["match.ogg"]);
+		}
+		else
+		{
+			::SetSoundPitch(this->mApp->mResMgr->mSounds["doubleset.ogg"], 0.7f + (std::min(this->mCascadeNumber, cMaxCascadesSwerve) * 0.15f));
+			::PlaySound(this->mApp->mResMgr->mSounds["doubleset.ogg"]);
+		}
 	}
 	for ( auto &matchSet : this->mMatchSets )
 	{
@@ -814,14 +843,17 @@ int Cyrey::Board::UpdateMatchSets()
 			if (piece == addedPiece && piecesPerSet == 4)
 			{
 				addedPiece->Bombify();
+				::PlaySound(this->mApp->mResMgr->mSounds["bombCreate.ogg"]);
 			}
 			else if (piece == addedPiece && piecesPerSet == 5)
 			{
 				addedPiece->Lightningify();
+				::PlaySound(this->mApp->mResMgr->mSounds["lightningCreate.ogg"]);
 			}
 			else if (piece == addedPiece && piecesPerSet >= 6)
 			{
 				addedPiece->Hypercubify();
+				::PlaySound(this->mApp->mResMgr->mSounds["hypercubeCreate.ogg"]);
 			}
 			
 			piecesCleared += this->MatchPiece(*piece);
@@ -852,6 +884,7 @@ void Cyrey::Board::UpdateFalling()
 			}
 		}
 	}
+	::PlaySound(this->mApp->mResMgr->mSounds["pieceFall.ogg"]);
 	this->FillInBlanks();
 }
 
@@ -898,8 +931,6 @@ void Cyrey::Board::DrawCheckerboard() const
 				(i % 2) ^ (j % 2) ?						//alternate between light and dark every row
 				::ColorAlpha(::LIGHTGRAY, this->mBoardAlpha) :
 				::ColorAlpha(::GRAY, this->mBoardAlpha));
-
-
 		}
 	}
 }
@@ -1228,7 +1259,7 @@ void Cyrey::Board::DrawSideUI()
 		this->mIsInReplay = false;
 		this->ResetBoard();
 	}
-	if (this->mIsInReplay && std::fmod(::GetTime(), 2.0))
+	if (this->mIsInReplay)
 	{
 		::GuiSetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, fontSize);
 		::GuiSetIconScale(fontSize / 16);

@@ -116,6 +116,7 @@ void Cyrey::SettingsMenu::Draw()
 	if (isVsync != this->mIsVSync)
 	{
 		this->mIsVSync = isVsync;
+		this->mApp.ChangeToState(CyreyAppState::Loading);
 		this->mApp.InitWindow(); // We need to reopen the window to apply VSync
 	}
 #endif // __EMSCRIPTEN__

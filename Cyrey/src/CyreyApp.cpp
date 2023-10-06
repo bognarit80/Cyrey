@@ -6,6 +6,7 @@
 #pragma GCC diagnostic ignored "-Wc++11-narrowing" // fix web build
 #include "style_cyber.h"
 #pragma GCC diagnostic pop
+#include <thread>
 
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
@@ -20,9 +21,9 @@ void Cyrey::CyreyApp::Init()
     this->mWantExit = false;
     this->mOldWindowSize = ::Vector2{ static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
     this->mHasWindow = false;
-    this->mFinishedLoading = false;
     this->mMTInstance = std::mt19937{}; // init the object first, we will reseed for sure
 
+    this->mResMgr = std::make_unique<ResourceManager>();
     this->InitWindow();
     this->mGameConfig = GameConfig::GetLatestConfig();
     this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
@@ -39,6 +40,7 @@ void Cyrey::CyreyApp::InitWindow()
     if (this->mHasWindow)
     {
         ::CloseWindow();
+        this->mResMgr->UnloadResources();
 
         // We always get here through settings, so it's guaranteed that they are available.
         this->mSettings->mIsFullscreen ?
@@ -49,7 +51,6 @@ void Cyrey::CyreyApp::InitWindow()
             ::SetConfigFlags(::ConfigFlags::FLAG_VSYNC_HINT) :
             ::ClearWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
     }
-    // TODO: Add local user configs here, for fullscreen, vsync and everything else that's added later.
     ::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
         
     ::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
@@ -59,6 +60,12 @@ void Cyrey::CyreyApp::InitWindow()
 
     // Load all textures and sounds
     ::GuiLoadStyleCyber();
+    ::InitAudioDevice();
+#if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
+    std::thread([this] { this->mResMgr->LoadResources(); }).detach();
+#else
+    this->mResMgr->LoadResources();
+#endif // !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 }
 
 void Cyrey::CyreyApp::GameLoop()
@@ -80,15 +87,24 @@ void Cyrey::CyreyApp::Update()
 
     this->mState = this->mChangeToState;
 
+    this->mResMgr->SetVolume(this->mSettings->mSoundVolume, this->mSettings->mMusicVolume); // func performs checks if sounds are loaded
+
     switch (this->mState)
     {
     case CyreyAppState::Loading:
-        if (this->LoadingThread())
-            this->ChangeToState(CyreyAppState::MainMenu);
+        if (this->mResMgr->HasFinishedLoading())
+        {
+            if (this->mPrevState == CyreyAppState::Loading)
+                this->ChangeToState(CyreyAppState::MainMenu);
+            else
+                // we can really only get to loading again by reopening window, i.e. from settings
+                this->ChangeToState(CyreyAppState::SettingsMenu);
+        }
         break;
 
     case CyreyAppState::MainMenu:
         this->mMainMenu->Update();
+        ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
         if (this->mMainMenu->mIsPlayBtnPressed)
         {
             this->ChangeToState(CyreyAppState::InGame);
@@ -102,6 +118,7 @@ void Cyrey::CyreyApp::Update()
 
     case CyreyAppState::SettingsMenu:
         this->mSettings->Update();
+        ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
         break;
 
     default:
@@ -118,6 +135,9 @@ void Cyrey::CyreyApp::Draw() const
         switch (this->mState)
         {
         case CyreyAppState::Loading:
+            ::GuiLabel(Rectangle{ static_cast<float>(this->mWidth) / 2,
+                static_cast<float>(this->mHeight) / 2 ,
+                300, 300}, "Loading...");
             break;
 
         case CyreyAppState::MainMenu:
@@ -151,7 +171,32 @@ float Cyrey::CyreyApp::GetDeltaTime() const
 void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 {
     this->mChangeToState = state;
-    this->mPrevState = this->mState;
+    if (this->mState != CyreyAppState::Loading && state != CyreyAppState::Loading) // prevent switching back to loading state
+        this->mPrevState = this->mState;
+
+    switch (state)
+    {
+    case Cyrey::CyreyAppState::Loading:
+        break;
+    case Cyrey::CyreyAppState::MainMenu:
+        if (this->mPrevState != CyreyAppState::SettingsMenu)
+        {
+            ::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+            ::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+        }
+        break;
+    case Cyrey::CyreyAppState::InGame:
+        break;
+    case Cyrey::CyreyAppState::SettingsMenu:
+        if (this->mPrevState != CyreyAppState::MainMenu)
+        {
+            ::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+            ::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void Cyrey::CyreyApp::ToggleFullscreen()
@@ -168,12 +213,6 @@ void Cyrey::CyreyApp::ToggleFullscreen()
         ::SetWindowSize(::GetMonitorWidth(currentMonitor), ::GetMonitorHeight(currentMonitor));
         ::ToggleFullscreen();
     }
-}
-
-bool Cyrey::CyreyApp::LoadingThread()
-{
-    this->mFinishedLoading = true;
-    return true;
 }
 
 unsigned int Cyrey::CyreyApp::SeedRNG()
