@@ -10,11 +10,16 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
-# output folder
+# output folders
 out
+cmake-build-debug
+cmake-build-release
 
 # resources folder
 resources
 
 # Visual Studio
 .vs
+
+# Idea
+.idea

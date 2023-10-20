@@ -9,20 +9,12 @@
 #include <vector>
 #include "PieceMatchAnim.hpp"
 #include "PieceDropAnim.hpp"
+#include "SwapDirection.hpp"
 #include "Replay.hpp"
 
 namespace Cyrey
 {
 	class CyreyApp;
-
-	enum class SwapDirection
-	{
-		None,
-		Up,
-		Down,
-		Left,
-		Right
-	};
 
 	class Board
 	{
@@ -75,6 +67,7 @@ namespace Cyrey
 		static constexpr float cGameOverAnimDuration = 1.0f;
 		bool mIsInReplay;
 		std::unique_ptr<Replay> mReplayData;
+		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
 		float mSecondsSinceLastCommand;
 
 		// game stats

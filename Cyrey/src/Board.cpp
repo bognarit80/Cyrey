@@ -3,6 +3,7 @@
 #include "raygui.h"
 #include "raymath.h"
 #include <cmath>
+#include <cstring>
 
 void Cyrey::Board::Init()
 {
@@ -273,7 +274,7 @@ void Cyrey::Board::ResetBoard()
 	unsigned int seed;
 	if (this->mIsInReplay)
 	{
-		seed = this->mReplayData->mSeed;
+		seed = this->mReplayCopy->mSeed;
 		this->mApp->SeedRNG(seed);
 	}
 	else
@@ -486,8 +487,11 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	}
 	this->AddSwerve(swerve);
 
-	this->mReplayData->mCommands.emplace_back(col, row, direction, this->mSecondsSinceLastCommand);
-	this->mSecondsSinceLastCommand = 0.0f;
+	if (!this->mIsInReplay)
+	{
+		this->mReplayData->mCommands.emplace_back(this->mReplayData->mCommands.size(), col, row, direction, this->mSecondsSinceLastCommand);
+		this->mSecondsSinceLastCommand = 0.0f;
+	}
 
 	return this->TrySwap(col, row, toRow, toCol);
 }
@@ -663,15 +667,27 @@ int Cyrey::Board::DoHypercube(Piece& cubePiece, const Piece& byPiece)
 
 void Cyrey::Board::UpdateReplay()
 {
-	if (this->mReplayData->mCommands.empty())
+	if (this->mReplayCopy->mCommands.empty())
 	{
 		return;
 	}
-	ReplayCommand nextCmd = this->mReplayData->mCommands.front();
+	ReplayCommand nextCmd = this->mReplayCopy->mCommands.front();
 	if (this->mSecondsSinceLastCommand >= nextCmd.mSecondsSinceLastCmd)
 	{
-		this->TrySwap(nextCmd.mBoardCol, nextCmd.mBoardRow, nextCmd.mDirection);
-		this->mReplayData->mCommands.pop_front();
+		bool swapSuccessful = this->TrySwap(nextCmd.mBoardCol, nextCmd.mBoardRow, nextCmd.mDirection);
+		// Add an #ifdef _DEBUG here later
+		bool swapQueued = this->mQueuedSwapDirection != SwapDirection::None;
+		::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
+			::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
+				swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
+				nextCmd.mCommandNumber,
+				this->mSecondsSinceLastCommand,
+				nextCmd.mSecondsSinceLastCmd,
+				this->mFallDelay,
+				this->mSecondsRemaining,
+				this->mReplayCopy->mCommands.size()));
+		this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
+		this->mReplayCopy->mCommands.pop_front();
 	}
 }
 
@@ -709,6 +725,11 @@ void Cyrey::Board::UpdateGameOverAnim()
 	{
 		this->mGameOverAnimProgress = Board::cGameOverAnimDuration; // failsafe
 		this->mIsGameOver = true;
+		if (this->mIsInReplay && this->mReplayCopy->mScore != this->mScore)
+			::TraceLog(::TraceLogLevel::LOG_WARNING, "Replay score mismatch!");
+		else
+			this->mReplayData->mScore = this->mScore;
+
 		::StopMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
 		::PlayMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
 	}
@@ -1242,6 +1263,8 @@ void Cyrey::Board::DrawSideUI()
 	int iconScale = iconSize / 16;
 	::GuiSetIconScale(iconScale);
 
+	if (this->mIsGameOver)
+		::GuiDisable();
 	if (::GuiButton(::Rectangle{ this->mXOffset - iconSize - (this->mTileSize / 2),
 		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
 		static_cast<float>(iconSize), 
@@ -1250,6 +1273,8 @@ void Cyrey::Board::DrawSideUI()
 	{
 		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
 	}
+	::GuiEnable();
+
 	if (::GuiButton(::Rectangle{ this->mXOffset - (iconSize * 2.25f) - (this->mTileSize / 2),
 		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
 		static_cast<float>(iconSize),
@@ -1421,12 +1446,15 @@ void Cyrey::Board::DrawResultsScreen()
 	if (::GuiButton(viewReplayBtnPos, "View Replay"))
 	{
 		this->mIsInReplay = true;
+		this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
 		this->ResetBoard();
 	}
 
-	::GuiDisable();
-	::GuiButton(submitBtnPos, "Submit Score");
-	::GuiEnable();
+	if (::GuiButton(submitBtnPos, "Save Replay"))
+    {
+        Replay::SaveReplayToFile(*this->mReplayData,
+                                 ::TextFormat("%s/cyrey_%d.cyrep", Replay::cReplaysFolderName, time(nullptr)));
+    }
 
 	if (::GuiButton(playAgainBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Play Again (R)")))
 	{

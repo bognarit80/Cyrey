@@ -4,6 +4,7 @@
 #include "raygui.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wc++11-narrowing" // fix web build
+#pragma GCC diagnostic ignored "-Wnarrowing" // fix clang build
 #include "style_cyber.h"
 #pragma GCC diagnostic pop
 #include <thread>
