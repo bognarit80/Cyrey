@@ -36,6 +36,7 @@ void Cyrey::Board::Init()
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
 	this->mIsInReplay = false;
 	this->mReplayData = std::make_unique<Replay>();
+    this->mSavedReplay = false;
 	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
@@ -121,6 +122,20 @@ void Cyrey::Board::Update()
 		::UpdateMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
 	else
 		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
+
+    this->mHasDroppedFile = ::IsFileDropped();
+    if (this->mHasDroppedFile)
+    {
+        ::FilePathList fileList = ::LoadDroppedFiles();
+
+        // TODO: Add error handling, also probably move it to CyreyApp class
+        this->mReplayData = std::make_unique<Replay>(Replay::OpenReplayFile(*fileList.paths));
+        this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
+        this->mIsInReplay = true;
+        this->ResetBoard();
+
+        ::UnloadDroppedFiles(fileList);
+    }
 
 }
 
@@ -296,6 +311,7 @@ void Cyrey::Board::ResetBoard()
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
+    this->mSavedReplay = false;
 
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
@@ -1416,6 +1432,11 @@ void Cyrey::Board::DrawResultsScreen()
 		(windowWidth / 2) - controlPaddingX * 1.5f,
 		fontSize
 	};
+    Rectangle dialogPos = Rectangle{ windowAnchor.x + (windowWidth / 4),
+        (appHeight / 2),
+        (windowWidth / 2),
+        fontSize * 5
+    };
 
 	if (::GuiWindowBox(windowRect, "Results") ||
 		::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, "Main Menu")))
@@ -1450,11 +1471,26 @@ void Cyrey::Board::DrawResultsScreen()
 		this->ResetBoard();
 	}
 
-	if (::GuiButton(submitBtnPos, "Save Replay"))
+    if (this->mSavedReplay)
+        ::GuiDisable();
+	if (::GuiButton(submitBtnPos, this->mSavedReplay ? "Success!" : "Save Replay"))
     {
-        Replay::SaveReplayToFile(*this->mReplayData,
-                                 ::TextFormat("%s/cyrey_%d.cyrep", Replay::cReplaysFolderName, time(nullptr)));
+        auto currentTime = time(nullptr);
+        tm *timeDetails = localtime(&currentTime);
+        if (Replay::SaveReplayToFile(*this->mReplayData,
+            ::TextFormat("%s/cyrey_%d-%02d-%02d_%02d-%02d-%02d.cyrep",
+                         Replay::cReplaysFolderName,
+                         timeDetails->tm_year + 1900,
+                         timeDetails->tm_mon + 1,
+                         timeDetails->tm_mday,
+                         timeDetails->tm_hour,
+                         timeDetails->tm_min,
+                         timeDetails->tm_sec)))
+        {
+            this->mSavedReplay = true;
+        }
     }
+    ::GuiEnable();
 
 	if (::GuiButton(playAgainBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Play Again (R)")))
 	{

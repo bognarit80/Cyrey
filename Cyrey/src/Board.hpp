@@ -69,6 +69,8 @@ namespace Cyrey
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
 		float mSecondsSinceLastCommand;
+        bool mSavedReplay;
+        bool mHasDroppedFile;
 
 		// game stats
 		int mMovesMade;
