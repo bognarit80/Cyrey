@@ -69,8 +69,9 @@ namespace Cyrey
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
 		float mSecondsSinceLastCommand;
-        bool mSavedReplay;
+        bool mHasSavedReplay;
         bool mHasDroppedFile;
+        std::optional<Replay> mDroppedReplay;
 
 		// game stats
 		int mMovesMade;
@@ -116,6 +117,7 @@ namespace Cyrey
 		void UpdateDragging();
 		int UpdateMatchSets(); //returns the amount of match sets processed
 		void UpdateFalling();
+        void UpdateDroppedFiles();
 		void FillInBlanks();
 		void DrawCheckerboard() const;
 		void DrawBorder() const;

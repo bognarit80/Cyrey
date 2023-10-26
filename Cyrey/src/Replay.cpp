@@ -40,42 +40,49 @@ std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
     return data;
 }
 
-Cyrey::Replay Cyrey::Replay::Deserialize(const std::vector<std::uint8_t> &data)
+std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::uint8_t> &data)
 {
-    Replay replay{};
-
+    // Verify the file's magic
     char magic[6];
     magic[5] = 0;
     std::memcpy(magic, data.data(), 5);
     if (strcmp(magic, "CYREP") != 0)
     {
-        ::TraceLog(::TraceLogLevel::LOG_WARNING, "File is not a Cyrey Replay!");
+        ::TraceLog(::TraceLogLevel::LOG_ERROR, "File is not a Cyrey Replay!");
+        return std::nullopt;
     }
+
+    Replay replay{};
 
     replay.mConfigVersion = data[5];
 
-    int64_t scoreData;
-    std::memcpy(&scoreData, data.data() + 6, 8);
-    replay.mScore = scoreData;
+    std::memcpy(&replay.mScore, data.data() + 6, sizeof(replay.mScore));
+    std::memcpy(&replay.mSeed, data.data() + 14, sizeof(replay.mSeed));
 
-    unsigned int seedData;
-    std::memcpy(&seedData, data.data() + 14, 4);
-    replay.mSeed = seedData;
-
-    uint64_t cmdsNum = (data.size() - 19) / 8;
-    for (int i = 0; i < cmdsNum; i++)
+    int replayCmdSize = 8; // IMPORTANT: keep this up to date with changes to the structure!
+    uint64_t cmdsAmount = (data.size() - 19) / replayCmdSize; // way too simple, no special indicator bytes nor anything, review later
+    for (int i = 0; i < cmdsAmount; i++)
     {
-        std::vector<uint8_t> cmdData(8);
-        std::memcpy(cmdData.data(), data.data() + 18 + (i * 8), 8);
+        std::vector<uint8_t> cmdData(replayCmdSize);
+        std::memcpy(cmdData.data(), data.data() + 18 + (i * replayCmdSize), replayCmdSize);
         replay.mCommands.push_back(ReplayCommand::Deserialize(cmdData));
+    }
+    unsigned char nextByte = data[18 + (cmdsAmount * replayCmdSize)];
+    if (nextByte != 0)
+    {
+        ::TraceLog(::TraceLogLevel::LOG_ERROR, ::TextFormat("Last byte of file is 0x%hhX instead of 0x00!", nextByte));
+        return std::nullopt;
     }
 
     return replay;
 }
 
-Cyrey::Replay Cyrey::Replay::OpenReplayFile(const char *fileName) {
+std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char *fileName) {
     int dataRead;
     unsigned char* fileData = ::LoadFileData(fileName, &dataRead);
+    if (!fileData)
+        return std::nullopt;
+
     std::vector<uint8_t> data(dataRead);
     std::memcpy(data.data(), fileData, dataRead);
     ::UnloadFileData(fileData);
@@ -98,8 +105,8 @@ std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const Cyrey::ReplayCommand&
     data.insert(data.end(), cmd.mBoardCol);
     data.insert(data.end(), cmd.mBoardRow);
     data.insert(data.end(), static_cast<uint8_t>(cmd.mDirection));
-    uint8_t floatData[4];
-    std::memcpy(floatData, &cmd.mSecondsSinceLastCmd, 4);
+    uint8_t floatData[sizeof(cmd.mSecondsSinceLastCmd)];
+    std::memcpy(floatData, &cmd.mSecondsSinceLastCmd, sizeof(cmd.mSecondsSinceLastCmd));
     data.insert(data.end(), {floatData[0], floatData[1], floatData[2], floatData[3]});
 
     return data;
@@ -113,9 +120,7 @@ Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::vector<uint8_t
     cmd.mBoardCol = data[1];
     cmd.mBoardRow = data[2];
     cmd.mDirection = static_cast<SwapDirection>(data[3]);
-    float floatData;
-    std::memcpy(&floatData, data.data() + 4, 4);
-    cmd.mSecondsSinceLastCmd = floatData;
+    std::memcpy(&cmd.mSecondsSinceLastCmd, data.data() + 4, sizeof(cmd.mSecondsSinceLastCmd));
 
     return cmd;
 }

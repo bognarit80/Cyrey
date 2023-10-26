@@ -3,7 +3,6 @@
 #include "raygui.h"
 #include "raymath.h"
 #include <cmath>
-#include <cstring>
 
 void Cyrey::Board::Init()
 {
@@ -36,7 +35,8 @@ void Cyrey::Board::Init()
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
 	this->mIsInReplay = false;
 	this->mReplayData = std::make_unique<Replay>();
-    this->mSavedReplay = false;
+    this->mHasSavedReplay = false;
+    this->mHasDroppedFile = false;
 	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
@@ -123,20 +123,7 @@ void Cyrey::Board::Update()
 	else
 		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 
-    this->mHasDroppedFile = ::IsFileDropped();
-    if (this->mHasDroppedFile)
-    {
-        ::FilePathList fileList = ::LoadDroppedFiles();
-
-        // TODO: Add error handling, also probably move it to CyreyApp class
-        this->mReplayData = std::make_unique<Replay>(Replay::OpenReplayFile(*fileList.paths));
-        this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
-        this->mIsInReplay = true;
-        this->ResetBoard();
-
-        ::UnloadDroppedFiles(fileList);
-    }
-
+    this->UpdateDroppedFiles();
 }
 
 void Cyrey::Board::Draw()
@@ -297,6 +284,7 @@ void Cyrey::Board::ResetBoard()
 		seed = this->mApp->SeedRNG();
 		this->mReplayData = std::make_unique<Replay>();
 		this->mReplayData->mSeed = seed;
+        this->mReplayData->mConfigVersion = this->mApp->mGameConfig.mVersion;
 	}
 	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
 	::PlaySound(this->mApp->mResMgr->mSounds["boardAppear.ogg"]);
@@ -311,7 +299,7 @@ void Cyrey::Board::ResetBoard()
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
-    this->mSavedReplay = false;
+    this->mHasSavedReplay = false;
 
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
@@ -925,6 +913,56 @@ void Cyrey::Board::UpdateFalling()
 	this->FillInBlanks();
 }
 
+void Cyrey::Board::UpdateDroppedFiles() {
+    if (::IsFileDropped())
+    {
+        ::FilePathList fileList;
+        fileList = ::LoadDroppedFiles();
+        if (fileList.paths != nullptr)
+            this->mDroppedReplay = Replay::OpenReplayFile(fileList.paths[0]);
+
+        this->mHasDroppedFile = true;
+        ::UnloadDroppedFiles(fileList);
+    }
+
+    if (!this->mHasDroppedFile)
+        return;
+
+    // TODO: handle dropped files in the CyreyApp class instead
+
+    if (this->mDroppedReplay.has_value())
+    {
+        this->mReplayData = std::make_unique<Replay>(*this->mDroppedReplay);
+        this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
+        this->mIsInReplay = true;
+        this->ResetBoard();
+        this->mDroppedReplay = std::nullopt;
+        this->mHasDroppedFile = false;
+    }
+    else
+    {
+        int fontSize = this->mApp->mHeight / 18;
+        ::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
+        const char* text = "Failed to open file.";
+        Vector2 textSize = ::MeasureTextEx(::GuiGetFont(),
+                                          text,
+                                          static_cast<float>(fontSize),
+                                          ::GuiGetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SPACING));
+        float dialogWidth = textSize.x * 1.4f;
+        float dialogHeight = textSize.y + (static_cast<float>(fontSize) * 2);
+        auto appWidth = static_cast<float>(this->mApp->mWidth);
+        auto appHeight = static_cast<float>(this->mApp->mHeight);
+
+        Rectangle dialogPos = { (appWidth / 2) - (dialogWidth / 2),
+                                (appHeight / 2) - (dialogHeight / 2),
+                                dialogWidth,
+                                dialogHeight
+        };
+        if(::GuiMessageBox(dialogPos, "Error", text, "OK") != -1)
+            this->mHasDroppedFile = false;
+    }
+}
+
 void Cyrey::Board::FillInBlanks()
 {
 	for (int i = 0; i < this->mHeight; i++)
@@ -1471,9 +1509,9 @@ void Cyrey::Board::DrawResultsScreen()
 		this->ResetBoard();
 	}
 
-    if (this->mSavedReplay)
+    if (this->mHasSavedReplay)
         ::GuiDisable();
-	if (::GuiButton(submitBtnPos, this->mSavedReplay ? "Success!" : "Save Replay"))
+	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Success!" : "Save Replay"))
     {
         auto currentTime = time(nullptr);
         tm *timeDetails = localtime(&currentTime);
@@ -1487,7 +1525,7 @@ void Cyrey::Board::DrawResultsScreen()
                          timeDetails->tm_min,
                          timeDetails->tm_sec)))
         {
-            this->mSavedReplay = true;
+            this->mHasSavedReplay = true;
         }
     }
     ::GuiEnable();
