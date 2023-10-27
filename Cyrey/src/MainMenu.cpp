@@ -27,7 +27,7 @@ void Cyrey::MainMenu::Draw()
 	int fontSize = ::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE);
 
 	::GuiLabel(
-		::Rectangle{ 0, this->mApp.mHeight * 0.125f,
+		::Rectangle{ 0, this->mApp.mHeight * 0.1f,
 			static_cast<float>(this->mApp.mWidth), static_cast<float>(fontSize) },
 		MainMenu::cTitleName
 	);
@@ -43,18 +43,30 @@ void Cyrey::MainMenu::Draw()
 
 	this->mIsPlayBtnPressed = ::GuiButton(
 		::Rectangle{ appWidth / 2 - buttonWidth / 2,
-			appHeight * 0.50f - fontSize / 2,
+			appHeight * 0.45f - fontSize / 2,
 			buttonWidth,
-			fontSize * 1.1f
+			fontSize * 1.05f
 		},
 		MainMenu::cPlayBtnText
 	);
 
+    if (::GuiButton(
+            ::Rectangle{ appWidth / 2 - buttonWidth / 2,
+                         appHeight * 0.59f - fontSize / 2,
+                         buttonWidth,
+                         fontSize * 1.05f
+            },
+            MainMenu::cReplaysBtnText
+    ))
+    {
+        this->mApp.ChangeToState(CyreyAppState::ReplaysMenu);
+    }
+
 	if (::GuiButton(
 		::Rectangle{ appWidth / 2 - buttonWidth / 2,
-			appHeight * 0.65f - fontSize / 2,
+			appHeight * 0.73f - fontSize / 2,
 			buttonWidth,
-			fontSize * 1.1f
+			fontSize * 1.05f
 		},
 		MainMenu::cSettingsBtnText
 	))
@@ -65,9 +77,9 @@ void Cyrey::MainMenu::Draw()
 #ifndef __EMSCRIPTEN__ //no quit button on web version
 	if (::GuiButton(
 		::Rectangle{ appWidth / 2 - buttonWidth / 2,
-			appHeight * 0.80f - fontSize / 2,
+			appHeight * 0.87f - fontSize / 2,
 			buttonWidth,
-			fontSize * 1.1f
+			fontSize * 1.05f
 		},
 		MainMenu::cQuitBtnText
 	))

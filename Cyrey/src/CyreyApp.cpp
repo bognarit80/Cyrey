@@ -34,6 +34,7 @@ void Cyrey::CyreyApp::Init()
     this->mMainMenu->Init();
     this->mCurrentUser = std::make_unique<User>();
     this->mSettings = std::make_unique<SettingsMenu>(*this);
+    this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);
 }
 
 void Cyrey::CyreyApp::InitWindow()
@@ -122,6 +123,11 @@ void Cyrey::CyreyApp::Update()
         ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
         break;
 
+    case CyreyAppState::ReplaysMenu:
+        this->mReplaysMenu->Update();
+        ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+        break;
+
     default:
         break;
     }
@@ -153,6 +159,10 @@ void Cyrey::CyreyApp::Draw() const
             this->mSettings->Draw();
             break;
 
+        case CyreyAppState::ReplaysMenu:
+            this->mReplaysMenu->Draw();
+            break;
+
         default:
             break;
         }
@@ -180,7 +190,7 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
     case Cyrey::CyreyAppState::Loading:
         break;
     case Cyrey::CyreyAppState::MainMenu:
-        if (this->mPrevState != CyreyAppState::SettingsMenu)
+        if (this->mPrevState != CyreyAppState::SettingsMenu && this->mPrevState != CyreyAppState::ReplaysMenu)
         {
             ::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
             ::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
@@ -194,6 +204,9 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
             ::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
             ::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
         }
+        break;
+    case CyreyAppState::ReplaysMenu:
+        this->mReplaysMenu->RefreshReplayList();
         break;
     default:
         break;

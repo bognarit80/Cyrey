@@ -8,6 +8,7 @@
 #include "SettingsMenu.hpp"
 #include "GameConfig.hpp"
 #include "ResourceManager.hpp"
+#include "ReplaysMenu.hpp"
 #include <memory>
 #include <random>
 
@@ -17,6 +18,7 @@ namespace Cyrey
 	class MainMenu;
 	class User;
 	class SettingsMenu;
+    class ReplaysMenu;
 	struct GameConfig;
 
 	enum class CyreyAppState
@@ -24,7 +26,8 @@ namespace Cyrey
 		Loading,
 		MainMenu,
 		InGame,
-		SettingsMenu
+		SettingsMenu,
+        ReplaysMenu
 	};
 
 	class CyreyApp
@@ -53,6 +56,7 @@ namespace Cyrey
 		GameConfig mGameConfig;
 		bool mHasWindow;
 		std::unique_ptr<ResourceManager> mResMgr;
+        std::unique_ptr<ReplaysMenu> mReplaysMenu;
 
 		static constexpr char cTitle[] = "Cyrey";
 

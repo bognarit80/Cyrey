@@ -13,7 +13,8 @@ namespace Cyrey
 		CyreyApp &mApp;
 		bool mIsPlayBtnPressed;
 		static constexpr char cTitleName[] = "Cyrey";
-		static constexpr char cPlayBtnText[] = "Play";
+        static constexpr char cPlayBtnText[] = "Play";
+        static constexpr char cReplaysBtnText[] = "Replays";
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 
