@@ -858,7 +858,7 @@ int Cyrey::Board::UpdateMatchSets()
 		int piecesPerSet = matchSet.mPieces.size();
 		int addedPiecesPerSet = matchSet.mAddedPieces.size();
 		//make the special at the added piece, or in the middle of the set if no pieces were added
-		Piece* addedPiece = addedPiecesPerSet > 0 ? 
+		Piece* addedPiece = addedPiecesPerSet > 0 ?
 			matchSet.mAddedPieces[addedPiecesPerSet / 2] : 
 			matchSet.mPieces[piecesPerSet / 2];
 		int piecesCleared = 0;

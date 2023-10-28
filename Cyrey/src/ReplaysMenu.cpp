@@ -44,6 +44,11 @@ void Cyrey::ReplaysMenu::Draw()
                              (windowWidth - (windowPaddingX * 2)) * 0.475f,
                              fontSize
     };
+    Rectangle noReplaysPos = { windowAnchor.x + windowPaddingX,
+                               windowAnchor.y + windowPaddingY,
+                               windowWidth - (windowPaddingX * 2),
+                               fontSize
+    };
 
     if (::GuiWindowBox(windowRect, ReplaysMenu::cTitleText) ||
         ::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_OK_TICK, ReplaysMenu::cBackBtnText)))
@@ -59,12 +64,14 @@ void Cyrey::ReplaysMenu::Draw()
                     &this->mScrollIndex,
                     &this->mActive,
                     &this->mFocus);
+
+    if (this->mReplayPaths.count <= 0)
+        ::GuiLabel(noReplaysPos, ReplaysMenu::cNoReplaysText);
 }
 
 void Cyrey::ReplaysMenu::RefreshReplayList()
 {
-    if (!::DirectoryExists(ReplaysMenu::cReplaysFolderPath))
-        return;
+    // TODO: Make this async
 
     if (this->mReplayPaths.count != 0)
         ::UnloadDirectoryFiles(this->mReplayPaths);

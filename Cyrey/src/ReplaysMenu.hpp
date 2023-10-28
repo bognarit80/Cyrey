@@ -26,10 +26,10 @@ namespace Cyrey
         int mScrollIndex;
         int mFocus;
 
-
         static constexpr char cReplaysFolderPath[] = "replays";
         static constexpr char cTitleText[] = "Replays";
         static constexpr char cBackBtnText[] = "Done";
+        static constexpr char cNoReplaysText[] = "No replays found.";
 
     };
 
