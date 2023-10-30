@@ -932,10 +932,7 @@ void Cyrey::Board::UpdateDroppedFiles() {
 
     if (this->mDroppedReplay.has_value())
     {
-        this->mReplayData = std::make_unique<Replay>(*this->mDroppedReplay);
-        this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
-        this->mIsInReplay = true;
-        this->ResetBoard();
+        this->PlayReplay(*this->mDroppedReplay);
         this->mDroppedReplay = std::nullopt;
         this->mHasDroppedFile = false;
     }
@@ -1503,11 +1500,7 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
 
 	if (::GuiButton(viewReplayBtnPos, "View Replay"))
-	{
-		this->mIsInReplay = true;
-		this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
-		this->ResetBoard();
-	}
+		this->PlayReplay();
 
     if (this->mHasSavedReplay)
         ::GuiDisable();
@@ -1516,7 +1509,7 @@ void Cyrey::Board::DrawResultsScreen()
         auto currentTime = time(nullptr);
         tm *timeDetails = localtime(&currentTime);
         if (Replay::SaveReplayToFile(*this->mReplayData,
-            ::TextFormat("%s/cyrey_%d-%02d-%02d_%02d-%02d-%02d.cyrep",
+            ::TextFormat("%s/cyrey_%d%02d%02d_%02d%02d%02d.cyrep",
                          Replay::cReplaysFolderName,
                          timeDetails->tm_year + 1900,
                          timeDetails->tm_mon + 1,
@@ -1546,4 +1539,17 @@ void Cyrey::Board::DrawResultsScreen()
 		fontSizeTitle
 	};
 	::GuiLabel(finalScoreLabel, ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime), this->mScore));
+}
+
+void Cyrey::Board::PlayReplay()
+{
+    this->mIsInReplay = true;
+    this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
+    this->ResetBoard();
+}
+
+void Cyrey::Board::PlayReplay(const Cyrey::Replay &replay)
+{
+    this->mReplayData = std::make_unique<Replay>(replay);
+    this->PlayReplay();
 }

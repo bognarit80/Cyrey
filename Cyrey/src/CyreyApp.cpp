@@ -124,9 +124,23 @@ void Cyrey::CyreyApp::Update()
         break;
 
     case CyreyAppState::ReplaysMenu:
+    {
         this->mReplaysMenu->Update();
         ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
+        int selectedIdx = this->mReplaysMenu->mActive;
+        if (selectedIdx != -1)
+        {
+            std::optional<Replay> rep = Replay::OpenReplayFile(this->mReplaysMenu->mReplayPaths.paths[selectedIdx]);
+            if (rep.has_value())
+            {
+                this->ChangeToState(CyreyAppState::InGame);
+                this->mBoard->Init();
+                this->mBoard->PlayReplay(*rep);
+                this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update
+            }
+        }
         break;
+    }
 
     default:
         break;

@@ -13,24 +13,24 @@ namespace Cyrey
         explicit ReplaysMenu(CyreyApp& app);
         ~ReplaysMenu();
 
-        void Update();
-        void Draw(); // not const because we want raygui functions to modify members
-        void RefreshReplayList();
-
-    private:
         ::FilePathList mReplayPaths;
-        CyreyApp& mApp;
 
         // ListView variables
         int mActive;
         int mScrollIndex;
         int mFocus;
 
+        void Update();
+        void Draw(); // not const because we want raygui functions to modify members
+        void RefreshReplayList();
+
+    private:
+        CyreyApp& mApp;
+
         static constexpr char cReplaysFolderPath[] = "replays";
         static constexpr char cTitleText[] = "Replays";
-        static constexpr char cBackBtnText[] = "Done";
+        static constexpr char cBackBtnText[] = "Back";
         static constexpr char cNoReplaysText[] = "No replays found.";
-
     };
 
 } // Cyrey

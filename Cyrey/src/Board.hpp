@@ -106,6 +106,8 @@ namespace Cyrey
 		constexpr bool IsPositionLegal(int col, int row) const;
 		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); //returns the amount of pieces cleared, if the piece was special
 		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
+        void PlayReplay();
+        void PlayReplay(const Replay& replay);
 
 	private:
 		void UpdateReplay();
