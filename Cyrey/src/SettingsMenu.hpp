@@ -16,8 +16,9 @@ namespace Cyrey
 		float mSwapDeadZone; //percentage of tile size before the drag turns into a swap
 		bool mWantBoardSwerve;
 		float mQueueSwapTolerance;
+        bool mWantReplayAutoSave;
 
-		SettingsMenu(CyreyApp& app) :
+		explicit SettingsMenu(CyreyApp& app) :
 			mMusicVolume(cMusicVolume),
 			mSoundVolume(cSoundVolume),
 			mIsFullscreen(cWantFullscreen),
@@ -25,6 +26,7 @@ namespace Cyrey
 			mSwapDeadZone(cSwapDeadZone),
 			mWantBoardSwerve(cWantBoardSwerve),
 			mQueueSwapTolerance(cQueueSwapTolerance),
+            mWantReplayAutoSave(cWantReplayAutoSave),
 			mApp(app) {};
 
 		void Update();
@@ -41,6 +43,7 @@ namespace Cyrey
 		static constexpr float cSwapDeadZone = 0.33f;
 		static constexpr bool cWantBoardSwerve = true;
 		static constexpr float cQueueSwapTolerance = 0.15f;
+		static constexpr bool cWantReplayAutoSave = true;
 
 		static constexpr char cWindowText[] = "Settings";
 		static constexpr char cMusicSliderText[] = "Music volume";
@@ -51,6 +54,7 @@ namespace Cyrey
 		static constexpr char cFullscreenCheckText[] = "Enable Fullscreen";
 		static constexpr char cVsyncCheckText[] = "Enable V-Sync";
 		static constexpr char cDefaultsButtonText[] = "Reset to default";
+		static constexpr char cReplayAutoSaveText[] = "Auto-save Replays";
 		static constexpr char cMainMenuButtonText[] = "Main Menu";
 		static constexpr char cDoneButtonText[] = "Done";
 		static constexpr char cOff[] = "Off";

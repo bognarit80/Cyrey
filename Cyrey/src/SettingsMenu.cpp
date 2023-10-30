@@ -67,23 +67,28 @@ void Cyrey::SettingsMenu::Draw()
 		fontSize,
 		fontSize
 	};
+    Rectangle autoSaveCheckPos = Rectangle{ windowAnchor.x + windowPaddingX,
+                                            windowAnchor.y + windowPaddingY + (controlOffset * 7),
+                                            fontSize,
+                                            fontSize
+    };
 	Rectangle defaultsBtnPos = Rectangle{ windowAnchor.x + windowPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffset * 7),
+		windowAnchor.y + windowPaddingY + (controlOffset * 8),
 		sliderWidth,
 		fontSize
 	};
 	Rectangle secondLinePos = Rectangle{ windowAnchor.x + linePadding,
-		windowAnchor.y + windowPaddingY + (controlOffset * 8),
+		windowAnchor.y + windowPaddingY + (controlOffset * 9),
 		windowWidth - (linePadding * 2),
 		fontSize
 	};
 	Rectangle mainMenuBtnPos = Rectangle{ windowAnchor.x + linePadding,
-		windowAnchor.y + windowPaddingY + (controlOffset * 9),
+		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
 	};
 	Rectangle doneBtnPos = Rectangle{ windowAnchor.x + windowPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffset * 9),
+		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
 	};
@@ -137,12 +142,13 @@ void Cyrey::SettingsMenu::Draw()
 		&this->mQueueSwapTolerance, 0, 1);
 
 	::GuiCheckBox(swerveCheckPos, cBoardSwerveCheckText, &this->mWantBoardSwerve);
+	::GuiCheckBox(autoSaveCheckPos, cReplayAutoSaveText, &this->mWantReplayAutoSave);
 
 	if (::GuiButton(defaultsBtnPos, cDefaultsButtonText))
 	{
 		this->mSwapDeadZone = SettingsMenu::cSwapDeadZone;
 		this->mQueueSwapTolerance = SettingsMenu::cQueueSwapTolerance;
-		this->mWantBoardSwerve = SettingsMenu::cQueueSwapTolerance;
+		this->mWantBoardSwerve = SettingsMenu::cWantBoardSwerve;
 	}
 
 	::GuiLine(secondLinePos, NULL);

@@ -1504,7 +1504,8 @@ void Cyrey::Board::DrawResultsScreen()
 
     if (this->mHasSavedReplay)
         ::GuiDisable();
-	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Success!" : "Save Replay"))
+	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Replay saved" : "Save Replay") ||
+        (this->mApp->mSettings->mWantReplayAutoSave && !this->mHasSavedReplay))
     {
         auto currentTime = time(nullptr);
         tm *timeDetails = localtime(&currentTime);
