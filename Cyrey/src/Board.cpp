@@ -727,13 +727,9 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 void Cyrey::Board::UpdateDroppedPieceAnims()
 {
 	for (auto &anim : this->mDroppedPieceAnims)
-	{
 		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
-		if (anim.mOpacity <= 0.0f)
-		{
-			this->mDroppedPieceAnims.clear();
-		}
-	}
+
+	std::erase_if(this->mDroppedPieceAnims, [](const PieceDropAnim &anim) { return anim.mOpacity <= 0.0f; });
 }
 
 void Cyrey::Board::UpdateGameOverAnim()
