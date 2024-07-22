@@ -587,8 +587,23 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 		//no infinite recursions of special pieces destroying each other
 		return 1;
 	}
-	this->mMatchedPieceAnims.push_back(PieceMatchAnim(piece.mBoardX, piece.mBoardY, piece.mColor, destroy));
-	piece = Cyrey::gNullPiece;
+
+    // FIXME: The copy constructor of std::vector<AnimSparkle> is throwing on this call, while trying to alloc
+    auto &anim = this->mMatchedPieceAnims.emplace_back(piece.mBoardX,
+                                                      piece.mBoardY,
+                                                      piece.mColor,
+                                                      destroy);
+    if (destroy)
+    {
+        anim.mSparklesAmount = ::GetRandomValue(AnimSparkle::cMinSparkles, AnimSparkle::cMaxSparkles);
+        for (int i = 0; i < anim.mSparklesAmount; i++)
+        {
+            anim.mSparkles[i] = AnimSparkle(::GetRandomValue(0, 360),
+                                  ::GetRandomValue(0, 360),
+                                  ::GetRandomValue(0, this->mTileSize / 2));
+        }
+    }
+    piece = Cyrey::gNullPiece;
 
 	int piecesCleared = 1;
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
@@ -700,11 +715,13 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 	for (auto& anim : this->mMatchedPieceAnims)
 	{
 		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
-		if (anim.mOpacity <= 0.0f)
-		{
-			this->mMatchedPieceAnims.clear();
-		}
+        for (int i = 0; i < anim.mSparklesAmount; ++i)
+        {
+            anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->mApp->GetDeltaTime();
+            anim.mSparkles[i].mDistance += AnimSparkle::cSpeed * this->mApp->GetDeltaTime();
+        }
 	}
+	std::erase_if(this->mMatchedPieceAnims, [](const PieceMatchAnim &anim) { return anim.mOpacity <= 0.0f; });
 }
 
 void Cyrey::Board::UpdateDroppedPieceAnims()
@@ -743,7 +760,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 	{
 		for (auto& piece : this->mBoard[rowsClearedAfterUpdate - 1])
 		{
-			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, true);
+			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, false);
 			piece = Cyrey::gNullPiece;
 		}
 		::PlaySound(this->mApp->mResMgr->mSounds["rowBlow.ogg"]);
@@ -1223,7 +1240,22 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		}
 		color = ::ColorAlpha(color, anim.mOpacity);
 
-		::DrawPoly(center, sides, radius, rotation, color);
+        if (anim.mDestroyed)
+        {
+            for (int i = 0; i < anim.mSparklesAmount; ++i)
+            {
+                auto &sparkle = anim.mSparkles[i];
+                ::Vector2 sparklePos = center;
+                ::Vector2 rotationVec = ::Vector2Rotate(::Vector2{1,0}, sparkle.mDirectionAngleDeg);
+                ::Vector2 offsetVec = ::Vector2Add(center, ::Vector2Scale(rotationVec, sparkle.mDistance));
+
+                ::DrawPoly(offsetVec, 4, radius * 0.2f, sparkle.mRotationDeg, color);
+            }
+        }
+        else
+        {
+            ::DrawPoly(center, sides, radius, rotation, color);
+        }
 	}
 }
 
@@ -1502,6 +1534,7 @@ void Cyrey::Board::DrawResultsScreen()
 	if (::GuiButton(viewReplayBtnPos, "View Replay"))
 		this->PlayReplay();
 
+    // FIXME: After watching a saved replay it might be saved again, especially with auto-save on
     if (this->mHasSavedReplay)
         ::GuiDisable();
 	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Replay saved" : "Save Replay") ||
