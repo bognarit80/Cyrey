@@ -197,8 +197,7 @@ void Cyrey::Board::UpdateInput()
 	switch(key)
 	{
 	case ::KeyboardKey::KEY_R:
-		this->mIsInReplay = false;
-		this->ResetBoard();
+		this->NewGame();
 		break;
 	case ::KeyboardKey::KEY_L:
 		this->mApp->mDarkMode ^= 1;
@@ -271,6 +270,13 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 	return board;
 }
 
+void Cyrey::Board::NewGame()
+{
+	this->mIsInReplay = false;
+	this->mHasSavedReplay = false;
+	this->ResetBoard();
+}
+
 void Cyrey::Board::ResetBoard()
 {
 	unsigned int seed;
@@ -299,7 +305,6 @@ void Cyrey::Board::ResetBoard()
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
-    this->mHasSavedReplay = false;
 
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
@@ -1360,8 +1365,7 @@ void Cyrey::Board::DrawSideUI()
 		static_cast<float>(iconSize) },
 		::GuiIconText(::GuiIconName::ICON_RESTART, "")))
 	{
-		this->mIsInReplay = false;
-		this->ResetBoard();
+		this->NewGame();
 	}
 	if (this->mIsInReplay)
 	{
@@ -1527,11 +1531,7 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", this->mBestMoveCascades));
 	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
 
-	if (::GuiButton(viewReplayBtnPos, "View Replay"))
-		this->PlayReplay();
-
-    // FIXME: After watching a saved replay it might be saved again, especially with auto-save on
-    if (this->mHasSavedReplay)
+	if (this->mHasSavedReplay)
         ::GuiDisable();
 	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Replay saved" : "Save Replay") ||
         (this->mApp->mSettings->mWantReplayAutoSave && !this->mHasSavedReplay))
@@ -1551,13 +1551,13 @@ void Cyrey::Board::DrawResultsScreen()
             this->mHasSavedReplay = true;
         }
     }
-    ::GuiEnable();
+	::GuiEnable();
+
+	if (::GuiButton(viewReplayBtnPos, "View Replay"))
+		this->PlayReplay();
 
 	if (::GuiButton(playAgainBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Play Again (R)")))
-	{
-		this->mIsInReplay = false;
-		this->ResetBoard();
-	}
+		this->NewGame();
 
 	float fontSizeTitle = windowHeight > windowWidth ? windowWidth / 12 : windowHeight / 12;
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSizeTitle);

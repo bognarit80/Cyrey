@@ -136,6 +136,7 @@ void Cyrey::CyreyApp::Update()
                 this->ChangeToState(CyreyAppState::InGame);
                 this->mBoard->Init();
                 this->mBoard->PlayReplay(*rep);
+                this->mBoard->mHasSavedReplay = true; // prevent saving the replay again
                 this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update
             }
         }
