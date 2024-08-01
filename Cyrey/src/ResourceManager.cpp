@@ -1,4 +1,5 @@
 #include "ResourceManager.hpp"
+#include <ranges>
 
 bool Cyrey::ResourceManager::HasFinishedLoading() const
 {
@@ -25,49 +26,49 @@ void Cyrey::ResourceManager::SetVolume(float soundVolume, float musicVolume)
 	if (!this->mHasFinishedLoading)
 		return;
 
-	for (auto &kvp : this->mSounds)
+	for (auto& sound : this->mSounds | std::views::values)
 	{
-		::SetSoundVolume(kvp.second, soundVolume);
+		::SetSoundVolume(sound, soundVolume);
 	}
-	for (auto &kvp : this->mMusics)
+	for (auto& music : this->mMusics | std::views::values)
 	{
-		::SetMusicVolume(kvp.second, musicVolume);
+		::SetMusicVolume(music, musicVolume);
 	}
 }
 
-constexpr std::string Cyrey::ResourceManager::GetFullPath(std::string fileName)
+constexpr std::string Cyrey::ResourceManager::GetFullPath(const std::string& fileName)
 {
 	return ResourceManager::cRootResorcesPath + fileName;
 }
 
 void Cyrey::ResourceManager::LoadMusic()
 {
-	for (auto &kvp : this->mMusics)
+	for (auto& [name, music] : this->mMusics)
 	{
-		kvp.second = ::LoadMusicStream(ResourceManager::GetFullPath(kvp.first).c_str());
+		music = ::LoadMusicStream(ResourceManager::GetFullPath(name).c_str());
 	}
 }
 
 void Cyrey::ResourceManager::LoadSounds()
 {
-	for (auto &kvp : this->mSounds)
+	for (auto& [name, sound] : this->mSounds)
 	{
-		kvp.second = ::LoadSound(ResourceManager::GetFullPath(kvp.first).c_str());
+		sound = ::LoadSound(ResourceManager::GetFullPath(name).c_str());
 	}
 }
 
 void Cyrey::ResourceManager::UnloadMusic()
 {
-	for (auto &kvp : this->mMusics)
+	for (auto& val : this->mMusics | std::views::values)
 	{
-		::UnloadMusicStream(kvp.second);
+		::UnloadMusicStream(val);
 	}
 }
 
 void Cyrey::ResourceManager::UnloadSounds()
 {
-	for (auto &kvp : this->mSounds)
+	for (auto& val : this->mSounds | std::views::values)
 	{
-		::UnloadSound(kvp.second);
+		::UnloadSound(val);
 	}
 }

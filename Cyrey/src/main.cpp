@@ -15,7 +15,7 @@ void web_loop()
     gApp.GameLoop();
 }
 
-int main(void)
+int main()
 {
     gApp.Init();
 #ifdef __EMSCRIPTEN__

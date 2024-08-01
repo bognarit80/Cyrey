@@ -79,7 +79,6 @@ void Cyrey::CyreyApp::GameLoop()
     ::DrawText(::TextFormat("%d", this->mUpdateCnt), 10, 100, 16,
         this->mDarkMode ? ::WHITE : ::BLACK);
 #endif // _DEBUG
-
 }
 
 void Cyrey::CyreyApp::Update()
@@ -159,7 +158,7 @@ void Cyrey::CyreyApp::Draw() const
         case CyreyAppState::Loading:
             ::GuiLabel(Rectangle{ static_cast<float>(this->mWidth) / 2,
                 static_cast<float>(this->mHeight) / 2 ,
-                300, 300}, "Loading...");
+                300, 300}, CyreyApp::cLoading);
             break;
 
         case CyreyAppState::MainMenu:

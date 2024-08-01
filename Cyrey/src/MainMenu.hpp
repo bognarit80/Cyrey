@@ -1,5 +1,5 @@
-#ifndef _CYREY_MAINMENU_HEADER
-#define _CYREY_MAINMENU_HEADER
+#ifndef CYREY_MAINMENU_HEADER
+#define CYREY_MAINMENU_HEADER
 
 #include "CyreyApp.hpp"
 
@@ -10,21 +10,22 @@ namespace Cyrey
 	class MainMenu
 	{
 	public:
-		CyreyApp &mApp;
+		CyreyApp& mApp;
 		bool mIsPlayBtnPressed;
+
 		static constexpr char cTitleName[] = "Cyrey";
         static constexpr char cPlayBtnText[] = "Play";
         static constexpr char cReplaysBtnText[] = "Replays";
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 
-		MainMenu(CyreyApp& app) : 
+		explicit MainMenu(CyreyApp& app) :
 			mApp(app), mIsPlayBtnPressed(false) {};
 
 		void Init();
 		void Update();
-		void Draw(); //not const because we want raygui functions to modify the members
+		void Draw(); // not const because we want raygui functions to modify the members
 	};
-}
+} // namespace Cyrey
 
 #endif // !_CYREY_MAINMENU_HEADER

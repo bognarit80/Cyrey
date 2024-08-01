@@ -1,5 +1,5 @@
-#ifndef _CYREY_RESOURCE_MANAGER_HEADER
-#define _CYREY_RESOURCE_MANAGER_HEADER
+#ifndef CYREY_RESOURCE_MANAGER_HEADER
+#define CYREY_RESOURCE_MANAGER_HEADER
 
 #include "raylib.h"
 #include <map>
@@ -34,14 +34,16 @@ namespace Cyrey
 			{"rowBlow.ogg", ::Sound{}}
 		};
 
-		bool HasFinishedLoading() const;
+		[[nodiscard]] bool HasFinishedLoading() const;
 		void LoadResources();
 		void UnloadResources();
 		void SetVolume(float soundVolume, float musicVolume);
 
 	private:
 		bool mHasFinishedLoading;
-		static constexpr std::string GetFullPath(std::string fileName); // try with const char* instead to avoid .c_str()?
+
+		static constexpr std::string GetFullPath(const std::string& fileName); // try with const char* instead to avoid .c_str()?
+
 		void LoadMusic();
 		void LoadSounds();
 
@@ -50,4 +52,4 @@ namespace Cyrey
 	};
 } // namespace Cyrey
 
-#endif // !_CYREY_RESOURCE_MANAGER_HEADER
+#endif // !CYREY_RESOURCE_MANAGER_HEADER

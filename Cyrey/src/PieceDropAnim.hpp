@@ -1,5 +1,5 @@
-#ifndef _CYREY_PIECEDROPANIM_HEADER
-#define _CYREY_PIECEDROPANIM_HEADER
+#ifndef CYREY_PIECEDROPANIM_HEADER
+#define CYREY_PIECEDROPANIM_HEADER
 
 namespace Cyrey
 {
@@ -12,6 +12,6 @@ namespace Cyrey
 
 		explicit PieceDropAnim(int col) : mBoardCol(col), mOpacity(cStartingOpacity) {};
 	};
-}
+} // namespace Cyrey
 
-#endif // !_CYREY_PIECEDROPANIM_HEADER
+#endif // !CYREY_PIECEDROPANIM_HEADER

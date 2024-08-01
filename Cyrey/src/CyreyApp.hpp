@@ -1,5 +1,5 @@
-﻿#ifndef _CYREY_APP_HEADER
-#define _CYREY_APP_HEADER
+﻿#ifndef CYREY_APP_HEADER
+#define CYREY_APP_HEADER
 
 #include "raylib.h"
 #include "Board.hpp"
@@ -46,7 +46,7 @@ namespace Cyrey
 		bool mDarkMode;
 		int mUpdateCnt;
 		CyreyAppState mState;
-		CyreyAppState mChangeToState; //to prevent drawing a state before updating it at least once
+		CyreyAppState mChangeToState; // to prevent drawing a state before updating it at least once
 		CyreyAppState mPrevState;
 		std::unique_ptr<MainMenu> mMainMenu;
 		bool mWantExit;
@@ -59,18 +59,19 @@ namespace Cyrey
         std::unique_ptr<ReplaysMenu> mReplaysMenu;
 
 		static constexpr char cTitle[] = "Cyrey";
+		static constexpr char cLoading[] = "Loading...";
 
 		void Init();
 		void InitWindow();
 		void GameLoop();
 		void Update();
 		void Draw() const;
-		float GetDeltaTime() const;
-		void ChangeToState(CyreyAppState state); //Change to the state at the beginning of the next update
+		[[nodiscard]] float GetDeltaTime() const;
+		void ChangeToState(CyreyAppState state); /// Change to the state at the beginning of the next update
 		void ToggleFullscreen();
 
-		unsigned int SeedRNG(); // Returns the seed.
-		void SeedRNG(unsigned int seed); // For replays and games with set seed.
+		unsigned int SeedRNG(); /// Returns the seed.
+		void SeedRNG(unsigned int seed); /// For replays and games with set seed.
 		int GetRandomNumber(int min, int max);
 
 	private:
@@ -79,4 +80,4 @@ namespace Cyrey
 	};
 } // namespace Cyrey 
 
-#endif // !_CYREY_APP_HEADER
+#endif // !CYREY_APP_HEADER

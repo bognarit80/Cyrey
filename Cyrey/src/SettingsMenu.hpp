@@ -1,11 +1,11 @@
-#ifndef _CYREY_SETTINGS_HEADER
-#define _CYREY_SETTINGS_HEADER
+#ifndef CYREY_SETTINGS_HEADER
+#define CYREY_SETTINGS_HEADER
 
 #include "CyreyApp.hpp"
 
 namespace Cyrey
 {
-	//User preferences. Changes in settings or through keyboard shortcuts, if I decide to keep them.
+	/// User preferences. Changes in settings or through keyboard shortcuts, if I decide to keep them.
 	class SettingsMenu
 	{
 	public:
@@ -13,7 +13,7 @@ namespace Cyrey
 		float mSoundVolume;
 		bool mIsFullscreen;
 		bool mIsVSync;
-		float mSwapDeadZone; //percentage of tile size before the drag turns into a swap
+		float mSwapDeadZone; /// Percentage of tile size before the drag turns into a swap
 		bool mWantBoardSwerve;
 		float mQueueSwapTolerance;
         bool mWantReplayAutoSave;
@@ -30,12 +30,12 @@ namespace Cyrey
 			mApp(app) {};
 
 		void Update();
-		void Draw(); //not const because raygui modifies variables
+		void Draw(); // not const because raygui modifies variables
 
 	private:
 		CyreyApp& mApp;
 
-		//default consts
+		// default consts
 		static constexpr float cMusicVolume = 0.80f;
 		static constexpr float cSoundVolume = 0.90f;
 		static constexpr bool cWantFullscreen = false;
@@ -60,6 +60,6 @@ namespace Cyrey
 		static constexpr char cOff[] = "Off";
 		static constexpr char cInf[] = "Inf";
 	};
-}
+} // namespace Cyrey
 
-#endif // !_CYREY_SETTINGS_HEADER
+#endif // !CYREY_SETTINGS_HEADER

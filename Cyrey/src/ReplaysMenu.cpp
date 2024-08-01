@@ -1,7 +1,7 @@
 #include "ReplaysMenu.hpp"
 #include "raygui.h"
 
-Cyrey::ReplaysMenu::ReplaysMenu(CyreyApp& app) : mApp(app), mReplayPaths({0})
+Cyrey::ReplaysMenu::ReplaysMenu(CyreyApp& app) : mReplayPaths({}), mApp(app)
 {
     this->RefreshReplayList(); // inits the rest of the members
 }
@@ -60,7 +60,7 @@ void Cyrey::ReplaysMenu::Draw()
     // evil const_cast to pass the paths array directly to the function, because .paths isn't <const> char*...
     ::GuiListViewEx(listRect,
                     const_cast<const char**>(this->mReplayPaths.paths),
-                    this->mReplayPaths.count,
+                    static_cast<int>(this->mReplayPaths.count),
                     &this->mScrollIndex,
                     &this->mActive,
                     &this->mFocus);

@@ -1,5 +1,5 @@
-#ifndef _CYREY_REPLAY_HEADER
-#define _CYREY_REPLAY_HEADER
+#ifndef CYREY_REPLAY_HEADER
+#define CYREY_REPLAY_HEADER
 
 #include "SwapDirection.hpp"
 #include <deque>
@@ -19,8 +19,8 @@ namespace Cyrey
 		SwapDirection mDirection;
 		float mSecondsSinceLastCmd;
 
-		static std::vector<uint8_t> Serialize(const ReplayCommand &cmd);
-		static ReplayCommand Deserialize(const std::vector<uint8_t> &data);
+		static std::vector<uint8_t> Serialize(const ReplayCommand& cmd);
+		static ReplayCommand Deserialize(const std::vector<uint8_t>& data);
 	};
 
 	struct Replay
@@ -30,15 +30,15 @@ namespace Cyrey
 		int mConfigVersion;
 		std::deque<ReplayCommand> mCommands;
 
-        static constexpr const char *cReplaysFolderName = "replays";
+        static constexpr char cReplaysFolderName[] = "replays";
 
-		static std::vector<uint8_t> Serialize(const Replay &replayData);
-		static std::optional<Replay> Deserialize(const std::vector<std::uint8_t> &data);
+		static std::vector<uint8_t> Serialize(const Replay& replayData);
+		static std::optional<Replay> Deserialize(const std::vector<std::uint8_t>& data);
         static std::optional<Replay> OpenReplayFile(const char* fileName);
-        static bool SaveReplayToFile(const Replay &replay, const char *fileName);
+        static bool SaveReplayToFile(const Replay &replay, const char* fileName);
 	};
 
 
-} //namespace Cyrey
+} // namespace Cyrey
 
-#endif // !_CYREY_REPLAY_HEADER
+#endif // !CYREY_REPLAY_HEADER

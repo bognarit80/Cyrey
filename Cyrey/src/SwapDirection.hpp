@@ -1,5 +1,5 @@
-#ifndef _CYREY_SWAPDIRECTION_HEADER
-#define _CYREY_SWAPDIRECTION_HEADER
+#ifndef CYREY_SWAPDIRECTION_HEADER
+#define CYREY_SWAPDIRECTION_HEADER
 
 namespace Cyrey
 {
@@ -13,4 +13,4 @@ namespace Cyrey
 	};
 } // namespace Cyrey
 
-#endif // !_CYREY_SWAPDIRECTION_HEADER
+#endif // !CYREY_SWAPDIRECTION_HEADER

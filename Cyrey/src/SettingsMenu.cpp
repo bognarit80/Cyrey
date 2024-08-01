@@ -7,15 +7,15 @@ void Cyrey::SettingsMenu::Update()
 
 void Cyrey::SettingsMenu::Draw()
 {
-	float appWidth = static_cast<float>(this->mApp.mWidth);
-	float appHeight = static_cast<float>(this->mApp.mHeight);
+	auto appWidth = static_cast<float>(this->mApp.mWidth);
+	auto appHeight = static_cast<float>(this->mApp.mHeight);
 
 	float windowY = appHeight * 0.1f;
 	float windowHeight = appHeight - (windowY * 2);
 	float windowX = appWidth > appHeight ? (appWidth - windowHeight) / 2 : appWidth * 0.1f;
 	float windowWidth = windowY < windowX ? windowHeight : appWidth - (windowX * 2); //square if window is wide
-	Vector2 windowAnchor = Vector2{ windowX, windowY };
-	Rectangle windowRect = Rectangle{ windowX, windowY, windowWidth, windowHeight };
+	Vector2 windowAnchor = { windowX, windowY };
+	Rectangle windowRect = { windowX, windowY, windowWidth, windowHeight };
 
 	float fontSize = windowHeight > windowWidth ? windowWidth / 20 : windowHeight / 20;
 	float windowPaddingX = windowWidth * 0.45f;
@@ -27,67 +27,67 @@ void Cyrey::SettingsMenu::Draw()
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
 	::GuiSetIconScale(fontSize / 16);
 
-	Rectangle musicSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle musicSliderPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY,
 		sliderWidth, 
 		fontSize 
 	};
-	Rectangle soundSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle soundSliderPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + controlOffset,
 		sliderWidth,
 		fontSize 
 	};
-	Rectangle fullscreenCheckPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle fullscreenCheckPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 2),
 		fontSize,
 		fontSize 
 	};
-	Rectangle vsyncCheckPos = Rectangle{ windowAnchor.x + linePadding,
+	Rectangle vsyncCheckPos = { windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 2),
 		fontSize,
 		fontSize
 	};
-	Rectangle firstLinePos = Rectangle{ windowAnchor.x + linePadding,
+	Rectangle firstLinePos = { windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 3),
 		windowWidth - (linePadding * 2),
 		fontSize
 	};
-	Rectangle swapDeadZoneSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle swapDeadZoneSliderPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 4),
 		sliderWidth,
 		fontSize 
 	};
-	Rectangle queueSwapToleranceSliderPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle queueSwapToleranceSliderPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 5),
 		sliderWidth,
 		fontSize
 	};
-	Rectangle swerveCheckPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle swerveCheckPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 6),
 		fontSize,
 		fontSize
 	};
-    Rectangle autoSaveCheckPos = Rectangle{ windowAnchor.x + windowPaddingX,
-                                            windowAnchor.y + windowPaddingY + (controlOffset * 7),
-                                            fontSize,
-                                            fontSize
+    Rectangle autoSaveCheckPos = { windowAnchor.x + windowPaddingX,
+    	windowAnchor.y + windowPaddingY + (controlOffset * 7),
+    	fontSize,
+    	fontSize
     };
-	Rectangle defaultsBtnPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle defaultsBtnPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 8),
 		sliderWidth,
 		fontSize
 	};
-	Rectangle secondLinePos = Rectangle{ windowAnchor.x + linePadding,
+	Rectangle secondLinePos = { windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 9),
 		windowWidth - (linePadding * 2),
 		fontSize
 	};
-	Rectangle mainMenuBtnPos = Rectangle{ windowAnchor.x + linePadding,
+	Rectangle mainMenuBtnPos = { windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
 	};
-	Rectangle doneBtnPos = Rectangle{ windowAnchor.x + windowPaddingX,
+	Rectangle doneBtnPos = { windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
@@ -107,7 +107,7 @@ void Cyrey::SettingsMenu::Draw()
 		::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)), 
 		&this->mSoundVolume, 0, 1);
 
-#ifndef __EMSCRIPTEN__ //TODO: Implement proper fullscreen on Web
+#ifndef __EMSCRIPTEN__ // TODO: Implement proper fullscreen on Web
 	bool isFullscreen = ::IsWindowFullscreen();
 	::GuiCheckBox(fullscreenCheckPos, SettingsMenu::cFullscreenCheckText, &isFullscreen);
 	if (isFullscreen != this->mIsFullscreen)
@@ -126,7 +126,7 @@ void Cyrey::SettingsMenu::Draw()
 	}
 #endif // __EMSCRIPTEN__
 	
-	::GuiLine(firstLinePos, NULL);
+	::GuiLine(firstLinePos, nullptr);
 
 	::GuiSlider(swapDeadZoneSliderPos, 
 		cSwapDeadZoneSliderText, 
@@ -151,14 +151,10 @@ void Cyrey::SettingsMenu::Draw()
 		this->mWantBoardSwerve = SettingsMenu::cWantBoardSwerve;
 	}
 
-	::GuiLine(secondLinePos, NULL);
+	::GuiLine(secondLinePos, nullptr);
 
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
-	{
 		if (::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, SettingsMenu::cMainMenuButtonText)))
-		{
-			//TODO: Save the game, or add XP or something
 			this->mApp.ChangeToState(CyreyAppState::MainMenu);
-		}
-	}
+			// TODO: Save the game, or add XP or something
 }

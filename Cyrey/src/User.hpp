@@ -1,5 +1,5 @@
-#ifndef _CYREY_USER_HEADER
-#define _CYREY_USER_HEADER
+#ifndef CYREY_USER_HEADER
+#define CYREY_USER_HEADER
 
 #include <cstdint>
 
@@ -17,6 +17,6 @@ namespace Cyrey
 		int mBestMovePoints;
 		int mBestMoveCascades;
 	};
-}
+} // namespace Cyrey
 
-#endif // !_CYREY_USER_HEADER
+#endif // !CYREY_USER_HEADER

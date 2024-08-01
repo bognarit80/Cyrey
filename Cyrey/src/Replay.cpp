@@ -29,7 +29,7 @@ std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
         static_cast<uint8_t>(((replayData.mSeed >> 24) & 0xFF))
     });
 
-    for (auto &cmd : replayData.mCommands)
+    for (auto& cmd : replayData.mCommands)
     {
         std::vector<uint8_t> cmdData = ReplayCommand::Serialize(cmd);
         data.insert(data.end(), cmdData.begin(), cmdData.end());
@@ -40,7 +40,7 @@ std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
     return data;
 }
 
-std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::uint8_t> &data)
+std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::uint8_t>& data)
 {
     // Verify the file's magic
     char magic[6];
@@ -77,7 +77,7 @@ std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::u
     return replay;
 }
 
-std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char *fileName) {
+std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char* fileName) {
     int dataRead;
     unsigned char* fileData = ::LoadFileData(fileName, &dataRead);
     if (!fileData)
@@ -89,15 +89,15 @@ std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char *fileName)
     return Replay::Deserialize(data);
 }
 
-bool Cyrey::Replay::SaveReplayToFile(const Cyrey::Replay &replay, const char *fileName) {
+bool Cyrey::Replay::SaveReplayToFile(const Replay& replay, const char* fileName) {
     if (!::DirectoryExists(Replay::cReplaysFolderName))
         std::filesystem::create_directory(Replay::cReplaysFolderName);
 
     std::vector<uint8_t> data = Replay::Serialize(replay);
-    return ::SaveFileData(fileName, data.data(), data.size());
+    return ::SaveFileData(fileName, data.data(), static_cast<int>(data.size()));
 }
 
-std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const Cyrey::ReplayCommand& cmd)
+std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
 {
     std::vector<uint8_t> data{};
 
@@ -112,7 +112,7 @@ std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const Cyrey::ReplayCommand&
     return data;
 }
 
-Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::vector<uint8_t> &data)
+Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::vector<uint8_t>& data)
 {
     ReplayCommand cmd{};
 

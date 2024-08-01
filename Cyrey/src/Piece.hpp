@@ -1,5 +1,5 @@
-#ifndef _CYREY_PIECE_HEADER
-#define _CYREY_PIECE_HEADER
+#ifndef CYREY_PIECE_HEADER
+#define CYREY_PIECE_HEADER
 
 namespace Cyrey
 {
@@ -27,7 +27,7 @@ namespace Cyrey
 	{
 	public:
 		PieceColor mColor;
-		PieceColor mOldColor; //for hypercubes
+		PieceColor mOldColor; // for hypercubes
 		unsigned int mID;
 		unsigned int mFlags;
 		bool mCanSwap;
@@ -41,12 +41,12 @@ namespace Cyrey
 
 		Piece() = default;
 
-		Piece(PieceColor color)
+		explicit Piece(PieceColor color)
 			: mColor(color), mOldColor(color), mID(sNextPieceID++), mFlags(0), mCanSwap(true), mDragging(false),
 			mXDiff(0.0f), mYDiff(0.0f), mMatched(false), mImmunity(false), mBoardX(0), mBoardY(0)
 		{};
 
-		bool IsFlagSet(unsigned int flag) const;
+		[[nodiscard]] bool IsFlagSet(unsigned int flag) const;
 		void SetFlag(unsigned int flag);
 		void Bombify();
 		void Lightningify();
@@ -55,7 +55,7 @@ namespace Cyrey
 	private:
 		static inline unsigned int sNextPieceID = 1;
 	};
-	static constexpr const Piece gNullPiece = Piece();
-}
+	static constexpr auto gNullPiece = Piece();
+} // namespace Cyrey
 
-#endif // !_CYREY_PIECE_HEADER
+#endif // !CYREY_PIECE_HEADER

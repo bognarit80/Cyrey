@@ -1,5 +1,5 @@
-#ifndef _CYREY_PIECEMATCHANIM_HEADER
-#define _CYREY_PIECEMATCHANIM_HEADER
+#ifndef CYREY_PIECEMATCHANIM_HEADER
+#define CYREY_PIECEMATCHANIM_HEADER
 
 #include <array>
 #include "Piece.hpp"
@@ -10,7 +10,7 @@ namespace Cyrey
     {
         float mRotationDeg;
         float mDirectionAngleDeg;
-        float mDistance; // distance from tile center, as percentage of tile size
+        float mDistance; /// Distance from the tile center, as percentage of tile size
 
         static constexpr int cMinSparkles = 4;
         static constexpr int cMaxSparkles = 16;
@@ -34,6 +34,6 @@ namespace Cyrey
 		PieceMatchAnim(int x, int y, PieceColor color, bool destroyed) :
 			mBoardX(x), mBoardY(y), mColor(color), mOpacity(cStartingOpacity), mDestroyed(destroyed), mSparkles({}), mSparklesAmount(0) {};
 	};
-}
+} // namespace Cyrey
 
-#endif // !_CYREY_PIECEMATCHANIM_HEADER
+#endif // !CYREY_PIECEMATCHANIM_HEADER

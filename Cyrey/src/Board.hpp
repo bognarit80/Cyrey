@@ -1,10 +1,10 @@
-#ifndef _CYREY_BOARD_HEADER
-#define _CYREY_BOARD_HEADER
+#ifndef CYREY_BOARD_HEADER
+#define CYREY_BOARD_HEADER
 
 #include "Piece.hpp"
 #include "CyreyApp.hpp"
 #include <optional>
-#include "MatchSet.h"
+#include "MatchSet.hpp"
 #include <memory>
 #include <vector>
 #include "PieceMatchAnim.hpp"
@@ -23,18 +23,16 @@ namespace Cyrey
 		int mHeight;
 		float mXOffset;
 		float mYOffset;
-		int mTileSize;
-		int mTileInset;
+		float mTileSize;
+		float mTileInset;
 		float mBoardAlpha;
 		std::vector<std::vector<Piece>> mBoard;
 		CyreyApp* mApp;
-		int mZoomPct;
-		static constexpr int cDefaultZoomPct = 70;
+		float mZoomPct;
 		bool mDragging;
 		::Vector2 mDragMouseBegin;
 		::Vector2 mDragTileBegin;
-		//used for disabling swaps until the mouse is released
-		bool mTriedSwap;
+		bool mTriedSwap; // used for disabling swaps until the mouse is released
 		std::vector<MatchSet> mMatchSets;
 		std::unique_ptr<MatchSet> mCurrentMatchSet;
 		float mFallDelay;
@@ -45,26 +43,18 @@ namespace Cyrey
 		int mPiecesClearedInMove;
 		int64_t mScoreInMove;
 		::Vector2 mBoardSwerve;
-		constexpr static float cSwerveCoeff = 0.1f;
-		constexpr static int cMaxCascadesSwerve = 8;
-		constexpr static float cFallDelay = 0.2f;
-		constexpr static float cMissPenalty = 3 * cFallDelay;
 		int mColorCount;
-		int mBaseScore; //score for one match
+		int mBaseScore; // score for one match
 		int mScoreMultiplier;
 		float mSecondsRemaining;
-		constexpr static float cStartingTime = 60.0f;
-		constexpr static int cLightningPiecesAmount = 10;
 		std::vector<PieceMatchAnim> mMatchedPieceAnims;
 		std::vector<PieceDropAnim> mDroppedPieceAnims;
 		::Vector2 mQueuedSwapPos;
 		SwapDirection mQueuedSwapDirection;
 		float mNewGameAnimProgress;
 		bool mDroppedNewGamePieces;
-		static constexpr float cNewGameAnimDuration = 1.0f;
 		float mGameOverAnimProgress;
 		bool mIsGameOver;
-		static constexpr float cGameOverAnimDuration = 1.0f;
 		bool mIsInReplay;
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
@@ -73,40 +63,50 @@ namespace Cyrey
         bool mHasDroppedFile;
         std::optional<Replay> mDroppedReplay;
 
+		static constexpr float cDefaultZoomPct = 70.0f;
+		static constexpr float cSwerveCoeff = 0.1f;
+		static constexpr int cMaxCascadesSwerve = 8;
+		static constexpr float cFallDelay = 0.2f;
+		static constexpr float cMissPenalty = 3 * cFallDelay;
+		static constexpr float cStartingTime = 60.0f;
+		static constexpr int cLightningPiecesAmount = 10;
+		static constexpr float cNewGameAnimDuration = 1.0f;
+		static constexpr float cGameOverAnimDuration = 1.0f;
+
 		// game stats
 		int mMovesMade;
 		int mBombsDetonated;
 		int mLightningsDetonated;
 		int mHypercubesDetonated;
-		int mBestMovePoints;
+		int64_t mBestMovePoints;
 		int mBestMoveCascades;
 
 		Board() = default;
 		Board(int width, int height) :
 			mWidth(width), mHeight(height) {};
-		Board(int size) : Board(size, size) {};
+		explicit Board(int size) : Board(size, size) {};
 
 		void Init();
 		void Update();
 		void Draw(); // not const because we want buttons on side UI and results screen
 		void UpdateInput();
-		static std::vector<std::vector<Piece>> ParseBoardString(const char*);
-		std::vector<std::vector<Piece>> GenerateStartingBoard() const;
+		static std::vector<std::vector<Piece>> ParseBoardString(const char* data);
+		[[nodiscard]] std::vector<std::vector<Piece>> GenerateStartingBoard() const;
 		void NewGame();
 		void ResetBoard();
-		void AddSwerve(::Vector2 swerve); //Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
-		std::optional<::Vector2> GetHoveredTile() const;
-		bool IsMouseInBoard() const;
+		void AddSwerve(::Vector2 swerve); /// Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
+		[[nodiscard]] std::optional<::Vector2> GetHoveredTile() const;
+		[[nodiscard]] bool IsMouseInBoard() const;
 		bool FindSets();
-		bool FindSets(int pieceRow, int pieceCol, PieceColor color, bool first = true);
-		bool IsPieceBeingMatched(unsigned int pieceID) const;
+		bool FindSets(int pieceCol, int pieceRow, PieceColor color, bool first = true);
+		[[nodiscard]] bool IsPieceBeingMatched(unsigned int pieceID) const;
 		bool TrySwap(int col, int row, SwapDirection direction);
 		bool TrySwap(int col, int row, int toCol, int toRow);
-		bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
-		bool CanSwap() const;
-		constexpr bool IsPositionLegal(int col, int row) const;
-		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); //returns the amount of pieces cleared, if the piece was special
-		int DoHypercube(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece);
+		[[nodiscard]] bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
+		[[nodiscard]] bool CanSwap() const;
+		[[nodiscard]] constexpr bool IsPositionLegal(int col, int row) const;
+		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); // returns the amount of pieces cleared, if the piece was special
+		int DoHypercube(const Piece& cubePiece, const Piece& byPiece = Cyrey::gNullPiece);
         void PlayReplay();
         void PlayReplay(const Replay& replay);
 
@@ -116,9 +116,9 @@ namespace Cyrey
 		void UpdateDroppedPieceAnims();
 		void UpdateGameOverAnim();
 		void UpdateBoardSwerve();
-		bool UpdateNewGameAnim(); //increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
+		bool UpdateNewGameAnim(); // increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
 		void UpdateDragging();
-		int UpdateMatchSets(); //returns the amount of match sets processed
+		size_t UpdateMatchSets(); // returns the amount of match sets processed
 		void UpdateFalling();
         void UpdateDroppedFiles();
 		void FillInBlanks();
@@ -131,6 +131,6 @@ namespace Cyrey
 		void DrawSideUI();
 		void DrawResultsScreen(); // not const because we want buttons
 	};
-}
+} // namespace Cyrey
 	
-#endif // #_CYREY_BOARD_HEADER
+#endif // #CYREY_BOARD_HEADER

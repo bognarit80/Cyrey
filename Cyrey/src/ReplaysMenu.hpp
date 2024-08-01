@@ -33,6 +33,6 @@ namespace Cyrey
         static constexpr char cNoReplaysText[] = "No replays found.";
     };
 
-} // Cyrey
+} // namespace Cyrey
 
 #endif //CYREY_REPLAYSMENU_HPP

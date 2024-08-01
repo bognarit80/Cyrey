@@ -1,5 +1,5 @@
-#ifndef _CYREY_GAMECONFIG_HEADER
-#define _CYREY_GAMECONFIG_HEADER
+#ifndef CYREY_GAMECONFIG_HEADER
+#define CYREY_GAMECONFIG_HEADER
 
 namespace Cyrey
 {
@@ -29,6 +29,6 @@ namespace Cyrey
 		.mMissDelayMultiplier = 3.0f,
 		.mLightningPiecesAmount = 10
 	};
-}
+} // namespace Cyrey
 
-#endif // !_CYREY_GAMECONFIG_HEADER
+#endif // !CYREY_GAMECONFIG_HEADER
