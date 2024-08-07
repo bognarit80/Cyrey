@@ -23,7 +23,7 @@ endif()
 
 # raygui
 set(RAYGUI_VERSION 4.0)
-find_package(raygui QUIET)
+find_package(raygui ${RAYGUI_VERSION} QUIET)
 if (NOT raygui_FOUND)
     include(FetchContent)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -42,20 +42,22 @@ if (NOT raygui_FOUND)
 endif()
 
 # nlohmann_json
-# find_package(json QUIET)
-# if (NOT json_FOUND)
-#     include(FetchContent)
-#     FetchContent_Declare(
-#         json
-#         URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-#     )
-#     FetchContent_MakeAvailable(json)
-# endif()
+set(JSON_VERSION 3.11.3)
+find_package(json ${JSON_VERSION} QUIET)
+if (NOT json_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+            json
+            DOWNLOAD_EXTRACT_TIMESTAMP OFF
+            URL https://github.com/nlohmann/json/releases/download/v${JSON_VERSION}/json.tar.xz
+    )
+    FetchContent_MakeAvailable(json)
+endif()
 
 file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
-target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
+target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${raygui_SOURCE_DIR}/src" "${raygui_SOURCE_DIR}/styles/cyber")
 
 # Copy /resources

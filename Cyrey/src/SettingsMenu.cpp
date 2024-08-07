@@ -95,7 +95,10 @@ void Cyrey::SettingsMenu::Draw()
 
 	if (::GuiWindowBox(windowRect, SettingsMenu::cWindowText) || 
 		::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_OK_TICK, SettingsMenu::cDoneButtonText)))
+	{
+		this->SaveSettingsFile(SettingsMenu::cSettingsFileName);
 		this->mApp.ChangeToState(this->mApp.mPrevState);
+	}
 
 	::GuiSlider(musicSliderPos, 
 		::GuiIconText(::GuiIconName::ICON_AUDIO, SettingsMenu::cMusicSliderText), 
@@ -149,12 +152,53 @@ void Cyrey::SettingsMenu::Draw()
 		this->mSwapDeadZone = SettingsMenu::cSwapDeadZone;
 		this->mQueueSwapTolerance = SettingsMenu::cQueueSwapTolerance;
 		this->mWantBoardSwerve = SettingsMenu::cWantBoardSwerve;
+		this->mWantReplayAutoSave = SettingsMenu::cWantReplayAutoSave;
 	}
 
 	::GuiLine(secondLinePos, nullptr);
 
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
 		if (::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, SettingsMenu::cMainMenuButtonText)))
-			this->mApp.ChangeToState(CyreyAppState::MainMenu);
+		{
 			// TODO: Save the game, or add XP or something
+			this->SaveSettingsFile(SettingsMenu::cSettingsFileName);
+			this->mApp.ChangeToState(CyreyAppState::MainMenu);
+		}
+}
+
+void Cyrey::SettingsMenu::OpenSettingsFile(const std::string& path)
+{
+	auto data = ::LoadFileText(path.c_str());
+	using json = nlohmann::ordered_json;
+
+	if (!data || !json::accept(data))
+		return;
+
+	json j = json::parse(data);
+
+	this->mMusicVolume = j.value("musicVolume", SettingsMenu::cMusicVolume);
+	this->mSoundVolume = j.value("soundVolume", SettingsMenu::cSoundVolume);
+	this->mIsFullscreen = j.value("wantFullscreen", SettingsMenu::cWantFullscreen);
+	this->mIsVSync = j.value("wantVSync", SettingsMenu::cWantVSync);
+	this->mSwapDeadZone = j.value("swapDeadZone", SettingsMenu::cSwapDeadZone);
+	this->mWantBoardSwerve = j.value("wantBoardSwerve", SettingsMenu::cWantBoardSwerve);
+	this->mQueueSwapTolerance = j.value("queueSwapTolerance", SettingsMenu::cQueueSwapTolerance);
+	this->mWantReplayAutoSave = j.value("wantReplayAutoSave", SettingsMenu::cWantReplayAutoSave);
+}
+
+bool Cyrey::SettingsMenu::SaveSettingsFile(const std::string& path)
+{
+	using json = nlohmann::ordered_json;
+
+	json j;
+	j["musicVolume"] = this->mMusicVolume;
+	j["soundVolume"] = this->mSoundVolume;
+	j["wantFullscreen"] = this->mIsFullscreen;
+	j["wantVSync"] = this->mIsVSync;
+	j["swapDeadZone"] = this->mSwapDeadZone;
+	j["wantBoardSwerve"] = this->mWantBoardSwerve;
+	j["queueSwapTolerance"] = this->mQueueSwapTolerance;
+	j["wantReplayAutoSave"] = this->mWantReplayAutoSave;
+
+	return ::SaveFileText(path.c_str(), j.dump().data());
 }
