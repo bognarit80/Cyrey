@@ -11,6 +11,7 @@
 #include "PieceDropAnim.hpp"
 #include "SwapDirection.hpp"
 #include "Replay.hpp"
+#include "SwapAnim.hpp"
 
 namespace Cyrey
 {
@@ -62,6 +63,7 @@ namespace Cyrey
         bool mHasSavedReplay;
         bool mHasDroppedFile;
         std::optional<Replay> mDroppedReplay;
+		SwapAnim mSwapAnim;
 
 		static constexpr float cDefaultZoomPct = 70.0f;
 		static constexpr float cSwerveCoeff = 0.1f;
@@ -112,6 +114,7 @@ namespace Cyrey
 
 	private:
 		void UpdateReplay();
+		void UpdateSwapAnim();
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
 		void UpdateGameOverAnim();
@@ -125,6 +128,7 @@ namespace Cyrey
 		void DrawCheckerboard() const;
 		void DrawBorder() const;
 		void DrawPieces() const;
+		void DrawSwapAnim() const;
 		void DrawPieceMatchAnims() const;
 		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;

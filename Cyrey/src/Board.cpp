@@ -61,6 +61,7 @@ void Cyrey::Board::Update()
 		this->UpdateInput();
 	}
 
+	this->UpdateSwapAnim();
 	this->UpdateMatchedPieceAnims();
 	this->UpdateDroppedPieceAnims();
 
@@ -127,6 +128,7 @@ void Cyrey::Board::Draw()
 	this->DrawCheckerboard();
 	this->DrawBorder();
 	this->DrawPieces();
+	this->DrawSwapAnim();
 	this->DrawPieceMatchAnims();
 	this->DrawPieceDropAnims();
 	this->DrawHoverSquare();
@@ -500,6 +502,7 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 		this->mSecondsSinceLastCommand = 0.0f;
 	}
 
+	this->mSwapAnim = {col, row, direction};
 	return this->TrySwap(col, row, toRow, toCol);
 }
 
@@ -715,6 +718,16 @@ void Cyrey::Board::UpdateReplay()
 				this->mReplayCopy->mCommands.size()));
 		this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
 		this->mReplayCopy->mCommands.pop_front();
+	}
+}
+
+void Cyrey::Board::UpdateSwapAnim()
+{
+	this->mSwapAnim.mOpacity -= SwapAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
+	if (this->mSwapAnim.mOpacity < 0.0f)
+	{
+		this->mSwapAnim.mOpacity = 0.0f;
+		this->mSwapAnim.mDirection = SwapDirection::None;
 	}
 }
 
@@ -1200,6 +1213,40 @@ void Cyrey::Board::DrawPieces() const
 			}
 		}
 	}
+}
+
+void Cyrey::Board::DrawSwapAnim() const
+{
+	if (this->mSwapAnim.mDirection == SwapDirection::None)
+		return;
+
+	float x = this->mXOffset + (this->mSwapAnim.mRow * this->mTileSize) + this->mTileInset;
+	float y = this->mYOffset + (this->mSwapAnim.mCol * this->mTileSize) + this->mTileInset;
+	if (this->mSwapAnim.mDirection == SwapDirection::Up)
+		y -= this->mTileSize;
+	if (this->mSwapAnim.mDirection == SwapDirection::Left)
+		x -= this->mTileSize;
+
+	float width = this->mTileSize - (this->mTileInset * 2);
+	float height = this->mTileSize - (this->mTileInset * 2);
+	if (this->mSwapAnim.mDirection == SwapDirection::Left || this->mSwapAnim.mDirection == SwapDirection::Right)
+		width += width + this->mTileInset * 2;
+	if (this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Down)
+		height += height + this->mTileInset * 2;
+
+	::Color from = this->mApp->mDarkMode ?
+		::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity) : ::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity);
+	::Color to = this->mApp->mDarkMode ?
+		::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity) : ::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity);
+
+	// ::DrawRectangleGradientV(x, y, width, height,
+	// 	(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? from : to,
+	// 	(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from);
+	::DrawRectangleGradientEx({x, y, width, height},
+		(this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,
+		(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,
+		(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from,
+		(this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from);
 }
 
 void Cyrey::Board::DrawPieceMatchAnims() const
