@@ -768,6 +768,8 @@ void Cyrey::Board::UpdateGameOverAnim()
 			::TraceLog(::TraceLogLevel::LOG_WARNING, "Replay score mismatch!");
 		else
 			this->mReplayData->mScore = this->mScore;
+		if (!this->mIsInReplay)
+			this->UpdateCurrentUserStats();
 
 		::StopMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
 		::PlayMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
@@ -783,6 +785,21 @@ void Cyrey::Board::UpdateGameOverAnim()
 		}
 		::PlaySound(this->mApp->mResMgr->mSounds["rowBlow.ogg"]);
 	}
+}
+
+void Cyrey::Board::UpdateCurrentUserStats() const
+{
+	User& user = *this->mApp->mCurrentUser;
+	user.mXP += this->mScore;
+	user.mPiecesCleared += this->mPiecesCleared;
+	user.mGamesPlayed++;
+	user.mBombsDetonated += this->mBombsDetonated;
+	user.mLightningsDetonated += this->mLightningsDetonated;
+	user.mHypercubesDetonated += this->mHypercubesDetonated;
+	user.mBestMovePoints = std::max(user.mBestMovePoints, this->mBestMovePoints);
+	user.mBestMoveCascades = std::max(user.mBestMoveCascades, this->mBestMoveCascades);
+
+	this->mApp->SaveCurrentUserData();
 }
 
 void Cyrey::Board::UpdateBoardSwerve()
@@ -1239,9 +1256,6 @@ void Cyrey::Board::DrawSwapAnim() const
 	::Color to = this->mApp->mDarkMode ?
 		::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity) : ::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity);
 
-	// ::DrawRectangleGradientV(x, y, width, height,
-	// 	(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? from : to,
-	// 	(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from);
 	::DrawRectangleGradientEx({x, y, width, height},
 		(this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,
 		(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,

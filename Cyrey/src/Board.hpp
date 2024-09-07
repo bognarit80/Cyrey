@@ -118,6 +118,7 @@ namespace Cyrey
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
 		void UpdateGameOverAnim();
+		void UpdateCurrentUserStats() const; // call after game ends
 		void UpdateBoardSwerve();
 		bool UpdateNewGameAnim(); // increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
 		void UpdateDragging();

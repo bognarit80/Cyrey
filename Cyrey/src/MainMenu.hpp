@@ -11,7 +11,8 @@ namespace Cyrey
 	{
 	public:
 		CyreyApp& mApp;
-		bool mIsPlayBtnPressed;
+		bool mIsPlayBtnPressed { false };
+		bool mIsUserPressed { false };
 
 		static constexpr char cTitleName[] = "Cyrey";
         static constexpr char cPlayBtnText[] = "Play";
@@ -19,8 +20,7 @@ namespace Cyrey
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 
-		explicit MainMenu(CyreyApp& app) :
-			mApp(app), mIsPlayBtnPressed(false) {};
+		explicit MainMenu(CyreyApp& app) : mApp(app) {}
 
 		void Init();
 		void Update();

@@ -9,10 +9,11 @@
 #include "GameConfig.hpp"
 #include "ResourceManager.hpp"
 #include "ReplaysMenu.hpp"
+#include "UserMenu.hpp"
 #include <memory>
 #include <random>
 
-namespace Cyrey 
+namespace Cyrey
 {
 	class Board;
 	class MainMenu;
@@ -20,6 +21,7 @@ namespace Cyrey
 	class SettingsMenu;
     class ReplaysMenu;
 	struct GameConfig;
+	class UserMenu;
 
 	enum class CyreyAppState
 	{
@@ -57,9 +59,11 @@ namespace Cyrey
 		bool mHasWindow;
 		std::unique_ptr<ResourceManager> mResMgr;
         std::unique_ptr<ReplaysMenu> mReplaysMenu;
+		std::unique_ptr<UserMenu> mUserMenu;
 
 		static constexpr char cTitle[] = "Cyrey";
 		static constexpr char cLoading[] = "Loading...";
+		static constexpr char cUserFileName[] = "user.json";
 
 		void Init();
 		void InitWindow();
@@ -69,6 +73,8 @@ namespace Cyrey
 		[[nodiscard]] float GetDeltaTime() const;
 		void ChangeToState(CyreyAppState state); /// Change to the state at the beginning of the next update
 		void ToggleFullscreen();
+		static User ParseUserFile();
+		void SaveCurrentUserData() const;
 
 		unsigned int SeedRNG(); /// Returns the seed.
 		void SeedRNG(unsigned int seed); /// For replays and games with set seed.

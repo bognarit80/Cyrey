@@ -8,6 +8,7 @@
 #include "style_cyber.h"
 #pragma GCC diagnostic pop
 #include <thread>
+#include "UserMenu.hpp"
 
 //Init the default values. Call this after constructing the object, before running the game.
 void Cyrey::CyreyApp::Init()
@@ -32,9 +33,10 @@ void Cyrey::CyreyApp::Init()
     this->mBoard->Init();
     this->mMainMenu = std::make_unique<MainMenu>(*this);
     this->mMainMenu->Init();
-    this->mCurrentUser = std::make_unique<User>();
+    this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile());
     this->mSettings = std::make_unique<SettingsMenu>(*this);
     this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);
+    this->mUserMenu = std::make_unique<UserMenu>(*this);
 }
 
 void Cyrey::CyreyApp::InitWindow()
@@ -111,6 +113,11 @@ void Cyrey::CyreyApp::Update()
             this->ChangeToState(CyreyAppState::InGame);
             this->mBoard->Init();
         }
+        if (this->mMainMenu->mIsUserPressed)
+        {
+            this->mUserMenu->mIsOpen = true;
+            this->mMainMenu->mIsUserPressed = false;
+        }
         break;
 
     case CyreyAppState::InGame:
@@ -162,7 +169,10 @@ void Cyrey::CyreyApp::Draw() const
             break;
 
         case CyreyAppState::MainMenu:
-            this->mMainMenu->Draw();
+            if (this->mUserMenu->mIsOpen)
+                this->mUserMenu->Draw();
+            else
+                this->mMainMenu->Draw();
             break;
 
         case CyreyAppState::InGame:
@@ -241,6 +251,22 @@ void Cyrey::CyreyApp::ToggleFullscreen()
         ::SetWindowSize(::GetMonitorWidth(currentMonitor), ::GetMonitorHeight(currentMonitor));
         ::ToggleFullscreen();
     }
+}
+
+Cyrey::User Cyrey::CyreyApp::ParseUserFile()
+{
+    char* txt = ::LoadFileText(CyreyApp::cUserFileName);
+    if (!txt)
+        return User{};
+
+    return nlohmann::json::parse(txt);
+}
+
+void Cyrey::CyreyApp::SaveCurrentUserData() const
+{
+    nlohmann::json json = *this->mCurrentUser;
+    std::string str = json.dump();
+    ::SaveFileData(CyreyApp::cUserFileName, str.data(), static_cast<int>(str.length()));
 }
 
 unsigned int Cyrey::CyreyApp::SeedRNG()

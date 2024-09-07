@@ -40,7 +40,7 @@ namespace Cyrey
 		void SetVolume(float soundVolume, float musicVolume);
 
 	private:
-		bool mHasFinishedLoading;
+		bool mHasFinishedLoading { false };
 
 		static constexpr std::string GetFullPath(const std::string& fileName); // try with const char* instead to avoid .c_str()?
 

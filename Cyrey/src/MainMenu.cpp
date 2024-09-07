@@ -27,10 +27,24 @@ void Cyrey::MainMenu::Draw()
 	auto fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
 
 	::GuiLabel(
-		::Rectangle{ 0, static_cast<float>(this->mApp.mHeight) * 0.1f,
+		::Rectangle{ 0, static_cast<float>(this->mApp.mHeight) * 0.05f,
 			static_cast<float>(this->mApp.mWidth), fontSize },
 		MainMenu::cTitleName
 	);
+
+	// draw current user text
+	::GuiSetStyle(::GuiControl::DEFAULT,
+		::GuiDefaultProperty::TEXT_SIZE,
+		static_cast<int>(appHeight > appWidth ? appWidth * 0.05f : appHeight * 0.05f)
+	);
+	fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
+	if (::GuiLabelButton(
+		::Rectangle{ 0, static_cast<float>(this->mApp.mHeight) * 0.30f,
+			static_cast<float>(this->mApp.mWidth), fontSize },
+		::TextFormat("Welcome back, %s.", this->mApp.mCurrentUser->mName.c_str())))
+	{
+		this->mIsUserPressed = true;
+	}
 
 	//draw buttons
 	float buttonWidth = appHeight > appWidth ? appWidth * 0.50f : appHeight * 0.50f;
