@@ -1,7 +1,11 @@
 ﻿#ifndef CYREY_APP_HEADER
 #define CYREY_APP_HEADER
 
+#ifdef PLATFORM_ANDROID
+#include "raymob.h"
+#else
 #include "raylib.h"
+#endif
 #include "Board.hpp"
 #include "MainMenu.hpp"
 #include "User.hpp"

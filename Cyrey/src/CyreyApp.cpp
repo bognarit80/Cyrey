@@ -77,10 +77,10 @@ void Cyrey::CyreyApp::GameLoop()
     this->Update();
     this->Draw();
     ::DrawFPS(10, 10);
-#ifdef _DEBUG
+#ifndef NDEBUG
     ::DrawText(::TextFormat("%d", this->mUpdateCnt), 10, 100, 16,
         this->mDarkMode ? ::WHITE : ::BLACK);
-#endif // _DEBUG
+#endif // NDEBUG
 }
 
 void Cyrey::CyreyApp::Update()
@@ -136,7 +136,8 @@ void Cyrey::CyreyApp::Update()
         int selectedIdx = this->mReplaysMenu->mActive;
         if (selectedIdx != -1)
         {
-            std::optional<Replay> rep = Replay::OpenReplayFile(this->mReplaysMenu->mReplayPaths.paths[selectedIdx]);
+            std::optional<Replay> rep = Replay::OpenReplayFile(
+                (Replay::cReplaysFolderName + this->mReplaysMenu->mReplays[selectedIdx]).c_str());
             if (rep.has_value())
             {
                 this->ChangeToState(CyreyAppState::InGame);
@@ -196,11 +197,11 @@ void Cyrey::CyreyApp::Draw() const
 
 float Cyrey::CyreyApp::GetDeltaTime() const
 {
-#ifdef _DEBUG
-    return 1.0f / this->mRefreshRate; //fixed frametime for debugging
-#else
+#ifndef NDEBUG
     return ::GetFrameTime();
-#endif // _DEBUG
+#else
+    return 1.0f / static_cast<float>(this->mRefreshRate); //fixed frametime for debugging
+#endif
 }
 
 void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
@@ -264,6 +265,7 @@ Cyrey::User Cyrey::CyreyApp::ParseUserFile()
 
 void Cyrey::CyreyApp::SaveCurrentUserData() const
 {
+    // this->mCurrentUser->mName.erase(this->mCurrentUser->mName.find_last_not_of('\0') + 1);
     nlohmann::json json = *this->mCurrentUser;
     std::string str = json.dump();
     ::SaveFileData(CyreyApp::cUserFileName, str.data(), static_cast<int>(str.length()));

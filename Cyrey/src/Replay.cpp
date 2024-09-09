@@ -2,7 +2,11 @@
 #include <vector>
 #include <cstring>
 #include <filesystem>
+#ifdef PLATFORM_ANDROID
+#include "raymob.h"
+#else
 #include "raylib.h"
+#endif
 
 // TODO: Break on invalid input, use std::optional
 
@@ -90,8 +94,13 @@ std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char* fileName)
 }
 
 bool Cyrey::Replay::SaveReplayToFile(const Replay& replay, const char* fileName) {
-    if (!::DirectoryExists(Replay::cReplaysFolderName))
-        std::filesystem::create_directory(Replay::cReplaysFolderName);
+#ifdef PLATFORM_ANDROID
+    const char* directory = ::TextFormat("%s/%s", ::GetAndroidApp()->activity->internalDataPath, Replay::cReplaysFolderName);
+#else
+    const char *directory = Replay::cReplaysFolderName;
+#endif
+    if (!::DirectoryExists(directory))
+        std::filesystem::create_directory(directory);
 
     std::vector<uint8_t> data = Replay::Serialize(replay);
     return ::SaveFileData(fileName, data.data(), static_cast<int>(data.size()));

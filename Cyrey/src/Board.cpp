@@ -46,7 +46,14 @@ void Cyrey::Board::Init()
 void Cyrey::Board::Update()
 {
 	this->mZoomPct += ::GetMouseWheelMove(); //perhaps change this to the Camera functionality in raylib? seems a lot more versatile
-	if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE))
+
+    static ::Vector2 lastVector{0.0f, 0.0f};
+    ::Vector2 pinch{std::abs(::GetGesturePinchVector().x), std::abs(::GetGesturePinchVector().y)};
+    if (pinch.x != 0.0f && pinch.y != 0.0f && (lastVector.x != 0.0f && lastVector.y !=0.0f))
+        this->mZoomPct += (pinch.x - lastVector.x + (pinch.y - lastVector.y) * 2) * 5;
+    lastVector = pinch;
+
+    if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE) || ::GetTouchPointCount() >= 4)
 		this->mZoomPct = Board::cDefaultZoomPct;
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration && this->mSecondsRemaining > 0.0f)
@@ -158,15 +165,18 @@ void Cyrey::Board::UpdateInput()
 		case ::KeyboardKey::KEY_D:
 			this->TrySwap(x, y, SwapDirection::Right);
 			return;
-#ifdef _DEBUG
+#ifndef NDEBUG
+		case ::KeyboardKey::KEY_O: // (almost) instantly finish game
+			this->mSecondsRemaining = 0.5f;
+			return;
 		case ::KeyboardKey::KEY_F:
-			this->mBoard[hoveredTile.y][hoveredTile.x].Bombify();
+			this->mBoard[y][x].Bombify();
 			return;
 		case ::KeyboardKey::KEY_Z:
-			this->mBoard[hoveredTile.y][hoveredTile.x].Lightningify();
+			this->mBoard[y][x].Lightningify();
 			return;
 		case ::KeyboardKey::KEY_C:
-			this->mBoard[hoveredTile.y][hoveredTile.x].Hypercubify();
+			this->mBoard[y][x].Hypercubify();
 			return;
 		case ::KeyboardKey::KEY_KP_1:
 		case ::KeyboardKey::KEY_KP_2:
@@ -175,7 +185,7 @@ void Cyrey::Board::UpdateInput()
 		case ::KeyboardKey::KEY_KP_5:
 		case ::KeyboardKey::KEY_KP_6:
 		case ::KeyboardKey::KEY_KP_7:
-			this->mBoard[hoveredTile.y][hoveredTile.x].mColor = static_cast<PieceColor>(key - 320);
+			this->mBoard[y][x].mColor = static_cast<PieceColor>(key - 320);
 			break;
 		case ::KeyboardKey::KEY_ONE:
 		case ::KeyboardKey::KEY_TWO:
@@ -184,7 +194,7 @@ void Cyrey::Board::UpdateInput()
 		case ::KeyboardKey::KEY_FIVE:
 		case ::KeyboardKey::KEY_SIX:
 		case ::KeyboardKey::KEY_SEVEN:
-			this->mBoard[hoveredTile.y][hoveredTile.x].mColor = static_cast<PieceColor>(key - 48);
+			this->mBoard[y][x].mColor = static_cast<PieceColor>(key - 48);
 			break;
 #endif
 		default:
@@ -337,7 +347,7 @@ std::optional<::Vector2> Cyrey::Board::GetHoveredTile() const
 	if (xTile >= this->mWidth || yTile >= this->mHeight)
 		return std::nullopt;
 
-	return ::Vector2(static_cast<float>(xTile), static_cast<float>(yTile));
+	return ::Vector2{static_cast<float>(xTile), static_cast<float>(yTile)};
 }
 
 bool Cyrey::Board::IsMouseInBoard() const
@@ -599,9 +609,9 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
         anim.mSparklesAmount = ::GetRandomValue(AnimSparkle::cMinSparkles, AnimSparkle::cMaxSparkles);
         for (int i = 0; i < anim.mSparklesAmount; i++)
         {
-            anim.mSparkles[i] = AnimSparkle(::GetRandomValue(0, 360),
-                                  ::GetRandomValue(0, 360),
-                                  ::GetRandomValue(0, this->mTileSize / 2));
+            anim.mSparkles[i] = AnimSparkle{static_cast<float>(::GetRandomValue(0, 360)),
+                                  static_cast<float>(::GetRandomValue(0, 360)),
+                                  static_cast<float>(::GetRandomValue(0, this->mTileSize / 2))};
         }
     }
     piece = Cyrey::gNullPiece;

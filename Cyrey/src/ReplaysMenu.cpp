@@ -1,7 +1,7 @@
 #include "ReplaysMenu.hpp"
 #include "raygui.h"
 
-Cyrey::ReplaysMenu::ReplaysMenu(CyreyApp& app) : mReplayPaths({}), mApp(app)
+Cyrey::ReplaysMenu::ReplaysMenu(CyreyApp& app) : mApp(app)
 {
     this->RefreshReplayList(); // inits the rest of the members
 }
@@ -57,34 +57,46 @@ void Cyrey::ReplaysMenu::Draw()
     if (::GuiButton(refreshBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Refresh")))
         this->RefreshReplayList();
 
-    // evil const_cast to pass the paths array directly to the function, because .paths isn't <const> char*...
+
+    const int size = static_cast<int>(this->mReplays.size());
+    this->mPaths = new const char*[size];
+    for (int i = 0; i < size; ++i)
+    {
+        this->mPaths[i] = this->mReplays[i].c_str();
+    }
     ::GuiListViewEx(listRect,
-                    const_cast<const char**>(this->mReplayPaths.paths),
-                    static_cast<int>(this->mReplayPaths.count),
+                    this->mPaths,
+                    size,
                     &this->mScrollIndex,
                     &this->mActive,
                     &this->mFocus);
 
-    if (this->mReplayPaths.count <= 0)
+    if (size <= 0)
         ::GuiLabel(noReplaysPos, ReplaysMenu::cNoReplaysText);
+    delete[] this->mPaths;
 }
 
 void Cyrey::ReplaysMenu::RefreshReplayList()
 {
     // TODO: Make this async
 
-    if (this->mReplayPaths.count != 0)
-        ::UnloadDirectoryFiles(this->mReplayPaths);
+#ifdef PLATFORM_ANDROID
+    const char* directory = ::TextFormat("%s/%s", ::GetAndroidApp()->activity->internalDataPath, Replay::cReplaysFolderName);
+#else
+    const char *directory = Replay::cReplaysFolderName;
+#endif
+    if (!::DirectoryExists(directory))
+        std::filesystem::create_directory(directory);
 
-    this->mReplayPaths = ::LoadDirectoryFilesEx(ReplaysMenu::cReplaysFolderPath, ".cyrep", false);
+    this->mReplays.clear();
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+        if (entry.path().extension() == Replay::cReplayFileExtension)
+            this->mReplays.emplace_front(entry.path().filename().generic_string());
+    }
 
     // reset the window's parameters, protect against out of bounds errors as we just changed the amount of list entries
     this->mScrollIndex = 0;
     this->mActive = -1;
     this->mFocus = -1;
-}
-
-Cyrey::ReplaysMenu::~ReplaysMenu()
-{
-    ::UnloadDirectoryFiles(this->mReplayPaths);
 }

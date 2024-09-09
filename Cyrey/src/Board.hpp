@@ -65,7 +65,11 @@ namespace Cyrey
         std::optional<Replay> mDroppedReplay;
 		SwapAnim mSwapAnim;
 
+#ifdef PLATFORM_ANDROID
+		static constexpr float cDefaultZoomPct = 85.0f;
+#else
 		static constexpr float cDefaultZoomPct = 70.0f;
+#endif
 		static constexpr float cSwerveCoeff = 0.1f;
 		static constexpr int cMaxCascadesSwerve = 8;
 		static constexpr float cFallDelay = 0.2f;

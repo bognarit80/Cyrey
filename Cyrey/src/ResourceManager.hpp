@@ -10,7 +10,11 @@ namespace Cyrey
 	class ResourceManager
 	{
 	public:
+#ifdef PLATFORM_ANDROID // Android assets have their own folder, no need to layer the "resources" one on top of it.
+		static constexpr char cRootResorcesPath[] = "";
+#else
 		static constexpr char cRootResorcesPath[] = "resources/";
+#endif
 
 		std::map<std::string, ::Music> mMusics
 		{
@@ -42,7 +46,7 @@ namespace Cyrey
 	private:
 		bool mHasFinishedLoading { false };
 
-		static constexpr std::string GetFullPath(const std::string& fileName); // try with const char* instead to avoid .c_str()?
+		static std::string GetFullPath(const std::string& fileName); // try with const char* instead to avoid .c_str()?
 
 		void LoadMusic();
 		void LoadSounds();

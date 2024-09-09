@@ -1,7 +1,7 @@
 #ifndef CYREY_REPLAYSMENU_HPP
 #define CYREY_REPLAYSMENU_HPP
 
-#include "raylib.h"
+#include <deque>
 #include "CyreyApp.hpp"
 
 namespace Cyrey
@@ -11,9 +11,8 @@ namespace Cyrey
     {
     public:
         explicit ReplaysMenu(CyreyApp& app);
-        ~ReplaysMenu();
 
-        ::FilePathList mReplayPaths;
+        std::deque<std::string> mReplays;
 
         // ListView variables
         int mActive;
@@ -26,8 +25,8 @@ namespace Cyrey
 
     private:
         CyreyApp& mApp;
+        const char** mPaths; // for the ListView
 
-        static constexpr char cReplaysFolderPath[] = "replays";
         static constexpr char cTitleText[] = "Replays";
         static constexpr char cBackBtnText[] = "Back";
         static constexpr char cNoReplaysText[] = "No replays found.";
