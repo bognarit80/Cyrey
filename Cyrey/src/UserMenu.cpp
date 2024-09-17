@@ -138,6 +138,13 @@ void Cyrey::UserMenu::Draw()
     ::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", user.mHypercubesDetonated));
     ::GuiLabel(bestMoveValuePos, ::TextFormat(" %lld", user.mBestMovePoints));
     ::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", user.mBestMoveCascades));
+#ifdef PLATFORM_ANDROID
+    if (const char* txt = ::GetInputDialogText(); txt != nullptr && txt[0])
+    {
+        user.mName = txt;
+        this->mApp.SaveCurrentUserData();
+    }
+#else
     if (this->mWantNameDialog)
     {
         static std::string str = user.mName;
@@ -147,6 +154,7 @@ void Cyrey::UserMenu::Draw()
                               "Enter new name:",
                               "OK;Cancel",
                               str.data(), User::cMaxNameLength + 1, nullptr);
+
         if (i == 1 && str[0])
         {
             user.mName = str;
@@ -156,6 +164,7 @@ void Cyrey::UserMenu::Draw()
         else if (i == 2)
             this->mWantNameDialog = false;
     }
+#endif
 
     // top text
     float fontSizeTitle = windowHeight > windowWidth ? windowWidth / 12 : windowHeight / 12;
@@ -175,7 +184,11 @@ void Cyrey::UserMenu::Draw()
     if (::GuiLabelButton(nameLabel,
         ::TextFormat("%s", user.mName.c_str())))
     {
+#ifdef PLATFORM_ANDROID
+        ::ShowInputDialog();
+#else
         this->mWantNameDialog = true;
+#endif
     }
     ::GuiLabel(xpLabel,
         ::TextFormat("%lld lifetime XP", user.mXP));
