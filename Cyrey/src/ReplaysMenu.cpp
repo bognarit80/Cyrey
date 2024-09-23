@@ -50,8 +50,71 @@ void Cyrey::ReplaysMenu::Draw()
                                fontSize
     };
 
+    if (this->mActive >= 0)
+    {
+        this->mSelectedReplay = Replay::OpenReplayFile((Replay::cReplaysFolderName + this->mReplays[this->mActive]).c_str());
+        this->mActive = -1;
+    }
+    if (this->mSelectedReplay.has_value())
+    {
+        if (::GuiWindowBox(windowRect, "Replay info") ||
+        ::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, ReplaysMenu::cBackBtnText)))
+            this->mSelectedReplay = std::nullopt;
+
+        if (::GuiButton(refreshBtnPos, ::GuiIconText(::GuiIconName::ICON_PLAYER_PLAY, "Play")))
+            this->mPlayReplay = true;
+
+        float controlOffsetY = fontSize * 1.3f;
+        float controlPaddingX = windowWidth * 0.05f;
+
+        const std::map<const char*, std::string> labelValueMap {
+            {"Moves: ", ::TextFormat("%d", this->mSelectedReplay->mMovesMade)},
+            {"Moves per second: ", ::TextFormat("%.2f",
+                static_cast<float>(this->mSelectedReplay->mMovesMade) / this->mApp.mGameConfig.mStartingTime)},
+            {"Bombs: ", ::TextFormat("%d", this->mSelectedReplay->mBombsDetonated)},
+            {"Lightnings: ", ::TextFormat("%d", this->mSelectedReplay->mLightningsDetonated)},
+            {"Hypercubes: ", ::TextFormat("%d", this->mSelectedReplay->mHypercubesDetonated)},
+            {"Best move (points): ", ::TextFormat("%d", this->mSelectedReplay->mBestMovePoints)},
+            {"Highest cascade: ", ::TextFormat("%d", this->mSelectedReplay->mBestMoveCascades)},
+            {"Pieces cleared: ", ::TextFormat("%d", this->mSelectedReplay->mPiecesCleared)}
+        };
+
+        int i = 3;
+        for (auto& [label, value] : labelValueMap)
+        {
+            ::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_RIGHT);
+            Rectangle labelPos = { windowAnchor.x + controlPaddingX,
+                windowAnchor.y + windowPaddingY + (controlOffsetY * static_cast<float>(i)),
+                (windowWidth / 2) - controlPaddingX,
+                fontSize
+            };
+            ::GuiLabel(labelPos, label);
+
+            ::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
+            Rectangle valuePos = { windowAnchor.x + (windowWidth / 2),
+                windowAnchor.y + windowPaddingY + (controlOffsetY * static_cast<float>(i)),
+                (windowWidth / 2) - controlPaddingX,
+                fontSize
+            };
+            ::GuiLabel(valuePos, value.c_str());
+            i++;
+        }
+        float fontSizeTitle = windowHeight > windowWidth ? windowWidth / 12 : windowHeight / 12;
+        ::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, static_cast<int>(fontSizeTitle));
+        ::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_CENTER);
+        Rectangle finalScoreLabel = { windowAnchor.x,
+            windowAnchor.y + windowPaddingY + controlOffsetY,
+            windowWidth,
+            fontSizeTitle
+        };
+        ::GuiLabel(finalScoreLabel,
+            ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp.mGameConfig.mStartingTime), this->mSelectedReplay->mScore));
+
+        return;
+    }
+
     if (::GuiWindowBox(windowRect, ReplaysMenu::cTitleText) ||
-        ::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_OK_TICK, ReplaysMenu::cBackBtnText)))
+        ::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, ReplaysMenu::cBackBtnText)))
         this->mApp.ChangeToState(CyreyAppState::MainMenu);
 
     if (::GuiButton(refreshBtnPos, ::GuiIconText(::GuiIconName::ICON_RESTART, "Refresh")))
@@ -59,13 +122,13 @@ void Cyrey::ReplaysMenu::Draw()
 
 
     const int size = static_cast<int>(this->mReplays.size());
-    this->mPaths = new const char*[size];
+    const char** paths = new const char*[size];
     for (int i = 0; i < size; ++i)
     {
-        this->mPaths[i] = this->mReplays[i].c_str();
+        paths[i] = this->mReplays[i].c_str();
     }
     ::GuiListViewEx(listRect,
-                    this->mPaths,
+                    paths,
                     size,
                     &this->mScrollIndex,
                     &this->mActive,
@@ -73,7 +136,7 @@ void Cyrey::ReplaysMenu::Draw()
 
     if (size <= 0)
         ::GuiLabel(noReplaysPos, ReplaysMenu::cNoReplaysText);
-    delete[] this->mPaths;
+    delete[] paths;
 }
 
 void Cyrey::ReplaysMenu::RefreshReplayList()

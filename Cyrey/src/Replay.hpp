@@ -35,10 +35,18 @@ namespace Cyrey
 		int64_t mScore;
 		unsigned int mSeed;
 		int mConfigVersion;
+		int mMovesMade;
+		int mBombsDetonated;
+		int mLightningsDetonated;
+		int mHypercubesDetonated;
+		int64_t mBestMovePoints;
+		int mBestMoveCascades;
+		int mPiecesCleared;
 		std::deque<ReplayCommand> mCommands;
 
         static constexpr char cReplaysFolderName[] = "replays/";
 		static constexpr char cReplayFileExtension[] = ".cyrep";
+		static constexpr char cReplayFileMagic[] = "CYREP";
 
 		static std::vector<uint8_t> Serialize(const Replay& replayData);
 		static std::optional<Replay> Deserialize(const std::vector<std::uint8_t>& data);

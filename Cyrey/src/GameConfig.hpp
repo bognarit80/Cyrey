@@ -19,7 +19,7 @@ namespace Cyrey
 	};
 
 	constexpr GameConfig cDefaultGameConfig {
-		.mVersion = 1,
+		.mVersion = 2,
 		.mPieceColorAmount = 7,
 		.mBoardWidth = 8,
 		.mBoardHeight = 8,

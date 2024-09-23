@@ -133,19 +133,15 @@ void Cyrey::CyreyApp::Update()
     {
         this->mReplaysMenu->Update();
         ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-        int selectedIdx = this->mReplaysMenu->mActive;
-        if (selectedIdx != -1)
+        if (this->mReplaysMenu->mPlayReplay)
         {
-            std::optional<Replay> rep = Replay::OpenReplayFile(
-                (Replay::cReplaysFolderName + this->mReplaysMenu->mReplays[selectedIdx]).c_str());
-            if (rep.has_value())
-            {
-                this->ChangeToState(CyreyAppState::InGame);
-                this->mBoard->Init();
-                this->mBoard->PlayReplay(*rep);
-                this->mBoard->mHasSavedReplay = true; // prevent saving the replay again
-                this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update
-            }
+            this->ChangeToState(CyreyAppState::InGame);
+            this->mBoard->Init();
+            this->mBoard->PlayReplay(*this->mReplaysMenu->mSelectedReplay); // we will always have a value here
+            this->mBoard->mHasSavedReplay = true; // prevent saving the replay again
+            this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update
+            this->mReplaysMenu->mPlayReplay = false;
+            this->mReplaysMenu->mSelectedReplay = std::nullopt;
         }
         break;
     }

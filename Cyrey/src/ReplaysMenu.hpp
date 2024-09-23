@@ -2,7 +2,9 @@
 #define CYREY_REPLAYSMENU_HPP
 
 #include <deque>
+#include <optional>
 #include "CyreyApp.hpp"
+#include "Replay.hpp"
 
 namespace Cyrey
 {
@@ -18,9 +20,12 @@ namespace Cyrey
         int mActive;
         int mScrollIndex;
         int mFocus;
+        std::optional<Replay> mSelectedReplay;
+        bool mPlayReplay { false };
 
         void Update();
         void Draw(); // not const because we want raygui functions to modify members
+        void DrawReplayPopup();
         void RefreshReplayList();
 
     private:

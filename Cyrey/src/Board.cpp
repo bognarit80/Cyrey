@@ -695,6 +695,9 @@ int Cyrey::Board::DoHypercube(const Piece& cubePiece, const Piece& byPiece)
 
 void Cyrey::Board::PlayReplay()
 {
+	if (this->mReplayData->mConfigVersion != this->mApp->mGameConfig.mVersion)
+		return;
+
 	this->mIsInReplay = true;
 	this->mReplayCopy = std::make_unique<Replay>(*this->mReplayData);
 	this->ResetBoard();
@@ -777,7 +780,17 @@ void Cyrey::Board::UpdateGameOverAnim()
 		if (this->mIsInReplay && this->mReplayCopy->mScore != this->mScore)
 			::TraceLog(::TraceLogLevel::LOG_WARNING, "Replay score mismatch!");
 		else
-			this->mReplayData->mScore = this->mScore;
+		{
+			auto& rep = this->mReplayData;
+			rep->mScore = this->mScore;
+			rep->mMovesMade = this->mMovesMade;
+			rep->mPiecesCleared = this->mPiecesCleared;
+			rep->mBombsDetonated = this->mBombsDetonated;
+			rep->mLightningsDetonated = this->mLightningsDetonated;
+			rep->mHypercubesDetonated = this->mHypercubesDetonated;
+			rep->mBestMovePoints = this->mBestMovePoints;
+			rep->mBestMoveCascades = this->mBestMoveCascades;
+		}
 		if (!this->mIsInReplay)
 			this->UpdateCurrentUserStats();
 
