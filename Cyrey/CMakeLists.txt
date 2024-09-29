@@ -54,10 +54,25 @@ if (NOT json_FOUND)
     FetchContent_MakeAvailable(json)
 endif()
 
+# libcpr
+set(CPR_VERSION 1.10.5)
+find_package(cpr ${CPR_VERSION} QUIET)
+if (NOT cpr_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+            cpr
+            DOWNLOAD_EXTRACT_TIMESTAMP OFF
+            URL https://github.com/libcpr/cpr/archive/refs/tags/${CPR_VERSION}.tar.gz
+    )
+    FetchContent_MakeAvailable(cpr)
+endif()
+
+add_compile_definitions(CYREY_APIURL="https://localhost:44392/api/")
+
 file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
-target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json cpr::cpr)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${raygui_SOURCE_DIR}/src" "${raygui_SOURCE_DIR}/styles/cyber")
 
 # Copy /resources
