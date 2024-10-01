@@ -278,7 +278,21 @@ void Cyrey::CyreyApp::SeedRNG(unsigned int seed)
     this->mMTInstance.seed(seed);
 }
 
-int Cyrey::CyreyApp::GetRandomNumber(int min, int max)
+uint32_t Cyrey::CyreyApp::GetRandomNumber(const uint32_t min, const uint32_t max)
 {
-    return std::uniform_int_distribution{ min, max }(this->mMTInstance);
+    // return std::uniform_int_distribution{ min, max }(this->mMTInstance);
+    // just simplify and reimplement the gcc's implementation because it's not portable :)
+
+    const uint32_t range = (max - min) + 1;
+    uint64_t product = static_cast<uint64_t>(this->mMTInstance()) * static_cast<uint64_t>(range);
+    if (auto low = static_cast<uint32_t>(product); low < range)
+    {
+        const uint32_t threshold = -range % range;
+        while (low < threshold)
+        {
+            product = static_cast<uint64_t>(this->mMTInstance()) * static_cast<uint64_t>(range);
+            low = static_cast<uint32_t>(product);
+        }
+    }
+    return (product >> 32) + min;
 }

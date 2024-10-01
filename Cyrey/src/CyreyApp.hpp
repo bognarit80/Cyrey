@@ -82,12 +82,12 @@ namespace Cyrey
 
 		unsigned int SeedRNG(); /// Returns the seed.
 		void SeedRNG(unsigned int seed); /// For replays and games with set seed.
-		int GetRandomNumber(int min, int max);
+		uint32_t GetRandomNumber(uint32_t min, uint32_t max);
 
 	private:
 		std::mt19937 mMTInstance;
 
 	};
-} // namespace Cyrey 
+} // namespace Cyrey
 
 #endif // !CYREY_APP_HEADER
