@@ -132,7 +132,7 @@ void Cyrey::CyreyApp::Update()
     {
         this->mReplaysMenu->Update();
         ::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-        if (this->mReplaysMenu->mPlayReplay)
+        if (this->mReplaysMenu->mPlayReplay && this->mReplaysMenu->mSelectedReplay->mConfigVersion == this->mGameConfig.mVersion)
         {
             this->ChangeToState(CyreyAppState::InGame);
             this->mBoard->Init();
@@ -260,7 +260,7 @@ Cyrey::User Cyrey::CyreyApp::ParseUserFile()
 
 void Cyrey::CyreyApp::SaveCurrentUserData() const
 {
-    // this->mCurrentUser->mName.erase(this->mCurrentUser->mName.find_last_not_of('\0') + 1);
+    this->mCurrentUser->mName.erase(this->mCurrentUser->mName.find_last_not_of('\0') + 1);
     nlohmann::json json = *this->mCurrentUser;
     std::string str = json.dump();
     ::SaveFileData(CyreyApp::cUserFileName, str.data(), static_cast<int>(str.length()));
