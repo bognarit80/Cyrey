@@ -27,12 +27,11 @@ void Cyrey::CyreyApp::Init()
 
     this->mResMgr = std::make_unique<ResourceManager>();
     this->InitWindow();
-    this->mGameConfig = GameConfig::GetLatestConfig();
+    this->mGameConfig = Cyrey::cDefaultGameConfig;
     this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
     this->mBoard->mApp = this;
     this->mBoard->Init();
     this->mMainMenu = std::make_unique<MainMenu>(*this);
-    this->mMainMenu->Init();
     this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile());
     this->mSettings = std::make_unique<SettingsMenu>(*this);
     this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);

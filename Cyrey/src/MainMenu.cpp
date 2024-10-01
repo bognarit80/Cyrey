@@ -1,15 +1,43 @@
 #include "MainMenu.hpp"
 #include "raygui.h"
 #include "raylib.h"
+#ifdef PLATFORM_DESKTOP
+#include "raylib_win32.h"
+#endif
+#include "cpr/cpr.h"
 
-void Cyrey::MainMenu::Init()
+static std::future<cpr::Response> futureConfig;
+
+static void FetchGameConfig()
 {
-	this->mIsPlayBtnPressed = false;
+	if (futureConfig.valid())
+		return; // we are already trying to fetch the config
+
+	futureConfig = std::async(std::launch::async, []
+	{
+		return cpr::Get(cpr::Url{Cyrey::GameConfig::cLatestConfigUrl},
+			cpr::Timeout{10000},
+			cpr::ConnectTimeout{500});
+	});
+}
+
+Cyrey::MainMenu::MainMenu(CyreyApp& app) : mApp(app)
+{
+	FetchGameConfig();
 }
 
 void Cyrey::MainMenu::Update()
 {
-	
+	if (!futureConfig.valid())
+		return;
+	if (futureConfig.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+		return;
+	auto resp = futureConfig.get();
+	if (resp.status_code != 200)
+		return;
+
+	if (auto cfg = GameConfig::ParseConfig(resp.text); cfg.has_value())
+		this->mApp.mGameConfig = *cfg;
 }
 
 void Cyrey::MainMenu::Draw()
@@ -55,6 +83,8 @@ void Cyrey::MainMenu::Draw()
 	);
 	fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
 
+	if (futureConfig.valid())
+		::GuiDisable();
 	this->mIsPlayBtnPressed = ::GuiButton(
 		::Rectangle{ appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.45f - fontSize / 2,
@@ -75,6 +105,7 @@ void Cyrey::MainMenu::Draw()
     {
         this->mApp.ChangeToState(CyreyAppState::ReplaysMenu);
     }
+	::GuiEnable();
 
 	if (::GuiButton(
 		::Rectangle{ appWidth / 2 - buttonWidth / 2,
@@ -101,4 +132,27 @@ void Cyrey::MainMenu::Draw()
 		this->mApp.mWantExit = true;
 	}
 #endif // __EMSCRIPTEN__
+
+	::GuiSetStyle(::GuiControl::DEFAULT,
+		::GuiDefaultProperty::TEXT_SIZE,
+		static_cast<int>(appHeight > appWidth ? appWidth * 0.035f : appHeight * 0.035f)
+	);
+	fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
+	const char* txt;
+	if (futureConfig.valid())
+		txt = MainMenu::cFetching;
+	else if (this->mApp.mGameConfig.mVersion == Cyrey::cDefaultGameConfig.mVersion)
+		txt = ::TextFormat(MainMenu::cLocalVersion, this->mApp.mGameConfig.mVersion);
+	else
+		txt = ::TextFormat(MainMenu::cFetchedVersion, this->mApp.mGameConfig.mVersion);
+	if (::GuiLabelButton(
+		::Rectangle{ 0,
+			static_cast<float>(this->mApp.mHeight) * 0.94f,
+			static_cast<float>(this->mApp.mWidth),
+			fontSize },
+		txt
+	))
+	{
+		FetchGameConfig();
+	}
 }

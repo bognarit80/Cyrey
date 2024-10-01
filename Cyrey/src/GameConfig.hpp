@@ -1,5 +1,6 @@
 #ifndef CYREY_GAMECONFIG_HEADER
 #define CYREY_GAMECONFIG_HEADER
+#include "nlohmann/json.hpp"
 
 namespace Cyrey
 {
@@ -15,7 +16,12 @@ namespace Cyrey
 		float mMissDelayMultiplier;
 		int mLightningPiecesAmount;
 
-		static GameConfig GetLatestConfig();
+		static std::optional<GameConfig> ParseConfig(const std::string& cfg);
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(GameConfig, mVersion, mPieceColorAmount, mBoardWidth, mBoardHeight, mBaseScore,
+			mStartingTime, mFallDelay, mMissDelayMultiplier, mLightningPiecesAmount);
+
+        constexpr static char cLatestConfigUrl[] = CYREY_APIURL "GameConfig/latest";
 	};
 
 	constexpr GameConfig cDefaultGameConfig {

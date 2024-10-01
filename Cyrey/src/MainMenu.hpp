@@ -20,7 +20,11 @@ namespace Cyrey
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 
-		explicit MainMenu(CyreyApp& app) : mApp(app) {}
+		static constexpr char cLocalVersion[] = "Local game config v%d";
+		static constexpr char cFetchedVersion[] = "Fetched game config v%d";
+		static constexpr char cFetching[] = "Fetching game config...";
+
+		explicit MainMenu(CyreyApp& app);
 
 		void Init();
 		void Update();
