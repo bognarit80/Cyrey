@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.14)
 project("CyreyApp")
 
+add_link_options(-static -static-libgcc -static-libstdc++)
+
 # raylib
 set(RAYLIB_VERSION 5.0)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
@@ -71,7 +73,8 @@ add_compile_definitions(CYREY_APIURL="https://localhost:44392/api/")
 
 file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 WIN32_EXECUTABLE
+        $<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug,RelWithDebInfo>>>)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json cpr::cpr)
 target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include" "${raygui_SOURCE_DIR}/src" "${raygui_SOURCE_DIR}/styles/cyber")
 
