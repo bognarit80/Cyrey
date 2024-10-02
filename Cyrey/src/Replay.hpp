@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <optional>
+#include <string>
 
 namespace Cyrey
 {
@@ -53,6 +54,7 @@ namespace Cyrey
 		static std::optional<Replay> Deserialize(const std::vector<std::uint8_t>& data);
         static std::optional<Replay> OpenReplayFile(const char* fileName);
         static bool SaveReplayToFile(const Replay &replay, const char* fileName);
+		static void PublishReplay(const Replay& replay, const std::string& userName); /// Temporarily in this class, move later
 	};
 
 

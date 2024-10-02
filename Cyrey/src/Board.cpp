@@ -1637,6 +1637,7 @@ void Cyrey::Board::DrawResultsScreen()
                          timeDetails->tm_min,
                          timeDetails->tm_sec)))
         {
+        	Replay::PublishReplay(*this->mReplayData, this->mApp->mCurrentUser->mName);
             this->mHasSavedReplay = true;
         }
     }

@@ -3,6 +3,10 @@
 #include <cstring>
 #include <filesystem>
 #include <concepts>
+#ifdef PLATFORM_DESKTOP
+#include "raylib_win32.h"
+#endif
+#include <cpr/cpr.h>
 #ifdef PLATFORM_ANDROID
 #include "raymob.h"
 #else
@@ -146,6 +150,19 @@ bool Cyrey::Replay::SaveReplayToFile(const Replay& replay, const char* fileName)
 
     std::vector<uint8_t> data = Replay::Serialize(replay);
     return ::SaveFileData(fileName, data.data(), static_cast<int>(data.size()));
+}
+
+void Cyrey::Replay::PublishReplay(const Replay& replay, const std::string& userName)
+{
+    std::thread([=]
+    {
+        auto data = Replay::Serialize(replay);
+        auto response = cpr::Post(cpr::Url{Replay::cReplaysUrl + userName},
+            cpr::Timeout{10000},
+            cpr::ConnectTimeout{500},
+            cpr::Header{{"Content-Type", "application/octet-stream"}},
+            cpr::Body{cpr::Buffer{data.begin(), data.end(), ""}});
+    }).detach();
 }
 
 std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
