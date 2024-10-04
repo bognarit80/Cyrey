@@ -729,12 +729,12 @@ void Cyrey::Board::UpdateReplay()
 		::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
 		           ::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
 		                        swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
-		                        nextCmd.mCommandNumber,
+		                        nextCmd.mCommandNumber + 1,
 		                        this->mSecondsSinceLastCommand,
 		                        nextCmd.mSecondsSinceLastCmd,
 		                        this->mFallDelay,
 		                        this->mSecondsRemaining,
-		                        this->mReplayCopy->mCommands.size()));
+		                        this->mReplayCopy->mCommands.size() - 1));
 		this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
 		this->mReplayCopy->mCommands.pop_front();
 	}
