@@ -1,17 +1,17 @@
 #ifndef CYREY_BOARD_HEADER
 #define CYREY_BOARD_HEADER
 
-#include "Piece.hpp"
-#include "CyreyApp.hpp"
-#include <optional>
-#include "MatchSet.hpp"
 #include <memory>
+#include <optional>
 #include <vector>
-#include "PieceMatchAnim.hpp"
+#include "CyreyApp.hpp"
+#include "MatchSet.hpp"
+#include "Piece.hpp"
 #include "PieceDropAnim.hpp"
-#include "SwapDirection.hpp"
+#include "PieceMatchAnim.hpp"
 #include "Replay.hpp"
 #include "SwapAnim.hpp"
+#include "SwapDirection.hpp"
 
 namespace Cyrey
 {
@@ -60,9 +60,9 @@ namespace Cyrey
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
 		float mSecondsSinceLastCommand;
-        bool mHasSavedReplay;
-        bool mHasDroppedFile;
-        std::optional<Replay> mDroppedReplay;
+		bool mHasSavedReplay;
+		bool mHasDroppedFile;
+		std::optional<Replay> mDroppedReplay;
 		SwapAnim mSwapAnim;
 
 #ifdef PLATFORM_ANDROID
@@ -88,6 +88,7 @@ namespace Cyrey
 		int mBestMoveCascades;
 
 		Board() = default;
+
 		Board(int width, int height) :
 			mWidth(width), mHeight(height) {};
 		explicit Board(int size) : Board(size, size) {};
@@ -100,7 +101,8 @@ namespace Cyrey
 		[[nodiscard]] std::vector<std::vector<Piece>> GenerateStartingBoard() const;
 		void NewGame();
 		void ResetBoard();
-		void AddSwerve(::Vector2 swerve); /// Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
+		void AddSwerve(::Vector2 swerve);
+		/// Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
 		[[nodiscard]] std::optional<::Vector2> GetHoveredTile() const;
 		[[nodiscard]] bool IsMouseInBoard() const;
 		bool FindSets();
@@ -111,10 +113,11 @@ namespace Cyrey
 		[[nodiscard]] bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
 		[[nodiscard]] bool CanSwap() const;
 		[[nodiscard]] constexpr bool IsPositionLegal(int col, int row) const;
-		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false); // returns the amount of pieces cleared, if the piece was special
+		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false);
+		// returns the amount of pieces cleared, if the piece was special
 		int DoHypercube(const Piece& cubePiece, const Piece& byPiece = Cyrey::gNullPiece);
-        void PlayReplay();
-        void PlayReplay(const Replay& replay);
+		void PlayReplay();
+		void PlayReplay(const Replay& replay);
 
 	private:
 		void UpdateReplay();
@@ -124,11 +127,12 @@ namespace Cyrey
 		void UpdateGameOverAnim();
 		void UpdateCurrentUserStats() const; // call after game ends
 		void UpdateBoardSwerve();
-		bool UpdateNewGameAnim(); // increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
+		bool UpdateNewGameAnim();
+		// increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
 		void UpdateDragging();
 		size_t UpdateMatchSets(); // returns the amount of match sets processed
 		void UpdateFalling();
-        void UpdateDroppedFiles();
+		void UpdateDroppedFiles();
 		void FillInBlanks();
 		void DrawCheckerboard() const;
 		void DrawBorder() const;
@@ -141,5 +145,5 @@ namespace Cyrey
 		void DrawResultsScreen(); // not const because we want buttons
 	};
 } // namespace Cyrey
-	
+
 #endif // #CYREY_BOARD_HEADER

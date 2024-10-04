@@ -2,7 +2,6 @@
 #define CYREY_SETTINGS_HEADER
 
 #include "CyreyApp.hpp"
-#include "nlohmann/json.hpp"
 
 namespace Cyrey
 {
@@ -10,16 +9,16 @@ namespace Cyrey
 	class SettingsMenu
 	{
 	public:
-		float mMusicVolume {cMusicVolume};
-		float mSoundVolume{cSoundVolume};
-		bool mIsFullscreen{cWantFullscreen};
-		bool mIsVSync{cWantVSync};
-		float mSwapDeadZone{cSwapDeadZone}; /// Percentage of tile size before the drag turns into a swap
-		bool mWantBoardSwerve{cWantBoardSwerve};
-		float mQueueSwapTolerance{cQueueSwapTolerance};
-        bool mWantReplayAutoSave{cWantReplayAutoSave};
+		float mMusicVolume { cMusicVolume };
+		float mSoundVolume { cSoundVolume };
+		bool mIsFullscreen { cWantFullscreen };
+		bool mIsVSync { cWantVSync };
+		float mSwapDeadZone { cSwapDeadZone }; /// Percentage of tile size before the drag turns into a swap
+		bool mWantBoardSwerve { cWantBoardSwerve };
+		float mQueueSwapTolerance { cQueueSwapTolerance };
+		bool mWantReplayAutoSave { cWantReplayAutoSave };
 
-		explicit SettingsMenu(CyreyApp& app) : mApp(app) { this->OpenSettingsFile(SettingsMenu::cSettingsFileName); };
+		explicit SettingsMenu(CyreyApp& app) : mApp(app) { this->OpenSettingsFile(SettingsMenu::cSettingsFileName); }
 
 		void Update();
 		void Draw(); // not const because raygui modifies variables

@@ -1,9 +1,9 @@
 #ifndef CYREY_RESOURCE_MANAGER_HEADER
 #define CYREY_RESOURCE_MANAGER_HEADER
 
-#include "raylib.h"
 #include <map>
 #include <string>
+#include "raylib.h"
 
 namespace Cyrey
 {
@@ -18,24 +18,24 @@ namespace Cyrey
 
 		std::map<std::string, ::Music> mMusics
 		{
-			{"mainMenuTheme.ogg", ::Music{}},
-			{"gameplayBlitz1min.ogg", ::Music{}},
-			{"resultsScreenBlitz1min.ogg", ::Music{}}
+			{ "mainMenuTheme.ogg", ::Music {} },
+			{ "gameplayBlitz1min.ogg", ::Music {} },
+			{ "resultsScreenBlitz1min.ogg", ::Music {} }
 		};
 		std::map<std::string, ::Sound> mSounds
 		{
-			{"badMove.ogg", ::Sound{}},
-			{"boardAppear.ogg", ::Sound{}},
-			{"bombCreate.ogg", ::Sound{}},
-			{"bombExplode.ogg", ::Sound{}},
-			{"doubleset.ogg", ::Sound{}},
-			{"hypercubeCreate.ogg", ::Sound{}},
-			{"hypercubeExplode.ogg", ::Sound{}},
-			{"lightningCreate.ogg", ::Sound{}},
-			{"lightningExplode.ogg", ::Sound{}},
-			{"match.ogg", ::Sound{}},
-			{"pieceFall.ogg", ::Sound{}},
-			{"rowBlow.ogg", ::Sound{}}
+			{ "badMove.ogg", ::Sound {} },
+			{ "boardAppear.ogg", ::Sound {} },
+			{ "bombCreate.ogg", ::Sound {} },
+			{ "bombExplode.ogg", ::Sound {} },
+			{ "doubleset.ogg", ::Sound {} },
+			{ "hypercubeCreate.ogg", ::Sound {} },
+			{ "hypercubeExplode.ogg", ::Sound {} },
+			{ "lightningCreate.ogg", ::Sound {} },
+			{ "lightningExplode.ogg", ::Sound {} },
+			{ "match.ogg", ::Sound {} },
+			{ "pieceFall.ogg", ::Sound {} },
+			{ "rowBlow.ogg", ::Sound {} }
 		};
 
 		[[nodiscard]] bool HasFinishedLoading() const;

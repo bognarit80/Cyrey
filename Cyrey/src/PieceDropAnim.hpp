@@ -7,10 +7,10 @@ namespace Cyrey
 	{
 	public:
 		int mBoardCol;
-		float mOpacity;
+		float mOpacity { cStartingOpacity };
 		static constexpr float cStartingOpacity = 0.80f;
 
-		explicit PieceDropAnim(int col) : mBoardCol(col), mOpacity(cStartingOpacity) {};
+		explicit PieceDropAnim(int col) : mBoardCol(col) {}
 	};
 } // namespace Cyrey
 

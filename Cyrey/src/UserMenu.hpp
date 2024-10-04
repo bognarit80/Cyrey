@@ -4,19 +4,18 @@
 
 namespace Cyrey
 {
-    class UserMenu
-    {
-    public:
-        CyreyApp& mApp;
-        bool mIsOpen {false};
-        bool mWantNameDialog {false};
+	class UserMenu
+	{
+	public:
+		CyreyApp& mApp;
+		bool mIsOpen { false };
+		bool mWantNameDialog { false };
 
-        explicit UserMenu(CyreyApp& app) : mApp(app) {}
+		explicit UserMenu(CyreyApp& app) : mApp(app) {}
 
-        void Update();
-        void Draw();
-    };
-
+		void Update();
+		void Draw();
+	};
 } // namespace Cyrey
 
 #endif // CYREY_USERMENU_HEADER

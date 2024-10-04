@@ -15,9 +15,9 @@ static void FetchGameConfig()
 
 	futureConfig = std::async(std::launch::async, []
 	{
-		return cpr::Get(cpr::Url{Cyrey::GameConfig::cLatestConfigUrl},
-			cpr::Timeout{10000},
-			cpr::ConnectTimeout{500});
+		return cpr::Get(cpr::Url { Cyrey::GameConfig::cLatestConfigUrl },
+		                cpr::Timeout { 10000 },
+		                cpr::ConnectTimeout { 500 });
 	});
 }
 
@@ -49,26 +49,30 @@ void Cyrey::MainMenu::Draw()
 	// draw title
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, GuiTextAlignment::TEXT_ALIGN_CENTER);
 	::GuiSetStyle(::GuiControl::DEFAULT,
-		::GuiDefaultProperty::TEXT_SIZE,
-		static_cast<int>(appHeight > appWidth ? appWidth * 0.2f : appHeight * 0.2f)
+	              ::GuiDefaultProperty::TEXT_SIZE,
+	              static_cast<int>(appHeight > appWidth ? appWidth * 0.2f : appHeight * 0.2f)
 	);
 	auto fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
 
 	::GuiLabel(
-		::Rectangle{ 0, static_cast<float>(this->mApp.mHeight) * 0.05f,
-			static_cast<float>(this->mApp.mWidth), fontSize },
+		::Rectangle {
+			0, static_cast<float>(this->mApp.mHeight) * 0.05f,
+			static_cast<float>(this->mApp.mWidth), fontSize
+		},
 		MainMenu::cTitleName
 	);
 
 	// draw current user text
 	::GuiSetStyle(::GuiControl::DEFAULT,
-		::GuiDefaultProperty::TEXT_SIZE,
-		static_cast<int>(appHeight > appWidth ? appWidth * 0.05f : appHeight * 0.05f)
+	              ::GuiDefaultProperty::TEXT_SIZE,
+	              static_cast<int>(appHeight > appWidth ? appWidth * 0.05f : appHeight * 0.05f)
 	);
 	fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
 	if (::GuiLabelButton(
-		::Rectangle{ 0, static_cast<float>(this->mApp.mHeight) * 0.30f,
-			static_cast<float>(this->mApp.mWidth), fontSize },
+		::Rectangle {
+			0, static_cast<float>(this->mApp.mHeight) * 0.30f,
+			static_cast<float>(this->mApp.mWidth), fontSize
+		},
 		::TextFormat("Welcome back, %s.", this->mApp.mCurrentUser->mName.c_str())))
 	{
 		this->mIsUserPressed = true;
@@ -86,7 +90,8 @@ void Cyrey::MainMenu::Draw()
 	if (futureConfig.valid())
 		::GuiDisable();
 	this->mIsPlayBtnPressed = ::GuiButton(
-		::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle {
+			appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.45f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.05f
@@ -94,21 +99,23 @@ void Cyrey::MainMenu::Draw()
 		MainMenu::cPlayBtnText
 	);
 
-    if (::GuiButton(
-            ::Rectangle{ appWidth / 2 - buttonWidth / 2,
-                         appHeight * 0.59f - fontSize / 2,
-                         buttonWidth,
-                         fontSize * 1.05f
-            },
-            MainMenu::cReplaysBtnText
-    ))
-    {
-        this->mApp.ChangeToState(CyreyAppState::ReplaysMenu);
-    }
+	if (::GuiButton(
+		::Rectangle {
+			appWidth / 2 - buttonWidth / 2,
+			appHeight * 0.59f - fontSize / 2,
+			buttonWidth,
+			fontSize * 1.05f
+		},
+		MainMenu::cReplaysBtnText
+	))
+	{
+		this->mApp.ChangeToState(CyreyAppState::ReplaysMenu);
+	}
 	::GuiEnable();
 
 	if (::GuiButton(
-		::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle {
+			appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.73f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.05f
@@ -121,7 +128,8 @@ void Cyrey::MainMenu::Draw()
 
 #ifndef __EMSCRIPTEN__ //no quit button on web version
 	if (::GuiButton(
-		::Rectangle{ appWidth / 2 - buttonWidth / 2,
+		::Rectangle {
+			appWidth / 2 - buttonWidth / 2,
 			appHeight * 0.87f - fontSize / 2,
 			buttonWidth,
 			fontSize * 1.05f
@@ -134,8 +142,8 @@ void Cyrey::MainMenu::Draw()
 #endif // __EMSCRIPTEN__
 
 	::GuiSetStyle(::GuiControl::DEFAULT,
-		::GuiDefaultProperty::TEXT_SIZE,
-		static_cast<int>(appHeight > appWidth ? appWidth * 0.035f : appHeight * 0.035f)
+	              ::GuiDefaultProperty::TEXT_SIZE,
+	              static_cast<int>(appHeight > appWidth ? appWidth * 0.035f : appHeight * 0.035f)
 	);
 	fontSize = static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE));
 	const char* txt;
@@ -146,10 +154,12 @@ void Cyrey::MainMenu::Draw()
 	else
 		txt = ::TextFormat(MainMenu::cFetchedVersion, this->mApp.mGameConfig.mVersion);
 	if (::GuiLabelButton(
-		::Rectangle{ 0,
+		::Rectangle {
+			0,
 			static_cast<float>(this->mApp.mHeight) * 0.94f,
 			static_cast<float>(this->mApp.mWidth),
-			fontSize },
+			fontSize
+		},
 		txt
 	))
 	{

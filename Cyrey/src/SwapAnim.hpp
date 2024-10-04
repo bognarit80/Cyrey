@@ -4,15 +4,15 @@
 
 namespace Cyrey
 {
-    struct SwapAnim
-    {
-        int mRow;
-        int mCol;
-        SwapDirection mDirection{SwapDirection::None};
-        float mOpacity{cStartingOpacity};
+	struct SwapAnim
+	{
+		int mRow;
+		int mCol;
+		SwapDirection mDirection { SwapDirection::None };
+		float mOpacity { cStartingOpacity };
 
-        static constexpr float cStartingOpacity = 0.80f;
-    };
-} // Cyrey
+		static constexpr float cStartingOpacity = 0.80f;
+	};
+} // namespace Cyrey
 
 #endif // CYREY_SWAPANIM_HEADER

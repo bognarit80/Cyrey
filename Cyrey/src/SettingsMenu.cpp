@@ -1,9 +1,7 @@
 #include "SettingsMenu.hpp"
 #include "raygui.h"
 
-void Cyrey::SettingsMenu::Update()
-{
-}
+void Cyrey::SettingsMenu::Update() {}
 
 void Cyrey::SettingsMenu::Draw()
 {
@@ -27,88 +25,101 @@ void Cyrey::SettingsMenu::Draw()
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
 	::GuiSetIconScale(fontSize / 16);
 
-	Rectangle musicSliderPos = { windowAnchor.x + windowPaddingX,
+	Rectangle musicSliderPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY,
-		sliderWidth, 
-		fontSize 
+		sliderWidth,
+		fontSize
 	};
-	Rectangle soundSliderPos = { windowAnchor.x + windowPaddingX,
+	Rectangle soundSliderPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + controlOffset,
 		sliderWidth,
-		fontSize 
+		fontSize
 	};
-	Rectangle fullscreenCheckPos = { windowAnchor.x + windowPaddingX,
-		windowAnchor.y + windowPaddingY + (controlOffset * 2),
-		fontSize,
-		fontSize 
-	};
-	Rectangle vsyncCheckPos = { windowAnchor.x + linePadding,
+	Rectangle fullscreenCheckPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 2),
 		fontSize,
 		fontSize
 	};
-	Rectangle firstLinePos = { windowAnchor.x + linePadding,
+	Rectangle vsyncCheckPos = {
+		windowAnchor.x + linePadding,
+		windowAnchor.y + windowPaddingY + (controlOffset * 2),
+		fontSize,
+		fontSize
+	};
+	Rectangle firstLinePos = {
+		windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 3),
 		windowWidth - (linePadding * 2),
 		fontSize
 	};
-	Rectangle swapDeadZoneSliderPos = { windowAnchor.x + windowPaddingX,
+	Rectangle swapDeadZoneSliderPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 4),
 		sliderWidth,
-		fontSize 
+		fontSize
 	};
-	Rectangle queueSwapToleranceSliderPos = { windowAnchor.x + windowPaddingX,
+	Rectangle queueSwapToleranceSliderPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 5),
 		sliderWidth,
 		fontSize
 	};
-	Rectangle swerveCheckPos = { windowAnchor.x + windowPaddingX,
+	Rectangle swerveCheckPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 6),
 		fontSize,
 		fontSize
 	};
-    Rectangle autoSaveCheckPos = { windowAnchor.x + windowPaddingX,
-    	windowAnchor.y + windowPaddingY + (controlOffset * 7),
-    	fontSize,
-    	fontSize
-    };
-	Rectangle defaultsBtnPos = { windowAnchor.x + windowPaddingX,
+	Rectangle autoSaveCheckPos = {
+		windowAnchor.x + windowPaddingX,
+		windowAnchor.y + windowPaddingY + (controlOffset * 7),
+		fontSize,
+		fontSize
+	};
+	Rectangle defaultsBtnPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 8),
 		sliderWidth,
 		fontSize
 	};
-	Rectangle secondLinePos = { windowAnchor.x + linePadding,
+	Rectangle secondLinePos = {
+		windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 9),
 		windowWidth - (linePadding * 2),
 		fontSize
 	};
-	Rectangle mainMenuBtnPos = { windowAnchor.x + linePadding,
+	Rectangle mainMenuBtnPos = {
+		windowAnchor.x + linePadding,
 		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
 	};
-	Rectangle doneBtnPos = { windowAnchor.x + windowPaddingX,
+	Rectangle doneBtnPos = {
+		windowAnchor.x + windowPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffset * 10),
 		sliderWidth * 0.9f,
 		fontSize
 	};
 
-	if (::GuiWindowBox(windowRect, SettingsMenu::cWindowText) || 
+	if (::GuiWindowBox(windowRect, SettingsMenu::cWindowText) ||
 		::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_OK_TICK, SettingsMenu::cDoneButtonText)))
 	{
 		this->SaveSettingsFile(SettingsMenu::cSettingsFileName);
 		this->mApp.ChangeToState(this->mApp.mPrevState);
 	}
 
-	::GuiSlider(musicSliderPos, 
-		::GuiIconText(::GuiIconName::ICON_AUDIO, SettingsMenu::cMusicSliderText), 
-		::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)), 
-		&this->mMusicVolume, 0, 1);
+	::GuiSlider(musicSliderPos,
+	            ::GuiIconText(::GuiIconName::ICON_AUDIO, SettingsMenu::cMusicSliderText),
+	            ::TextFormat("%d", static_cast<int>(this->mMusicVolume * 100)),
+	            &this->mMusicVolume, 0, 1);
 
-	::GuiSlider(soundSliderPos, 
-		::GuiIconText(::GuiIconName::ICON_FX, SettingsMenu::cSoundSliderText), 
-		::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)), 
-		&this->mSoundVolume, 0, 1);
+	::GuiSlider(soundSliderPos,
+	            ::GuiIconText(::GuiIconName::ICON_FX, SettingsMenu::cSoundSliderText),
+	            ::TextFormat("%d", static_cast<int>(this->mSoundVolume * 100)),
+	            &this->mSoundVolume, 0, 1);
 
 #ifndef __EMSCRIPTEN__ // TODO: Implement proper fullscreen on Web
 	bool isFullscreen = ::IsWindowFullscreen();
@@ -128,21 +139,22 @@ void Cyrey::SettingsMenu::Draw()
 		this->mApp.InitWindow(); // We need to reopen the window to apply VSync
 	}
 #endif // __EMSCRIPTEN__
-	
+
 	::GuiLine(firstLinePos, nullptr);
 
-	::GuiSlider(swapDeadZoneSliderPos, 
-		cSwapDeadZoneSliderText, 
-		::TextFormat("%d%%", static_cast<int>(this->mSwapDeadZone * 100)), 
-		&this->mSwapDeadZone, 0.1f, 1.0f);
+	::GuiSlider(swapDeadZoneSliderPos,
+	            cSwapDeadZoneSliderText,
+	            ::TextFormat("%d%%", static_cast<int>(this->mSwapDeadZone * 100)),
+	            &this->mSwapDeadZone, 0.1f, 1.0f);
 
 	::GuiSlider(queueSwapToleranceSliderPos,
-		cQueueSwapToleranceSliderText,
-		this->mQueueSwapTolerance > 0.0f ?
-		this->mQueueSwapTolerance < 1.0f ? ::TextFormat("%.2fs", this->mQueueSwapTolerance) : 
-		SettingsMenu::cInf :
-		SettingsMenu::cOff,
-		&this->mQueueSwapTolerance, 0, 1);
+	            cQueueSwapToleranceSliderText,
+	            this->mQueueSwapTolerance > 0.0f ?
+		            this->mQueueSwapTolerance < 1.0f ?
+			            ::TextFormat("%.2fs", this->mQueueSwapTolerance) :
+			            SettingsMenu::cInf :
+		            SettingsMenu::cOff,
+	            &this->mQueueSwapTolerance, 0, 1);
 
 	::GuiCheckBox(swerveCheckPos, cBoardSwerveCheckText, &this->mWantBoardSwerve);
 	::GuiCheckBox(autoSaveCheckPos, cReplayAutoSaveText, &this->mWantReplayAutoSave);
@@ -160,7 +172,6 @@ void Cyrey::SettingsMenu::Draw()
 	if (this->mApp.mPrevState == CyreyAppState::InGame)
 		if (::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, SettingsMenu::cMainMenuButtonText)))
 		{
-			// TODO: Save the game, or add XP or something
 			this->SaveSettingsFile(SettingsMenu::cSettingsFileName);
 			this->mApp.ChangeToState(CyreyAppState::MainMenu);
 		}

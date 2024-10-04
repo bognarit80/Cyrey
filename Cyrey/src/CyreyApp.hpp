@@ -6,16 +6,16 @@
 #else
 #include "raylib.h"
 #endif
-#include "Board.hpp"
-#include "MainMenu.hpp"
-#include "User.hpp"
-#include "SettingsMenu.hpp"
-#include "GameConfig.hpp"
-#include "ResourceManager.hpp"
-#include "ReplaysMenu.hpp"
-#include "UserMenu.hpp"
 #include <memory>
 #include <random>
+#include "Board.hpp"
+#include "GameConfig.hpp"
+#include "MainMenu.hpp"
+#include "ReplaysMenu.hpp"
+#include "ResourceManager.hpp"
+#include "SettingsMenu.hpp"
+#include "User.hpp"
+#include "UserMenu.hpp"
 
 namespace Cyrey
 {

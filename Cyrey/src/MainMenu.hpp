@@ -15,8 +15,8 @@ namespace Cyrey
 		bool mIsUserPressed { false };
 
 		static constexpr char cTitleName[] = "Cyrey";
-        static constexpr char cPlayBtnText[] = "Play";
-        static constexpr char cReplaysBtnText[] = "Replays";
+		static constexpr char cPlayBtnText[] = "Play";
+		static constexpr char cReplaysBtnText[] = "Replays";
 		static constexpr char cSettingsBtnText[] = "Settings";
 		static constexpr char cQuitBtnText[] = "Quit";
 

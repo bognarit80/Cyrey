@@ -1,8 +1,8 @@
 #ifndef MATCHSET_CYREY_HEADER
 #define MATCHSET_CYREY_HEADER
 
-#include "Piece.hpp"
 #include <vector>
+#include "Piece.hpp"
 
 namespace Cyrey
 {

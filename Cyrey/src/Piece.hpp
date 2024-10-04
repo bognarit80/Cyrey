@@ -41,10 +41,10 @@ namespace Cyrey
 
 		Piece() = default;
 
-		explicit Piece(PieceColor color)
-			: mColor(color), mOldColor(color), mID(sNextPieceID++), mFlags(0), mCanSwap(true), mDragging(false),
-			mXDiff(0.0f), mYDiff(0.0f), mMatched(false), mImmunity(false), mBoardX(0), mBoardY(0)
-		{};
+		explicit Piece(PieceColor color) : mColor(color), mOldColor(color), mID(sNextPieceID++), mFlags(0),
+		                                   mCanSwap(true), mDragging(false),
+		                                   mXDiff(0.0f), mYDiff(0.0f), mMatched(false), mImmunity(false), mBoardX(0),
+		                                   mBoardY(0) {}
 
 		[[nodiscard]] bool IsFlagSet(unsigned int flag) const;
 		void SetFlag(unsigned int flag);
@@ -55,6 +55,7 @@ namespace Cyrey
 	private:
 		static inline unsigned int sNextPieceID = 1;
 	};
+
 	static constexpr auto gNullPiece = Piece();
 } // namespace Cyrey
 

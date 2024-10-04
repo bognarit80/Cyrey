@@ -19,9 +19,9 @@ namespace Cyrey
 		static std::optional<GameConfig> ParseConfig(const std::string& cfg);
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(GameConfig, mVersion, mPieceColorAmount, mBoardWidth, mBoardHeight, mBaseScore,
-			mStartingTime, mFallDelay, mMissDelayMultiplier, mLightningPiecesAmount);
+		                               mStartingTime, mFallDelay, mMissDelayMultiplier, mLightningPiecesAmount);
 
-        constexpr static char cLatestConfigUrl[] = CYREY_APIURL "GameConfig/latest";
+		constexpr static char cLatestConfigUrl[] = CYREY_APIURL "GameConfig/latest";
 	};
 
 	constexpr GameConfig cDefaultGameConfig {

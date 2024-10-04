@@ -1,8 +1,8 @@
 #include "Board.hpp"
+#include <cmath>
 #include <map>
 #include "raygui.h"
 #include "raymath.h"
-#include <cmath>
 
 void Cyrey::Board::Init()
 {
@@ -19,7 +19,7 @@ void Cyrey::Board::Init()
 	this->mCascadeNumber = 0;
 	this->mPiecesClearedInMove = 0;
 	this->mScoreInMove = 0;
-	this->mBoardSwerve = ::Vector2{0, -this->mTileSize * 8};
+	this->mBoardSwerve = ::Vector2 { 0, -this->mTileSize * 8 };
 	this->mFallDelay = 0.0f;
 	this->mMissDelay = 0.0f;
 	this->mColorCount = this->mApp->mGameConfig.mPieceColorAmount;
@@ -35,8 +35,8 @@ void Cyrey::Board::Init()
 	this->mCurrentMatchSet = std::make_unique<MatchSet>();
 	this->mIsInReplay = false;
 	this->mReplayData = std::make_unique<Replay>();
-    this->mHasSavedReplay = false;
-    this->mHasDroppedFile = false;
+	this->mHasSavedReplay = false;
+	this->mHasDroppedFile = false;
 	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
@@ -45,15 +45,16 @@ void Cyrey::Board::Init()
 
 void Cyrey::Board::Update()
 {
-	this->mZoomPct += ::GetMouseWheelMove(); //perhaps change this to the Camera functionality in raylib? seems a lot more versatile
+	this->mZoomPct += ::GetMouseWheelMove();
+	//perhaps change this to the Camera functionality in raylib? seems a lot more versatile
 
-    static ::Vector2 lastVector{0.0f, 0.0f};
-    ::Vector2 pinch{std::abs(::GetGesturePinchVector().x), std::abs(::GetGesturePinchVector().y)};
-    if (pinch.x != 0.0f && pinch.y != 0.0f && (lastVector.x != 0.0f && lastVector.y !=0.0f))
-        this->mZoomPct += (pinch.x - lastVector.x + (pinch.y - lastVector.y) * 2) * 5;
-    lastVector = pinch;
+	static ::Vector2 lastVector { 0.0f, 0.0f };
+	::Vector2 pinch { std::abs(::GetGesturePinchVector().x), std::abs(::GetGesturePinchVector().y) };
+	if (pinch.x != 0.0f && pinch.y != 0.0f && (lastVector.x != 0.0f && lastVector.y != 0.0f))
+		this->mZoomPct += (pinch.x - lastVector.x + (pinch.y - lastVector.y) * 2) * 5;
+	lastVector = pinch;
 
-    if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE) || ::GetTouchPointCount() >= 4)
+	if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE) || ::GetTouchPointCount() >= 4)
 		this->mZoomPct = Board::cDefaultZoomPct;
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration && this->mSecondsRemaining > 0.0f)
@@ -79,8 +80,10 @@ void Cyrey::Board::Update()
 	{
 		this->mTileSize = (screenHeight * this->mZoomPct / 100) / static_cast<float>(this->mHeight);
 		this->mTileInset = this->mTileSize / 10;
-		this->mXOffset = (screenWidth / 2) - (static_cast<float>(this->mWidth) * this->mTileSize / 2) + this->mBoardSwerve.x;
-		this->mYOffset = (screenHeight / 2) - (static_cast<float>(this->mHeight) * this->mTileSize / 2) + this->mBoardSwerve.y;
+		this->mXOffset = (screenWidth / 2) - (static_cast<float>(this->mWidth) * this->mTileSize / 2) + this->
+			mBoardSwerve.x;
+		this->mYOffset = (screenHeight / 2) - (static_cast<float>(this->mHeight) * this->mTileSize / 2) + this->
+			mBoardSwerve.y;
 	}
 
 	this->UpdateBoardSwerve();
@@ -127,7 +130,7 @@ void Cyrey::Board::Update()
 	else
 		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 
-    this->UpdateDroppedFiles();
+	this->UpdateDroppedFiles();
 }
 
 void Cyrey::Board::Draw()
@@ -202,7 +205,7 @@ void Cyrey::Board::UpdateInput()
 		}
 	}
 
-	switch(key)
+	switch (key)
 	{
 	case ::KeyboardKey::KEY_R:
 		this->NewGame();
@@ -233,13 +236,13 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char
 {
 	std::map<char, Cyrey::PieceColor> charPieceMap =
 	{
-		{'r', PieceColor::Red},
-		{'g', PieceColor::Green},
-		{'b', PieceColor::Blue},
-		{'y', PieceColor::Yellow},
-		{'o', PieceColor::Orange},
-		{'w', PieceColor::White},
-		{'p', PieceColor::Purple}
+		{ 'r', PieceColor::Red },
+		{ 'g', PieceColor::Green },
+		{ 'b', PieceColor::Blue },
+		{ 'y', PieceColor::Yellow },
+		{ 'o', PieceColor::Orange },
+		{ 'w', PieceColor::White },
+		{ 'p', PieceColor::Purple }
 	};
 	std::vector<std::vector<Piece>> board {};
 	std::vector<Piece> row {};
@@ -261,9 +264,8 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::ParseBoardString(const char
 
 std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() const
 {
-	std::vector<std::vector<Piece>> board{};
-	std::vector<Piece> row{};
-	//TODO: SetRandomSeed
+	std::vector<std::vector<Piece>> board {};
+	std::vector<Piece> row {};
 	for (int i = 0; i < this->mHeight; i++)
 	{
 		for (int j = 0; j < this->mWidth; j++)
@@ -298,7 +300,7 @@ void Cyrey::Board::ResetBoard()
 		seed = this->mApp->SeedRNG();
 		this->mReplayData = std::make_unique<Replay>();
 		this->mReplayData->mSeed = seed;
-        this->mReplayData->mConfigVersion = this->mApp->mGameConfig.mVersion;
+		this->mReplayData->mConfigVersion = this->mApp->mGameConfig.mVersion;
 	}
 	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
 	::PlaySound(this->mApp->mResMgr->mSounds["boardAppear.ogg"]);
@@ -306,9 +308,10 @@ void Cyrey::Board::ResetBoard()
 	{
 		this->mMatchSets.clear();
 		this->mBoard = this->GenerateStartingBoard();
-	} while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
+	}
+	while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
 	this->mSecondsRemaining = 0.0f;
-	this->mBoardSwerve = ::Vector2{ 0.0f, -this->mTileSize * 8 };
+	this->mBoardSwerve = ::Vector2 { 0.0f, -this->mTileSize * 8 };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
@@ -347,7 +350,7 @@ std::optional<::Vector2> Cyrey::Board::GetHoveredTile() const
 	if (xTile >= this->mWidth || yTile >= this->mHeight)
 		return std::nullopt;
 
-	return ::Vector2{static_cast<float>(xTile), static_cast<float>(yTile)};
+	return ::Vector2 { static_cast<float>(xTile), static_cast<float>(yTile) };
 }
 
 bool Cyrey::Board::IsMouseInBoard() const
@@ -462,12 +465,12 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	{
 		float queueSwapTolerance = this->mApp->mSettings->mQueueSwapTolerance;
 		if ((queueSwapTolerance >= 1.0f ||
-			(this->mFallDelay < queueSwapTolerance &&
-			this->mMissDelay < queueSwapTolerance &&
-			Board::cNewGameAnimDuration - this->mNewGameAnimProgress < queueSwapTolerance)) &&
+				(this->mFallDelay < queueSwapTolerance &&
+					this->mMissDelay < queueSwapTolerance &&
+					Board::cNewGameAnimDuration - this->mNewGameAnimProgress < queueSwapTolerance)) &&
 			this->mSecondsRemaining > 0)
 		{
-			this->mQueuedSwapPos = ::Vector2{ static_cast<float>(col), static_cast<float>(row) };
+			this->mQueuedSwapPos = ::Vector2 { static_cast<float>(col), static_cast<float>(row) };
 			this->mQueuedSwapDirection = direction;
 		}
 		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) //skip anim if user tries to swap during it
@@ -508,11 +511,11 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	if (!this->mIsInReplay)
 	{
 		this->mReplayData->mCommands.emplace_back(this->mReplayData->mCommands.size(),
-			col, row, direction, this->mSecondsSinceLastCommand);
+		                                          col, row, direction, this->mSecondsSinceLastCommand);
 		this->mSecondsSinceLastCommand = 0.0f;
 	}
 
-	this->mSwapAnim = {col, row, direction};
+	this->mSwapAnim = { col, row, direction };
 	return this->TrySwap(col, row, toRow, toCol);
 }
 
@@ -599,22 +602,24 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	if (piece.mImmunity)
 		return 1;
 
-    // FIXME: The copy constructor of std::vector<AnimSparkle> is throwing on this call, while trying to alloc
-    auto &anim = this->mMatchedPieceAnims.emplace_back(piece.mBoardX,
-                                                      piece.mBoardY,
-                                                      piece.mColor,
-                                                      destroy);
-    if (destroy)
-    {
-        anim.mSparklesAmount = ::GetRandomValue(AnimSparkle::cMinSparkles, AnimSparkle::cMaxSparkles);
-        for (int i = 0; i < anim.mSparklesAmount; i++)
-        {
-            anim.mSparkles[i] = AnimSparkle{static_cast<float>(::GetRandomValue(0, 360)),
-                                  static_cast<float>(::GetRandomValue(0, 360)),
-                                  static_cast<float>(::GetRandomValue(0, this->mTileSize / 2))};
-        }
-    }
-    piece = Cyrey::gNullPiece;
+	// FIXME: The copy constructor of std::vector<AnimSparkle> is throwing on this call, while trying to alloc
+	auto& anim = this->mMatchedPieceAnims.emplace_back(piece.mBoardX,
+	                                                   piece.mBoardY,
+	                                                   piece.mColor,
+	                                                   destroy);
+	if (destroy)
+	{
+		anim.mSparklesAmount = ::GetRandomValue(AnimSparkle::cMinSparkles, AnimSparkle::cMaxSparkles);
+		for (int i = 0; i < anim.mSparklesAmount; i++)
+		{
+			anim.mSparkles[i] = AnimSparkle {
+				static_cast<float>(::GetRandomValue(0, 360)),
+				static_cast<float>(::GetRandomValue(0, 360)),
+				static_cast<float>(::GetRandomValue(0, this->mTileSize / 2))
+			};
+		}
+	}
+	piece = Cyrey::gNullPiece;
 
 	int piecesCleared = 1;
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
@@ -630,7 +635,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 
 				if (this->IsPositionLegal(pieceCopy.mBoardX + j, pieceCopy.mBoardY + i))
 					piecesCleared += this->MatchPiece(this->mBoard[pieceCopy.mBoardY + i][pieceCopy.mBoardX + j],
-						pieceCopy, true);
+					                                  pieceCopy, true);
 			}
 		}
 		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 0.25f;
@@ -641,7 +646,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 		::PlaySound(this->mApp->mResMgr->mSounds["lightningExplode.ogg"]);
 		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
-			int row, col, count = 0;
+			uint32_t row, col, count = 0;
 			do
 			{
 				count++;
@@ -654,7 +659,8 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 					::TraceLog(TraceLogLevel::LOG_DEBUG, "Lightning piece activation couldn't find a vacant piece");
 					break; //no need to set x and y to anything as calling MatchPiece on a nullPiece is fine
 				}
-			} while (this->mBoard[row][col].mID == 0);
+			}
+			while (this->mBoard[row][col].mID == 0);
 
 			piecesCleared += this->MatchPiece(this->mBoard[row][col], pieceCopy, true);
 		}
@@ -721,14 +727,14 @@ void Cyrey::Board::UpdateReplay()
 		// Add an #ifdef _DEBUG here later
 		bool swapQueued = this->mQueuedSwapDirection != SwapDirection::None;
 		::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
-			::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
-				swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
-				nextCmd.mCommandNumber,
-				this->mSecondsSinceLastCommand,
-				nextCmd.mSecondsSinceLastCmd,
-				this->mFallDelay,
-				this->mSecondsRemaining,
-				this->mReplayCopy->mCommands.size()));
+		           ::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
+		                        swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
+		                        nextCmd.mCommandNumber,
+		                        this->mSecondsSinceLastCommand,
+		                        nextCmd.mSecondsSinceLastCmd,
+		                        this->mFallDelay,
+		                        this->mSecondsRemaining,
+		                        this->mReplayCopy->mCommands.size()));
 		this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
 		this->mReplayCopy->mCommands.pop_front();
 	}
@@ -736,7 +742,8 @@ void Cyrey::Board::UpdateReplay()
 
 void Cyrey::Board::UpdateSwapAnim()
 {
-	this->mSwapAnim.mOpacity -= SwapAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
+	this->mSwapAnim.mOpacity -= SwapAnim::cStartingOpacity *
+		(this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
 	if (this->mSwapAnim.mOpacity < 0.0f)
 	{
 		this->mSwapAnim.mOpacity = 0.0f;
@@ -748,12 +755,13 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 {
 	for (auto& anim : this->mMatchedPieceAnims)
 	{
-		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
-        for (int i = 0; i < anim.mSparklesAmount; ++i)
-        {
-            anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->mApp->GetDeltaTime();
-            anim.mSparkles[i].mDistance += AnimSparkle::cSpeed * this->mApp->GetDeltaTime();
-        }
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.
+			mFallDelay);
+		for (int i = 0; i < anim.mSparklesAmount; ++i)
+		{
+			anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->mApp->GetDeltaTime();
+			anim.mSparkles[i].mDistance += AnimSparkle::cSpeed * this->mApp->GetDeltaTime();
+		}
 	}
 	std::erase_if(this->mMatchedPieceAnims, [](const PieceMatchAnim& anim) { return anim.mOpacity <= 0.0f; });
 }
@@ -761,7 +769,8 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 void Cyrey::Board::UpdateDroppedPieceAnims()
 {
 	for (auto& anim : this->mDroppedPieceAnims)
-		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.
+			mFallDelay);
 
 	std::erase_if(this->mDroppedPieceAnims, [](const PieceDropAnim& anim) { return anim.mOpacity <= 0.0f; });
 }
@@ -837,7 +846,8 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress > Board::cNewGameAnimDuration)
 		return false;
 
-	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mApp->mGameConfig.mStartingTime;
+	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mApp->mGameConfig.
+		mStartingTime;
 	this->mNewGameAnimProgress += this->mApp->GetDeltaTime();
 
 	if (this->mNewGameAnimProgress >= (Board::cNewGameAnimDuration * 0.75f) && !this->mDroppedNewGamePieces)
@@ -846,7 +856,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 			this->mDroppedPieceAnims.emplace_back(i);
 
 		this->mDroppedNewGamePieces = true;
-		this->AddSwerve(::Vector2{ 0.0f, this->mTileSize * Board::cSwerveCoeff * 3 });
+		this->AddSwerve(::Vector2 { 0.0f, this->mTileSize * Board::cSwerveCoeff * 3 });
 	}
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
@@ -912,31 +922,34 @@ size_t Cyrey::Board::UpdateMatchSets()
 	if (matchSets > 0)
 	{
 		this->mFallDelay = this->mApp->mGameConfig.mFallDelay;
-		this->AddSwerve(::Vector2{ 0.0f,
+		this->AddSwerve(::Vector2 {
+			0.0f,
 			Board::cSwerveCoeff *
-				static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
-					this->mTileSize * 0.75f });
+			static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
+			this->mTileSize * 0.75f
+		});
 		this->mCascadeNumber++;
 		if (this->mCascadeNumber <= 1)
 			::PlaySound(this->mApp->mResMgr->mSounds["match.ogg"]);
 		else
 		{
 			::SetSoundPitch(this->mApp->mResMgr->mSounds["doubleset.ogg"],
-				0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) * 0.15f));
+			                0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
+				                0.15f));
 			::PlaySound(this->mApp->mResMgr->mSounds["doubleset.ogg"]);
 		}
 	}
-	for (auto& matchSet : this->mMatchSets)
+	for (auto& [mPieces, mAddedPieces] : this->mMatchSets)
 	{
-		size_t piecesPerSet = matchSet.mPieces.size();
-		size_t addedPiecesPerSet = matchSet.mAddedPieces.size();
-		//make the special at the added piece, or in the middle of the set if no pieces were added
+		size_t piecesPerSet = mPieces.size();
+		size_t addedPiecesPerSet = mAddedPieces.size();
+		// make the special at the added piece, or in the middle of the set if no pieces were added
 		Piece* addedPiece = addedPiecesPerSet > 0 ?
-			matchSet.mAddedPieces[addedPiecesPerSet / 2] :
-			matchSet.mPieces[piecesPerSet / 2];
+			                    mAddedPieces[addedPiecesPerSet / 2] :
+			                    mPieces[piecesPerSet / 2];
 		int piecesCleared = 0;
 
-		for (auto piece : matchSet.mPieces)
+		for (auto piece : mPieces)
 		{
 			if (piece == addedPiece && piecesPerSet == 4)
 			{
@@ -986,51 +999,53 @@ void Cyrey::Board::UpdateFalling()
 	this->FillInBlanks();
 }
 
-void Cyrey::Board::UpdateDroppedFiles() {
-    if (::IsFileDropped())
-    {
-        ::FilePathList fileList = ::LoadDroppedFiles();
-        if (fileList.paths != nullptr)
-            this->mDroppedReplay = Replay::OpenReplayFile(fileList.paths[0]);
+void Cyrey::Board::UpdateDroppedFiles()
+{
+	if (::IsFileDropped())
+	{
+		::FilePathList fileList = ::LoadDroppedFiles();
+		if (fileList.paths != nullptr)
+			this->mDroppedReplay = Replay::OpenReplayFile(fileList.paths[0]);
 
-        this->mHasDroppedFile = true;
-        ::UnloadDroppedFiles(fileList);
-    }
+		this->mHasDroppedFile = true;
+		::UnloadDroppedFiles(fileList);
+	}
 
-    if (!this->mHasDroppedFile)
-        return;
+	if (!this->mHasDroppedFile)
+		return;
 
-    // TODO: handle dropped files in the CyreyApp class instead
+	// TODO: handle dropped files in the CyreyApp class instead
 
-    if (this->mDroppedReplay.has_value())
-    {
-        this->PlayReplay(*this->mDroppedReplay);
-        this->mDroppedReplay = std::nullopt;
-        this->mHasDroppedFile = false;
-    }
-    else
-    {
-        int fontSize = this->mApp->mHeight / 18;
-        ::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
-        auto text = "Failed to open file.";
-        auto [x, y] = ::MeasureTextEx(
-        	::GuiGetFont(),
-        	text,
-        	static_cast<float>(fontSize),
-        	static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SPACING)));
-        float dialogWidth = x * 1.4f;
-        float dialogHeight = y + (static_cast<float>(fontSize) * 2);
-        auto appWidth = static_cast<float>(this->mApp->mWidth);
-        auto appHeight = static_cast<float>(this->mApp->mHeight);
+	if (this->mDroppedReplay.has_value())
+	{
+		this->PlayReplay(*this->mDroppedReplay);
+		this->mDroppedReplay = std::nullopt;
+		this->mHasDroppedFile = false;
+	}
+	else
+	{
+		int fontSize = this->mApp->mHeight / 18;
+		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
+		auto text = "Failed to open file.";
+		auto [x, y] = ::MeasureTextEx(
+			::GuiGetFont(),
+			text,
+			static_cast<float>(fontSize),
+			static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SPACING)));
+		float dialogWidth = x * 1.4f;
+		float dialogHeight = y + (static_cast<float>(fontSize) * 2);
+		auto appWidth = static_cast<float>(this->mApp->mWidth);
+		auto appHeight = static_cast<float>(this->mApp->mHeight);
 
-        Rectangle dialogPos = { (appWidth / 2) - (dialogWidth / 2),
-                                (appHeight / 2) - (dialogHeight / 2),
-                                dialogWidth,
-                                dialogHeight
-        };
-        if (::GuiMessageBox(dialogPos, "Error", text, "OK") != -1)
-            this->mHasDroppedFile = false;
-    }
+		Rectangle dialogPos = {
+			(appWidth / 2) - (dialogWidth / 2),
+			(appHeight / 2) - (dialogHeight / 2),
+			dialogWidth,
+			dialogHeight
+		};
+		if (::GuiMessageBox(dialogPos, "Error", text, "OK") != -1)
+			this->mHasDroppedFile = false;
+	}
 }
 
 void Cyrey::Board::FillInBlanks()
@@ -1069,13 +1084,16 @@ void Cyrey::Board::DrawCheckerboard() const
 		for (int j = 0; j < this->mWidth; j++)
 		{
 			::DrawRectangleRec(
-				::Rectangle{ j * this->mTileSize + this->mXOffset,
-				i * this->mTileSize + this->mYOffset,
-				this->mTileSize,
-				this->mTileSize },
-				(i % 2) ^ (j % 2) ?						//alternate between light and dark every row
-				::ColorAlpha(::LIGHTGRAY, this->mBoardAlpha) :
-				::ColorAlpha(::GRAY, this->mBoardAlpha));
+				::Rectangle {
+					j * this->mTileSize + this->mXOffset,
+					i * this->mTileSize + this->mYOffset,
+					this->mTileSize,
+					this->mTileSize
+				},
+				(i % 2) ^ (j % 2) ?
+					//alternate between light and dark every row
+					::ColorAlpha(::LIGHTGRAY, this->mBoardAlpha) :
+					::ColorAlpha(::GRAY, this->mBoardAlpha));
 		}
 	}
 }
@@ -1088,15 +1106,18 @@ void Cyrey::Board::DrawBorder() const
 		outlineColor = ::RED;
 
 	::DrawRectangleRoundedLines(
-		::Rectangle{ this->mXOffset - 1,
-		this->mYOffset - 1,
-		(this->mTileSize * static_cast<float>(this->mWidth)) + 2,
-		(this->mTileSize * static_cast<float>(this->mHeight)) + 2 },
+		::Rectangle {
+			this->mXOffset - 1,
+			this->mYOffset - 1,
+			(this->mTileSize * static_cast<float>(this->mWidth)) + 2,
+			(this->mTileSize * static_cast<float>(this->mHeight)) + 2
+		},
 		0.0f, 1, this->mTileInset, outlineColor);
 
 	// draw the timer - way more complicated than I thought it would be. definitely review and simplify later.
 	float thick = this->mTileInset * 2;
-	float offset = thick / 2; //Rectangle draws thickness outwards, Line draws it in the middle, shift it to fit somewhat
+	float offset = thick / 2;
+	//Rectangle draws thickness outwards, Line draws it in the middle, shift it to fit somewhat
 	::Color timerColor = this->mSecondsRemaining < 10 ? ::RED : ::GREEN;
 
 	float halfPerimeter = ((static_cast<float>(this->mWidth) * this->mTileSize) +
@@ -1113,38 +1134,52 @@ void Cyrey::Board::DrawBorder() const
 	float secondCurveLen = firstCurveLen + (static_cast<float>(this->mHeight) * this->mTileSize) + thick;
 
 	// intentional implicit casts
-	::Vector2 startPos{ this->mXOffset + (static_cast<float>(this->mWidth) / 2 * this->mTileSize) ,
-		this->mYOffset + (this->mHeight * this->mTileSize) + offset};
-	::Vector2 firstCurvePointLeft{ this->mXOffset - offset,
-		this->mYOffset + (this->mHeight * this->mTileSize) + offset };
-	::Vector2 firstCurvePointRight{ this->mXOffset + (this->mWidth * this->mTileSize) + offset,
-		this->mYOffset + (this->mHeight * this->mTileSize) + offset };
-	::Vector2 secondCurvePointLeft{ this->mXOffset - offset,
-		this->mYOffset - offset };
-	::Vector2 secondCurvePointRight{ this->mXOffset + (this->mWidth * this->mTileSize) + offset,
-		this->mYOffset - offset };
+	::Vector2 startPos {
+		this->mXOffset + (static_cast<float>(this->mWidth) / 2 * this->mTileSize),
+		this->mYOffset + (this->mHeight * this->mTileSize) + offset
+	};
+	::Vector2 firstCurvePointLeft {
+		this->mXOffset - offset,
+		this->mYOffset + (this->mHeight * this->mTileSize) + offset
+	};
+	::Vector2 firstCurvePointRight {
+		this->mXOffset + (this->mWidth * this->mTileSize) + offset,
+		this->mYOffset + (this->mHeight * this->mTileSize) + offset
+	};
+	::Vector2 secondCurvePointLeft {
+		this->mXOffset - offset,
+		this->mYOffset - offset
+	};
+	::Vector2 secondCurvePointRight {
+		this->mXOffset + (this->mWidth * this->mTileSize) + offset,
+		this->mYOffset - offset
+	};
 
 	bool wantFirstCurve = fillLength >= firstCurveLen;
 	bool wantSecondCurve = fillLength >= secondCurveLen;
 
 	float leftX = wantSecondCurve ?
-		secondCurvePointLeft.x + fillLength - secondCurveLen :
-		wantFirstCurve ? firstCurvePointLeft.x :
-		startPos.x - fillLength;
+		              secondCurvePointLeft.x + fillLength - secondCurveLen :
+		              wantFirstCurve ?
+		              firstCurvePointLeft.x :
+		              startPos.x - fillLength;
 	float leftY = wantSecondCurve ?
-		secondCurvePointLeft.y :
-		wantFirstCurve ? firstCurvePointLeft.y - (fillLength - firstCurveLen) :
-		firstCurvePointLeft.y;
+		              secondCurvePointLeft.y :
+		              wantFirstCurve ?
+		              firstCurvePointLeft.y - (fillLength - firstCurveLen) :
+		              firstCurvePointLeft.y;
 	float rightX = wantSecondCurve ?
-		secondCurvePointRight.x - (fillLength - secondCurveLen) :
-		wantFirstCurve ? firstCurvePointRight.x :
-		startPos.x + fillLength;
+		               secondCurvePointRight.x - (fillLength - secondCurveLen) :
+		               wantFirstCurve ?
+		               firstCurvePointRight.x :
+		               startPos.x + fillLength;
 	float rightY = wantSecondCurve ?
-		secondCurvePointRight.y :
-		wantFirstCurve ? firstCurvePointRight.y - (fillLength - firstCurveLen) :
-		firstCurvePointRight.y;
-	::Vector2 lastLeft{ leftX, leftY };
-	::Vector2 lastRight{ rightX, rightY };
+		               secondCurvePointRight.y :
+		               wantFirstCurve ?
+		               firstCurvePointRight.y - (fillLength - firstCurveLen) :
+		               firstCurvePointRight.y;
+	::Vector2 lastLeft { leftX, leftY };
+	::Vector2 lastRight { rightX, rightY };
 
 	int edgeCircleSegments = 6;
 	if (wantSecondCurve)
@@ -1199,8 +1234,9 @@ void Cyrey::Board::DrawPieces() const
 			int sides = 3;
 			float rotation = 0;
 			float radius = (static_cast<float>(this->mTileSize) / 2) - this->mTileInset;
-			::Vector2 center { ((this->mTileSize * static_cast<float>(j)) + this->mXOffset + this->mTileSize / 2),
-									((this->mTileSize * static_cast<float>(i)) + this->mYOffset + this->mTileSize / 2)
+			::Vector2 center {
+				((this->mTileSize * static_cast<float>(j)) + this->mXOffset + this->mTileSize / 2),
+				((this->mTileSize * static_cast<float>(i)) + this->mYOffset + this->mTileSize / 2)
 			};
 
 			switch (this->mBoard[i][j].mColor)
@@ -1209,16 +1245,19 @@ void Cyrey::Board::DrawPieces() const
 				color = ::RED;
 				sides = 4;
 				rotation = 45.0f;
-				radius += this->mTileInset; break;
+				radius += this->mTileInset;
+				break;
 			case PieceColor::Green:
 				color = ::GREEN;
-				sides = 8; break;
+				sides = 8;
+				break;
 			case PieceColor::Blue:
 				color = ::BLUE;
 				sides = 3;
 				center.y -= this->mTileSize / 10.0f;
 				rotation = 210.0f;
-				radius += this->mTileInset; break;
+				radius += this->mTileInset;
+				break;
 			case PieceColor::Yellow:
 				color = ::YELLOW;
 				sides = 4;
@@ -1226,26 +1265,30 @@ void Cyrey::Board::DrawPieces() const
 			case PieceColor::Orange:
 				color = ::ORANGE;
 				sides = 6;
-				// rotation = 90.0f;
+			// rotation = 90.0f;
 				break;
 			case PieceColor::White:
 				color = this->mApp->mDarkMode ? ::WHITE : ::DARKGRAY;
-				sides = 12; break;
+				sides = 12;
+				break;
 			case PieceColor::Purple:
 				color = ::PURPLE;
 				sides = 3;
 				rotation = 150.0f;
 				center.y += this->mTileSize / 10.0f;
-				radius += this->mTileInset; break;
+				radius += this->mTileInset;
+				break;
 			default:
 				break;
 			}
 
 			::DrawPoly(center, sides, radius, rotation, color);
 			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Bomb))
-				::DrawPolyLinesEx(center, sides, radius + this->mTileInset / 2, rotation, this->mTileSize / 10, ::ORANGE);
+				::DrawPolyLinesEx(center, sides, radius + this->mTileInset / 2, rotation, this->mTileSize / 10,
+				                  ::ORANGE);
 			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Lightning))
-				::DrawPolyLinesEx(center, sides, radius + this->mTileInset / 2, rotation, this->mTileSize / 10, ::SKYBLUE);
+				::DrawPolyLinesEx(center, sides, radius + this->mTileInset / 2, rotation, this->mTileSize / 10,
+				                  ::SKYBLUE);
 			if (this->mBoard[i][j].IsFlagSet(PieceFlag::Hypercube))
 			{
 				::DrawCircleV(center, radius, ::PINK);
@@ -1275,15 +1318,29 @@ void Cyrey::Board::DrawSwapAnim() const
 		height += height + this->mTileInset * 2;
 
 	::Color from = this->mApp->mDarkMode ?
-		::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity) : ::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity);
+		               ::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity) :
+		               ::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity);
 	::Color to = this->mApp->mDarkMode ?
-		::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity) : ::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity);
+		             ::ColorAlpha(::GRAY, this->mSwapAnim.mOpacity) :
+		             ::ColorAlpha(::RAYWHITE, this->mSwapAnim.mOpacity);
 
-	::DrawRectangleGradientEx({x, y, width, height},
-		(this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,
-		(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Right) ? to : from,
-		(this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from,
-		(this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection == SwapDirection::Left) ? to : from);
+	::DrawRectangleGradientEx({ x, y, width, height },
+	                          (this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection ==
+		                          SwapDirection::Right) ?
+		                          to :
+		                          from,
+	                          (this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection ==
+		                          SwapDirection::Right) ?
+		                          to :
+		                          from,
+	                          (this->mSwapAnim.mDirection == SwapDirection::Up || this->mSwapAnim.mDirection ==
+		                          SwapDirection::Left) ?
+		                          to :
+		                          from,
+	                          (this->mSwapAnim.mDirection == SwapDirection::Down || this->mSwapAnim.mDirection ==
+		                          SwapDirection::Left) ?
+		                          to :
+		                          from);
 }
 
 void Cyrey::Board::DrawPieceMatchAnims() const
@@ -1294,8 +1351,9 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		int sides = 3;
 		float rotation = 0;
 		float radius = (this->mTileSize / 2) - this->mTileInset;
-		::Vector2 center{ ((anim.mBoardX * this->mTileSize) + this->mXOffset + this->mTileSize / 2),
-								((anim.mBoardY * this->mTileSize) + this->mYOffset + this->mTileSize / 2)
+		::Vector2 center {
+			((anim.mBoardX * this->mTileSize) + this->mXOffset + this->mTileSize / 2),
+			((anim.mBoardY * this->mTileSize) + this->mYOffset + this->mTileSize / 2)
 		};
 
 		switch (anim.mColor)
@@ -1304,16 +1362,19 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 			color = ::RED;
 			sides = 4;
 			rotation = 45.0f;
-			radius += this->mTileInset; break;
+			radius += this->mTileInset;
+			break;
 		case PieceColor::Green:
 			color = ::GREEN;
-			sides = 8; break;
+			sides = 8;
+			break;
 		case PieceColor::Blue:
 			color = ::BLUE;
 			sides = 3;
 			rotation = 210.0f;
 			center.y -= this->mTileSize / 10.0f;
-			radius += this->mTileInset; break;
+			radius += this->mTileInset;
+			break;
 		case PieceColor::Yellow:
 			color = ::YELLOW;
 			sides = 4;
@@ -1321,35 +1382,37 @@ void Cyrey::Board::DrawPieceMatchAnims() const
 		case PieceColor::Orange:
 			color = ::ORANGE;
 			sides = 6;
-			// rotation = 90.0f;
+		// rotation = 90.0f;
 			break;
 		case PieceColor::White:
 			color = this->mApp->mDarkMode ? ::WHITE : ::DARKGRAY;
-			sides = 12; break;
+			sides = 12;
+			break;
 		case PieceColor::Purple:
 			color = ::PURPLE;
 			sides = 3;
 			rotation = 150.0f;
 			center.y += this->mTileSize / 10.0f;
-			radius += this->mTileInset; break;
+			radius += this->mTileInset;
+			break;
 		default:
 			break;
 		}
 		color = ::ColorAlpha(color, anim.mOpacity);
 
-        if (anim.mDestroyed)
-        {
-            for (int i = 0; i < anim.mSparklesAmount; ++i)
-            {
-	            auto& sparkle = anim.mSparkles[i];
-                ::Vector2 rotationVec = ::Vector2Rotate(::Vector2{1,0}, sparkle.mDirectionAngleDeg);
-                ::Vector2 offsetVec = ::Vector2Add(center, ::Vector2Scale(rotationVec, sparkle.mDistance));
+		if (anim.mDestroyed)
+		{
+			for (int i = 0; i < anim.mSparklesAmount; ++i)
+			{
+				const auto& [mRotationDeg, mDirectionAngleDeg, mDistance] = anim.mSparkles[i];
+				::Vector2 rotationVec = ::Vector2Rotate(::Vector2 { 1, 0 }, mDirectionAngleDeg);
+				::Vector2 offsetVec = ::Vector2Add(center, ::Vector2Scale(rotationVec, mDistance));
 
-                ::DrawPoly(offsetVec, 4, radius * 0.2f, sparkle.mRotationDeg, color);
-            }
-        }
-        else
-            ::DrawPoly(center, sides, radius, rotation, color);
+				::DrawPoly(offsetVec, 4, radius * 0.2f, mRotationDeg, color);
+			}
+		}
+		else
+			::DrawPoly(center, sides, radius, rotation, color);
 	}
 }
 
@@ -1359,11 +1422,15 @@ void Cyrey::Board::DrawPieceDropAnims() const
 	{
 		float x = this->mXOffset + (anim.mBoardCol * this->mTileSize) + this->mTileInset;
 		float y = this->mYOffset - (this->mTileSize * 3);
-		::Color from = this->mApp->mDarkMode ? ::ColorAlpha(::RAYWHITE, anim.mOpacity) : ::ColorAlpha(::BLACK, anim.mOpacity);
-		::Color to = this->mApp->mDarkMode ? ::ColorAlpha(::BLACK, anim.mOpacity) : ::ColorAlpha(::RAYWHITE, anim.mOpacity);
+		::Color from = this->mApp->mDarkMode ?
+			               ::ColorAlpha(::RAYWHITE, anim.mOpacity) :
+			               ::ColorAlpha(::BLACK, anim.mOpacity);
+		::Color to = this->mApp->mDarkMode ?
+			             ::ColorAlpha(::BLACK, anim.mOpacity) :
+			             ::ColorAlpha(::RAYWHITE, anim.mOpacity);
 
 		::DrawRectangleGradientV(x, y, this->mTileSize - (this->mTileInset * 2),
-			this->mTileSize * 2.75f, from, to);
+		                         this->mTileSize * 2.75f, from, to);
 	}
 }
 
@@ -1379,12 +1446,13 @@ void Cyrey::Board::DrawHoverSquare() const
 	if (!this->CanSwap())
 		rectColor = ::RED;
 
-	::DrawRectangleRoundedLines(::Rectangle{
-		hoveredTile->x * mTileSize + this->mXOffset + 1,
-		hoveredTile->y * mTileSize + this->mYOffset + 1,
-		this->mTileSize - 2,
-		this->mTileSize - 2 },
-		0.0f, 1, this->mTileInset / 2.0f, rectColor);
+	::DrawRectangleRoundedLines(::Rectangle {
+		                            hoveredTile->x * mTileSize + this->mXOffset + 1,
+		                            hoveredTile->y * mTileSize + this->mYOffset + 1,
+		                            this->mTileSize - 2,
+		                            this->mTileSize - 2
+	                            },
+	                            0.0f, 1, this->mTileInset / 2.0f, rectColor);
 }
 
 void Cyrey::Board::DrawSideUI()
@@ -1395,13 +1463,17 @@ void Cyrey::Board::DrawSideUI()
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
 
 	::GuiLabel(
-		::Rectangle{ 0, static_cast<float>(this->mApp->mHeight) / 2,
-			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::Rectangle {
+			0, static_cast<float>(this->mApp->mHeight) / 2,
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+		},
 		::TextFormat("Score: %lld", this->mScore)
 	);
 	::GuiLabel(
-		::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize,
-			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::Rectangle {
+			0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize,
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+		},
 		::TextFormat("Pieces cleared: %d", this->mPiecesCleared)
 	);
 
@@ -1409,8 +1481,10 @@ void Cyrey::Board::DrawSideUI()
 	{
 		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, ColorToInt(::GREEN));
 		::GuiLabel(
-			::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 3,
-				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::Rectangle {
+				0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 3,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+			},
 			::TextFormat("Cascades: %d", this->mCascadeNumber)
 		);
 		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
@@ -1419,20 +1493,24 @@ void Cyrey::Board::DrawSideUI()
 	{
 		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, ColorToInt(::PINK));
 		::GuiLabel(
-			::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 4,
-				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::Rectangle {
+				0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 4,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+			},
 			::TextFormat("Pieces: %d", this->mPiecesClearedInMove)
 		);
 		::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
 	}
 
 	::GuiSetStyle(::GuiControl::LABEL,
-		::GuiControlProperty::TEXT_COLOR_NORMAL,
-		this->mSecondsRemaining < 10 ? ColorToInt(::RED) : ColorToInt(::WHITE));
+	              ::GuiControlProperty::TEXT_COLOR_NORMAL,
+	              this->mSecondsRemaining < 10 ? ColorToInt(::RED) : ColorToInt(::WHITE));
 	::GuiSetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, fontSize * 2);
 	::GuiLabel(
-		::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 5,
-			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+		::Rectangle {
+			0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 5,
+			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+		},
 		::TextFormat("%.1f", this->mSecondsRemaining)
 	);
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_COLOR_NORMAL, defaultColor);
@@ -1443,21 +1521,25 @@ void Cyrey::Board::DrawSideUI()
 
 	if (this->mIsGameOver)
 		::GuiDisable();
-	if (::GuiButton(::Rectangle{ this->mXOffset - iconSize - (this->mTileSize / 2),
-		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
-		static_cast<float>(iconSize),
-		static_cast<float>(iconSize)},
-		::GuiIconText(::GuiIconName::ICON_PLAYER_PAUSE, "")))
+	if (::GuiButton(::Rectangle {
+		                this->mXOffset - iconSize - (this->mTileSize / 2),
+		                (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
+		                static_cast<float>(iconSize),
+		                static_cast<float>(iconSize)
+	                },
+	                ::GuiIconText(::GuiIconName::ICON_PLAYER_PAUSE, "")))
 	{
 		this->mApp->ChangeToState(CyreyAppState::SettingsMenu);
 	}
 	::GuiEnable();
 
-	if (::GuiButton(::Rectangle{ this->mXOffset - (iconSize * 2.25f) - (this->mTileSize / 2),
-		(static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
-		static_cast<float>(iconSize),
-		static_cast<float>(iconSize) },
-		::GuiIconText(::GuiIconName::ICON_RESTART, "")))
+	if (::GuiButton(::Rectangle {
+		                this->mXOffset - (iconSize * 2.25f) - (this->mTileSize / 2),
+		                (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 7,
+		                static_cast<float>(iconSize),
+		                static_cast<float>(iconSize)
+	                },
+	                ::GuiIconText(::GuiIconName::ICON_RESTART, "")))
 	{
 		this->NewGame();
 	}
@@ -1466,8 +1548,10 @@ void Cyrey::Board::DrawSideUI()
 		::GuiSetStyle(::GuiControl::DEFAULT, GuiDefaultProperty::TEXT_SIZE, fontSize);
 		::GuiSetIconScale(fontSize / 16);
 		::GuiLabel(
-			::Rectangle{ 0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 10,
-				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize) },
+			::Rectangle {
+				0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize * 10,
+				this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
+			},
 			::GuiIconText(::GuiIconName::ICON_PLAYER_RECORD, "Replay")
 		);
 	}
@@ -1493,102 +1577,122 @@ void Cyrey::Board::DrawResultsScreen()
 	float controlOffsetY = fontSize * 1.3f;
 	float controlPaddingX = windowWidth * 0.05f;
 
-	Rectangle movesLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle movesLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle movesValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle movesValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 2),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle mpsLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle mpsLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle mpsValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle mpsValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 3),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bombsLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle bombsLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bombsValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle bombsValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 4),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle lightningsLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle lightningsLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle lightningsValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle lightningsValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 5),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle hypercubesLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle hypercubesLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle hypercubesValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle hypercubesValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 6),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bestMoveLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle bestMoveLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 7),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bestMoveValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle bestMoveValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 7),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bestCascadeLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle bestCascadeLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 8),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle bestCascadeValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle bestCascadeValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 8),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle piecesClearedLabelPos = { windowAnchor.x + controlPaddingX,
+	Rectangle piecesClearedLabelPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 9),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle piecesClearedValuePos = { windowAnchor.x + (windowWidth / 2),
+	Rectangle piecesClearedValuePos = {
+		windowAnchor.x + (windowWidth / 2),
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 9),
 		(windowWidth / 2) - controlPaddingX,
 		fontSize
 	};
-	Rectangle viewReplayBtnPos = { windowAnchor.x + controlPaddingX,
+	Rectangle viewReplayBtnPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 10.5f),
 		(windowWidth / 2) - controlPaddingX * 1.5f,
 		fontSize
 	};
-	Rectangle submitBtnPos = { windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
+	Rectangle submitBtnPos = {
+		windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 10.5f),
 		(windowWidth / 2) - controlPaddingX * 1.5f,
 		fontSize
 	};
-	Rectangle mainMenuBtnPos = { windowAnchor.x + controlPaddingX,
+	Rectangle mainMenuBtnPos = {
+		windowAnchor.x + controlPaddingX,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 12),
 		(windowWidth / 2) - controlPaddingX * 1.5f,
 		fontSize
 	};
-	Rectangle playAgainBtnPos = { windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
+	Rectangle playAgainBtnPos = {
+		windowAnchor.x + (windowWidth / 2) + controlPaddingX * 0.5f,
 		windowAnchor.y + windowPaddingY + (controlOffsetY * 12),
 		(windowWidth / 2) - controlPaddingX * 1.5f,
 		fontSize
@@ -1612,7 +1716,8 @@ void Cyrey::Board::DrawResultsScreen()
 
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
 	::GuiLabel(movesValuePos, ::TextFormat(" %d", this->mMovesMade));
-	::GuiLabel(mpsValuePos, ::TextFormat(" %.2f", static_cast<float>(this->mMovesMade) / this->mApp->mGameConfig.mStartingTime));
+	::GuiLabel(mpsValuePos,
+	           ::TextFormat(" %.2f", static_cast<float>(this->mMovesMade) / this->mApp->mGameConfig.mStartingTime));
 	::GuiLabel(bombsValuePos, ::TextFormat(" %d", this->mBombsDetonated));
 	::GuiLabel(lightningsValuePos, ::TextFormat(" %d", this->mLightningsDetonated));
 	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", this->mHypercubesDetonated));
@@ -1621,26 +1726,26 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
 
 	if (this->mHasSavedReplay)
-        ::GuiDisable();
+		::GuiDisable();
 	if (::GuiButton(submitBtnPos, this->mHasSavedReplay ? "Replay saved" : "Save Replay") ||
-        (this->mApp->mSettings->mWantReplayAutoSave && !this->mHasSavedReplay))
-    {
-        auto currentTime = time(nullptr);
-        tm *timeDetails = localtime(&currentTime);
-        if (Replay::SaveReplayToFile(*this->mReplayData,
-            ::TextFormat("%s/cyrey_%d%02d%02d_%02d%02d%02d.cyrep",
-                         Replay::cReplaysFolderName,
-                         timeDetails->tm_year + 1900,
-                         timeDetails->tm_mon + 1,
-                         timeDetails->tm_mday,
-                         timeDetails->tm_hour,
-                         timeDetails->tm_min,
-                         timeDetails->tm_sec)))
-        {
-        	Replay::PublishReplay(*this->mReplayData, this->mApp->mCurrentUser->mName);
-            this->mHasSavedReplay = true;
-        }
-    }
+		(this->mApp->mSettings->mWantReplayAutoSave && !this->mHasSavedReplay))
+	{
+		auto currentTime = time(nullptr);
+		tm* timeDetails = localtime(&currentTime);
+		if (Replay::SaveReplayToFile(*this->mReplayData,
+		                             ::TextFormat("%s/cyrey_%d%02d%02d_%02d%02d%02d.cyrep",
+		                                          Replay::cReplaysFolderName,
+		                                          timeDetails->tm_year + 1900,
+		                                          timeDetails->tm_mon + 1,
+		                                          timeDetails->tm_mday,
+		                                          timeDetails->tm_hour,
+		                                          timeDetails->tm_min,
+		                                          timeDetails->tm_sec)))
+		{
+			Replay::PublishReplay(*this->mReplayData, this->mApp->mCurrentUser->mName);
+			this->mHasSavedReplay = true;
+		}
+	}
 	::GuiEnable();
 
 	if (::GuiButton(viewReplayBtnPos, "View Replay"))
@@ -1653,12 +1758,13 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, static_cast<int>(fontSizeTitle));
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_CENTER);
 
-	Rectangle finalScoreLabel = { windowAnchor.x,
+	Rectangle finalScoreLabel = {
+		windowAnchor.x,
 		windowAnchor.y + windowPaddingY,
 		windowWidth,
 		fontSizeTitle
 	};
 	::GuiLabel(finalScoreLabel,
-		::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime), this->mScore));
+	           ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime),
+	                        this->mScore));
 }
-
