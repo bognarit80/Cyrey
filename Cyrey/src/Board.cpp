@@ -154,6 +154,11 @@ void Cyrey::Board::UpdateInput()
 	if (this->GetHoveredTile())
 	{
 		auto [x, y] = *this->GetHoveredTile();
+		if (this->mSelectedTile.has_value())
+		{
+			x = this->mSelectedTile->x;
+			y = this->mSelectedTile->y;
+		}
 		switch (key)
 		{
 		case ::KeyboardKey::KEY_W:
@@ -316,6 +321,7 @@ void Cyrey::Board::ResetBoard()
 	this->mDroppedNewGamePieces = false;
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
+	this->mSelectedTile.reset();
 
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
@@ -459,8 +465,42 @@ bool Cyrey::Board::IsPieceBeingMatched(unsigned int pieceID) const
 	return false;
 }
 
+bool Cyrey::Board::SelectPiece(int col, int row)
+{
+	if (this->IsPositionLegal(col, row))
+	{
+		if (this->mSelectedTile.has_value())
+		{
+			int selCol = static_cast<int>(this->mSelectedTile->x);
+			int selRow = static_cast<int>(this->mSelectedTile->y);
+			if (selCol == col && selRow == row)
+			{
+				// deselect piece if the same one is pressed
+				this->mSelectedTile.reset();
+				return false;
+			}
+			if (this->IsSwapLegal(selCol, selRow, col, row))
+			{
+				int xDiff = selCol - col;
+				int yDiff = selRow - row;
+
+				if (abs(xDiff))
+					this->TrySwap(selCol, selRow, (xDiff > 0 ? SwapDirection::Left : SwapDirection::Right));
+				else if (abs(yDiff))
+					this->TrySwap(selCol, selRow, (yDiff > 0 ? SwapDirection::Up : SwapDirection::Down));
+
+				return false;
+			}
+		}
+		this->mSelectedTile = { static_cast<float>(col), static_cast<float>(row) };
+		return true;
+	}
+	return false;
+}
+
 bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 {
+	this->mSelectedTile.reset();
 	if (!this->CanSwap())
 	{
 		float queueSwapTolerance = this->mApp->mSettings->mQueueSwapTolerance;
@@ -810,7 +850,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 
 	if (rowsClearedBeforeUpdate < rowsClearedAfterUpdate)
 	{
-		for (auto& piece : this->mBoard[rowsClearedAfterUpdate - 1])
+		for (auto& piece : this->mBoard[rowsClearedBeforeUpdate])
 		{
 			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, false);
 			piece = Cyrey::gNullPiece;
@@ -909,6 +949,8 @@ void Cyrey::Board::UpdateDragging()
 	}
 	else if (::IsMouseButtonReleased(::MouseButton::MOUSE_BUTTON_LEFT))
 	{
+		if (this->mDragging)
+			this->SelectPiece(this->mDragTileBegin.x, this->mDragTileBegin.y);
 		this->mDragging = false;
 		this->mDragMouseBegin = ::Vector2Zero();
 		this->mDragTileBegin = ::Vector2Zero();
@@ -1436,8 +1478,7 @@ void Cyrey::Board::DrawPieceDropAnims() const
 
 void Cyrey::Board::DrawHoverSquare() const
 {
-	std::optional<::Vector2> hoveredTile = this->GetHoveredTile();
-	if (!hoveredTile)
+	if (this->mIsInReplay)
 		return;
 
 	auto rectColor = ::ORANGE;
@@ -1446,13 +1487,26 @@ void Cyrey::Board::DrawHoverSquare() const
 	if (!this->CanSwap())
 		rectColor = ::RED;
 
-	::DrawRectangleRoundedLines(::Rectangle {
-		                            hoveredTile->x * mTileSize + this->mXOffset + 1,
-		                            hoveredTile->y * mTileSize + this->mYOffset + 1,
-		                            this->mTileSize - 2,
-		                            this->mTileSize - 2
-	                            },
-	                            0.0f, 1, this->mTileInset / 2.0f, rectColor);
+	if (std::optional<::Vector2> hoveredTile = this->GetHoveredTile(); hoveredTile.has_value())
+	{
+		::DrawRectangleRoundedLines(::Rectangle {
+			                            hoveredTile->x * this->mTileSize + this->mXOffset + 1,
+			                            hoveredTile->y * this->mTileSize + this->mYOffset + 1,
+			                            this->mTileSize - 2,
+			                            this->mTileSize - 2
+		                            },
+		                            0.0f, 1, this->mTileInset / 2.0f, rectColor);
+	}
+	if (this->mSelectedTile.has_value())
+	{
+		::DrawRectangleRoundedLines(::Rectangle {
+										this->mSelectedTile->x * this->mTileSize + this->mXOffset + 1,
+										this->mSelectedTile->y * this->mTileSize + this->mYOffset + 1,
+										this->mTileSize - 2,
+										this->mTileSize - 2
+									},
+									0.0f, 1, this->mTileInset / 2.0f, ::GREEN);
+	}
 }
 
 void Cyrey::Board::DrawSideUI()

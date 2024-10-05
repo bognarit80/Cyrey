@@ -64,6 +64,7 @@ namespace Cyrey
 		bool mHasDroppedFile;
 		std::optional<Replay> mDroppedReplay;
 		SwapAnim mSwapAnim;
+		std::optional<::Vector2> mSelectedTile;
 
 #ifdef PLATFORM_ANDROID
 		static constexpr float cDefaultZoomPct = 85.0f;
@@ -101,13 +102,14 @@ namespace Cyrey
 		[[nodiscard]] std::vector<std::vector<Piece>> GenerateStartingBoard() const;
 		void NewGame();
 		void ResetBoard();
-		void AddSwerve(::Vector2 swerve);
 		/// Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
+		void AddSwerve(::Vector2 swerve);
 		[[nodiscard]] std::optional<::Vector2> GetHoveredTile() const;
 		[[nodiscard]] bool IsMouseInBoard() const;
 		bool FindSets();
 		bool FindSets(int pieceCol, int pieceRow, PieceColor color, bool first = true);
 		[[nodiscard]] bool IsPieceBeingMatched(unsigned int pieceID) const;
+		bool SelectPiece(int col, int row);
 		bool TrySwap(int col, int row, SwapDirection direction);
 		bool TrySwap(int col, int row, int toCol, int toRow);
 		[[nodiscard]] bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
