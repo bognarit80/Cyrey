@@ -125,12 +125,14 @@ void Cyrey::UserMenu::Draw()
 		fontSize
 	};
 
+	static bool wantResetDialog = false;
+
 	if (::GuiWindowBox(windowRect, "User profile") ||
 		::GuiButton(mainMenuBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, "Main Menu")))
 	{
 		this->mIsOpen = false;
+		wantResetDialog = false;
 	}
-	::GuiButton(changeUserBtnPos, ::GuiIconText(::GuiIconName::ICON_PLAYER, "Select User"));
 
 	// left side
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_RIGHT);
@@ -152,6 +154,21 @@ void Cyrey::UserMenu::Draw()
 	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", user.mHypercubesDetonated));
 	::GuiLabel(bestMoveValuePos, ::TextFormat(" %lld", user.mBestMovePoints));
 	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", user.mBestMoveCascades));
+
+	if (::GuiButton(changeUserBtnPos, ::GuiIconText(::GuiIconName::ICON_REDO_FILL, "Reset Tutorial")))
+		wantResetDialog = true;
+	if (wantResetDialog)
+	{
+		int result = this->mApp.DrawDialog(UserMenu::cResetTutorialTitle, UserMenu::cResetTutorialTxt, "Yes;No");
+		if (result != -1)
+			wantResetDialog = false;
+		if (result == 1)
+		{
+			this->mApp.mCurrentUser->mFinishedTutorial = false;
+			this->mApp.SaveCurrentUserData();
+		}
+	}
+
 #ifdef PLATFORM_ANDROID
     if (const char* txt = ::GetInputDialogText(); txt != nullptr && txt[0])
     {
@@ -208,4 +225,6 @@ void Cyrey::UserMenu::Draw()
 	}
 	::GuiLabel(xpLabel,
 	           ::TextFormat("%lld lifetime XP", user.mXP));
+
+
 }

@@ -74,10 +74,11 @@ namespace Cyrey
 		void GameLoop();
 		void Update();
 		void Draw() const;
+		int DrawDialog(const char* title, const char* message, const char* buttons) const;
 		[[nodiscard]] float GetDeltaTime() const;
 		void ChangeToState(CyreyAppState state); /// Change to the state at the beginning of the next update
 		void ToggleFullscreen();
-		static User ParseUserFile();
+		static User ParseUserFile(const char* path);
 		void SaveCurrentUserData() const;
 
 		unsigned int SeedRNG(); /// Returns the seed.

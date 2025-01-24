@@ -8,6 +8,8 @@
 #include "style_cyber.h"
 #pragma GCC diagnostic pop
 #include <thread>
+
+#include "TutorialBoard.hpp"
 #include "UserMenu.hpp"
 
 //Init the default values. Call this after constructing the object, before running the game.
@@ -32,7 +34,7 @@ void Cyrey::CyreyApp::Init()
 	this->mBoard->mApp = this;
 	this->mBoard->Init();
 	this->mMainMenu = std::make_unique<MainMenu>(*this);
-	this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile());
+	this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile(CyreyApp::cUserFileName));
 	this->mSettings = std::make_unique<SettingsMenu>(*this);
 	this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);
 	this->mUserMenu = std::make_unique<UserMenu>(*this);
@@ -110,8 +112,18 @@ void Cyrey::CyreyApp::Update()
 		::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
 		if (this->mMainMenu->mIsPlayBtnPressed)
 		{
-			this->ChangeToState(CyreyAppState::InGame);
+			if (!this->mCurrentUser->mFinishedTutorial)
+				this->mBoard = std::make_unique<TutorialBoard>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
+			else
+			{
+				this->mGameConfig = Cyrey::cDefaultGameConfig; // TODO: Attempt to fetch game config here?
+				this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
+			}
+			this->mBoard->mApp = this;
 			this->mBoard->Init();
+
+			this->ChangeToState(CyreyAppState::InGame);
+			this->mBoard->NewGame();
 		}
 		if (this->mMainMenu->mIsUserPressed)
 		{
@@ -194,6 +206,29 @@ void Cyrey::CyreyApp::Draw() const
 	::EndDrawing();
 }
 
+int Cyrey::CyreyApp::DrawDialog(const char* title, const char* message, const char* buttons) const
+{
+	int fontSize = this->mHeight / 18;
+	::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
+	auto [x, y] = ::MeasureTextEx(
+		::GuiGetFont(),
+		message,
+		static_cast<float>(fontSize),
+		static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SPACING)));
+	float dialogWidth = x * 1.1f;
+	float dialogHeight = y + (static_cast<float>(fontSize) * 2.5f);
+	auto appWidth = static_cast<float>(this->mWidth);
+	auto appHeight = static_cast<float>(this->mHeight);
+
+	Rectangle dialogPos = {
+		(appWidth / 2) - (dialogWidth / 2),
+		(appHeight / 2) - (dialogHeight / 2),
+		dialogWidth,
+		dialogHeight
+	};
+	return ::GuiMessageBox(dialogPos, title, message, buttons);
+}
+
 float Cyrey::CyreyApp::GetDeltaTime() const
 {
 #ifndef NDEBUG
@@ -254,9 +289,9 @@ void Cyrey::CyreyApp::ToggleFullscreen()
 	}
 }
 
-Cyrey::User Cyrey::CyreyApp::ParseUserFile()
+Cyrey::User Cyrey::CyreyApp::ParseUserFile(const char* path)
 {
-	char* txt = ::LoadFileText(CyreyApp::cUserFileName);
+	char* txt = ::LoadFileText(path);
 	if (!txt)
 		return User {};
 

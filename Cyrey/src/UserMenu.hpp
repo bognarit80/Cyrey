@@ -15,6 +15,9 @@ namespace Cyrey
 
 		void Update();
 		void Draw();
+
+		static constexpr char cResetTutorialTitle[] = "Reset Tutorial?";
+		static constexpr char cResetTutorialTxt[] = "Are you sure you want to reset the tutorial?";
 	};
 } // namespace Cyrey
 

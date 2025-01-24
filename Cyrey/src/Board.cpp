@@ -963,7 +963,7 @@ size_t Cyrey::Board::UpdateMatchSets()
 	size_t matchSets = this->mMatchSets.size();
 	if (matchSets > 0)
 	{
-		this->mFallDelay = this->mApp->mGameConfig.mFallDelay;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
 		this->AddSwerve(::Vector2 {
 			0.0f,
 			Board::cSwerveCoeff *
@@ -1066,26 +1066,7 @@ void Cyrey::Board::UpdateDroppedFiles()
 	}
 	else
 	{
-		int fontSize = this->mApp->mHeight / 18;
-		::GuiSetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SIZE, fontSize);
-		auto text = "Failed to open file.";
-		auto [x, y] = ::MeasureTextEx(
-			::GuiGetFont(),
-			text,
-			static_cast<float>(fontSize),
-			static_cast<float>(::GuiGetStyle(::GuiControl::DEFAULT, ::GuiDefaultProperty::TEXT_SPACING)));
-		float dialogWidth = x * 1.4f;
-		float dialogHeight = y + (static_cast<float>(fontSize) * 2);
-		auto appWidth = static_cast<float>(this->mApp->mWidth);
-		auto appHeight = static_cast<float>(this->mApp->mHeight);
-
-		Rectangle dialogPos = {
-			(appWidth / 2) - (dialogWidth / 2),
-			(appHeight / 2) - (dialogHeight / 2),
-			dialogWidth,
-			dialogHeight
-		};
-		if (::GuiMessageBox(dialogPos, "Error", text, "OK") != -1)
+		if (this->mApp->DrawDialog("Error", "Failed to open file.", "OK") != -1)
 			this->mHasDroppedFile = false;
 	}
 }

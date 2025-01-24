@@ -73,7 +73,8 @@ void Cyrey::MainMenu::Draw()
 			0, static_cast<float>(this->mApp.mHeight) * 0.30f,
 			static_cast<float>(this->mApp.mWidth), fontSize
 		},
-		::TextFormat("Welcome back, %s.", this->mApp.mCurrentUser->mName.c_str())))
+		::TextFormat(this->mApp.mCurrentUser->mFinishedTutorial ? "Welcome back, %s." : "Welcome, %s.",
+		             this->mApp.mCurrentUser->mName.c_str())))
 	{
 		this->mIsUserPressed = true;
 	}
@@ -141,6 +142,8 @@ void Cyrey::MainMenu::Draw()
 	}
 #endif // __EMSCRIPTEN__
 
+	if (!this->mApp.mCurrentUser->mFinishedTutorial) // don't show config ver if in tutorial
+		return;
 	::GuiSetStyle(::GuiControl::DEFAULT,
 	              ::GuiDefaultProperty::TEXT_SIZE,
 	              static_cast<int>(appHeight > appWidth ? appWidth * 0.035f : appHeight * 0.035f)

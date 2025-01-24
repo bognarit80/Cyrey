@@ -93,15 +93,16 @@ namespace Cyrey
 		Board(int width, int height) :
 			mWidth(width), mHeight(height) {};
 		explicit Board(int size) : Board(size, size) {};
+		virtual ~Board() = default;
 
 		void Init();
-		void Update();
-		void Draw(); // not const because we want buttons on side UI and results screen
+		virtual void Update();
+		virtual void Draw(); // not const because we want buttons on side UI and results screen
 		void UpdateInput();
 		static std::vector<std::vector<Piece>> ParseBoardString(const char* data);
 		[[nodiscard]] std::vector<std::vector<Piece>> GenerateStartingBoard() const;
-		void NewGame();
-		void ResetBoard();
+		virtual void NewGame();
+		virtual void ResetBoard();
 		/// Checks for mWantBoardSwerve. Modify swerve value directly to skip the check.
 		void AddSwerve(::Vector2 swerve);
 		[[nodiscard]] std::optional<::Vector2> GetHoveredTile() const;
@@ -110,18 +111,18 @@ namespace Cyrey
 		bool FindSets(int pieceCol, int pieceRow, PieceColor color, bool first = true);
 		[[nodiscard]] bool IsPieceBeingMatched(unsigned int pieceID) const;
 		bool SelectPiece(int col, int row);
-		bool TrySwap(int col, int row, SwapDirection direction);
+		virtual bool TrySwap(int col, int row, SwapDirection direction);
 		bool TrySwap(int col, int row, int toCol, int toRow);
 		[[nodiscard]] bool IsSwapLegal(int col, int row, int toCol, int toRow) const;
 		[[nodiscard]] bool CanSwap() const;
 		[[nodiscard]] constexpr bool IsPositionLegal(int col, int row) const;
-		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false);
 		// returns the amount of pieces cleared, if the piece was special
+		int MatchPiece(Piece& piece, const Piece& byPiece = Cyrey::gNullPiece, bool destroy = false);
 		int DoHypercube(const Piece& cubePiece, const Piece& byPiece = Cyrey::gNullPiece);
 		void PlayReplay();
 		void PlayReplay(const Replay& replay);
 
-	private:
+	protected:
 		void UpdateReplay();
 		void UpdateSwapAnim();
 		void UpdateMatchedPieceAnims();
@@ -129,8 +130,8 @@ namespace Cyrey
 		void UpdateGameOverAnim();
 		void UpdateCurrentUserStats() const; // call after game ends
 		void UpdateBoardSwerve();
-		bool UpdateNewGameAnim();
 		// increases mSecondsRemaining linearly over the duration of the anim, returns true if in anim
+		bool UpdateNewGameAnim();
 		void UpdateDragging();
 		size_t UpdateMatchSets(); // returns the amount of match sets processed
 		void UpdateFalling();
@@ -143,7 +144,7 @@ namespace Cyrey
 		void DrawPieceMatchAnims() const;
 		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;
-		void DrawSideUI();
+		virtual void DrawSideUI();
 		void DrawResultsScreen(); // not const because we want buttons
 	};
 } // namespace Cyrey

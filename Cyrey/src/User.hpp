@@ -9,7 +9,7 @@ namespace Cyrey
 	class User
 	{
 	public:
-		std::string mName { "Player" };
+		std::string mName { cDefaultName };
 		int64_t mXP;
 		int64_t mPiecesCleared;
 		int mGamesPlayed;
@@ -18,12 +18,14 @@ namespace Cyrey
 		int mHypercubesDetonated;
 		int64_t mBestMovePoints;
 		int mBestMoveCascades;
+		bool mFinishedTutorial;
 
-		constexpr static int cMaxNameLength = 16;
+		static constexpr int cMaxNameLength = 16;
+		static constexpr char cDefaultName[] = "Player";
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(User, mName, mXP, mPiecesCleared, mGamesPlayed, mBombsDetonated,
 		                                            mLightningsDetonated, mHypercubesDetonated, mBestMovePoints,
-		                                            mBestMoveCascades)
+		                                            mBestMoveCascades, mFinishedTutorial)
 	};
 } // namespace Cyrey
 

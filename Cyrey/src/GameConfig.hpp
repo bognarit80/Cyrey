@@ -35,6 +35,17 @@ namespace Cyrey
 		.mMissDelayMultiplier = 3.0f,
 		.mLightningPiecesAmount = 10
 	};
+	constexpr GameConfig cTutorialGameConfig {
+		.mVersion = 1,
+		.mPieceColorAmount = 7,
+		.mBoardWidth = 8,
+		.mBoardHeight = 8,
+		.mBaseScore = 50,
+		.mStartingTime = 60.0f,
+		.mFallDelay = 0.75f,
+		.mMissDelayMultiplier = 3.0f,
+		.mLightningPiecesAmount = 10
+	};
 } // namespace Cyrey
 
 #endif // !CYREY_GAMECONFIG_HEADER
