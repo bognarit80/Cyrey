@@ -65,6 +65,9 @@ namespace Cyrey
 		std::optional<Replay> mDroppedReplay;
 		SwapAnim mSwapAnim;
 		std::optional<::Vector2> mSelectedTile;
+		bool mIsPaused;
+		bool mHasSeekedReplay;
+		float mGameSpeed;
 
 #ifdef PLATFORM_ANDROID
 		static constexpr float cDefaultZoomPct = 85.0f;
@@ -121,9 +124,12 @@ namespace Cyrey
 		int DoHypercube(const Piece& cubePiece, const Piece& byPiece = Cyrey::gNullPiece);
 		void PlayReplay();
 		void PlayReplay(const Replay& replay);
+		void SetReplayTo(float secs);
 
 	protected:
-		void UpdateReplay();
+		/// Updates sizes and offsets related to the window size.
+		void UpdateUI();
+		bool UpdateReplay();
 		void UpdateSwapAnim();
 		void UpdateMatchedPieceAnims();
 		void UpdateDroppedPieceAnims();
@@ -136,7 +142,9 @@ namespace Cyrey
 		size_t UpdateMatchSets(); // returns the amount of match sets processed
 		void UpdateFalling();
 		void UpdateDroppedFiles();
+		[[nodiscard]] float GetStepInterval() const;
 		void FillInBlanks();
+		void HandleQueuedSwaps();
 		void DrawCheckerboard() const;
 		void DrawBorder() const;
 		void DrawPieces() const;
@@ -145,6 +153,7 @@ namespace Cyrey
 		void DrawPieceDropAnims() const;
 		void DrawHoverSquare() const;
 		virtual void DrawSideUI();
+		void DrawReplayControls(); // not const because the buttons alter state
 		void DrawResultsScreen(); // not const because we want buttons
 	};
 } // namespace Cyrey

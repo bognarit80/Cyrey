@@ -37,6 +37,9 @@ void Cyrey::Board::Init()
 	this->mReplayData = std::make_unique<Replay>();
 	this->mHasSavedReplay = false;
 	this->mHasDroppedFile = false;
+	this->mIsPaused = false;
+	this->mHasSeekedReplay = false;
+	this->mGameSpeed = 1.0f;
 	this->ResetBoard();
 
 	this->mWidth = mBoard[0].size();
@@ -45,82 +48,62 @@ void Cyrey::Board::Init()
 
 void Cyrey::Board::Update()
 {
-	this->mZoomPct += ::GetMouseWheelMove();
-	//perhaps change this to the Camera functionality in raylib? seems a lot more versatile
+	this->UpdateUI();
 
-	static ::Vector2 lastVector { 0.0f, 0.0f };
-	::Vector2 pinch { std::abs(::GetGesturePinchVector().x), std::abs(::GetGesturePinchVector().y) };
-	if (pinch.x != 0.0f && pinch.y != 0.0f && (lastVector.x != 0.0f && lastVector.y != 0.0f))
-		this->mZoomPct += (pinch.x - lastVector.x + (pinch.y - lastVector.y) * 2) * 5;
-	lastVector = pinch;
-
-	if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE) || ::GetTouchPointCount() >= 4)
-		this->mZoomPct = Board::cDefaultZoomPct;
+	if (this->mIsPaused)
+		return;
 
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration && this->mSecondsRemaining > 0.0f)
-		this->mSecondsSinceLastCommand += this->mApp->GetDeltaTime();
+		this->mSecondsSinceLastCommand += this->GetStepInterval();
 
-	// simple way to disable swaps and other input when in replay, for now
-	if (this->mIsInReplay && this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
-		this->UpdateReplay();
-	else
+	if (!this->mIsInReplay)
 	{
 		this->UpdateDragging();
 		this->UpdateInput();
 	}
 
+	if (this->mFallDelay > 0.0f)
+		this->mFallDelay -= this->GetStepInterval();
+	if (this->mMissDelay > 0.0f)
+		this->mMissDelay -= this->GetStepInterval();
+
+	bool didReplayMove = false;
+	do
+	{
+		while (this->mFallDelay < 0.0f)
+		{
+			this->UpdateFalling();
+			if (!this->UpdateMatchSets())
+			{
+				this->mFallDelay = 0.0f;
+				this->HandleQueuedSwaps();
+			}
+		}
+
+		if (this->mMissDelay < 0.0f)
+		{
+			this->mMissDelay = 0.0f;
+			this->HandleQueuedSwaps();
+		}
+
+		if (this->mIsInReplay && this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
+			didReplayMove = this->UpdateReplay();
+		if (didReplayMove)
+		{
+			// SSLC would then be the remainder after doing the command
+			if (this->mFallDelay != 0.0f)
+				this->mFallDelay -= this->mSecondsSinceLastCommand;
+			if (this->mMissDelay != 0.0f)
+				this->mMissDelay -= this->mSecondsSinceLastCommand;
+		}
+	} while (didReplayMove);
+
 	this->UpdateSwapAnim();
 	this->UpdateMatchedPieceAnims();
 	this->UpdateDroppedPieceAnims();
-
-	auto screenWidth = static_cast<float>(this->mApp->mWidth);
-	auto screenHeight = static_cast<float>(this->mApp->mHeight);
-
-	if (screenWidth > 0 && screenHeight > 0)
-	{
-		this->mTileSize = (screenHeight * this->mZoomPct / 100) / static_cast<float>(this->mHeight);
-		this->mTileInset = this->mTileSize / 10;
-		this->mXOffset = (screenWidth / 2) - (static_cast<float>(this->mWidth) * this->mTileSize / 2) + this->
-			mBoardSwerve.x;
-		this->mYOffset = (screenHeight / 2) - (static_cast<float>(this->mHeight) * this->mTileSize / 2) + this->
-			mBoardSwerve.y;
-	}
-
 	this->UpdateBoardSwerve();
 
-	if (this->mFallDelay > 0.0f)
-	{
-		this->mFallDelay -= this->mApp->GetDeltaTime();
-		if (this->mFallDelay <= 0.0f)
-		{
-			this->mFallDelay = 0.0f;
-			this->UpdateFalling();
-			if (!this->UpdateMatchSets() && this->mQueuedSwapDirection != SwapDirection::None)
-			{
-				this->TrySwap(this->mQueuedSwapPos.x, this->mQueuedSwapPos.y, this->mQueuedSwapDirection);
-				this->mQueuedSwapDirection = SwapDirection::None;
-			}
-			if (this->mApp->mSettings->mQueueSwapTolerance < 1.0f)
-				this->mQueuedSwapDirection = SwapDirection::None;
-		}
-	}
-	if (this->mMissDelay > 0.0f)
-	{
-		this->mMissDelay -= this->mApp->GetDeltaTime();
-		if (this->mMissDelay <= 0.0f)
-		{
-			this->mMissDelay = 0.0f;
-			if (this->mQueuedSwapDirection != SwapDirection::None)
-			{
-				this->TrySwap(this->mQueuedSwapPos.x, this->mQueuedSwapPos.y, this->mQueuedSwapDirection);
-				this->mQueuedSwapDirection = SwapDirection::None;
-			}
-			if (this->mApp->mSettings->mQueueSwapTolerance < 1.0f)
-				this->mQueuedSwapDirection = SwapDirection::None;
-		}
-	}
-
-	if (!this->UpdateNewGameAnim() && ((this->mSecondsRemaining -= this->mApp->GetDeltaTime()) < 0.0f))
+	if (!this->UpdateNewGameAnim() && ((this->mSecondsRemaining -= this->GetStepInterval()) < 0.0f))
 		this->mSecondsRemaining = 0.0f;
 
 	this->UpdateGameOverAnim();
@@ -131,6 +114,11 @@ void Cyrey::Board::Update()
 		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 
 	this->UpdateDroppedFiles();
+	if (this->mHasSeekedReplay)
+	{
+		this->mIsPaused = true;
+		this->mHasSeekedReplay = false;
+	}
 }
 
 void Cyrey::Board::Draw()
@@ -143,6 +131,8 @@ void Cyrey::Board::Draw()
 	this->DrawPieceDropAnims();
 	this->DrawHoverSquare();
 	this->DrawSideUI();
+	if (this->mIsInReplay)
+		this->DrawReplayControls();
 	if (this->mIsGameOver)
 		this->DrawResultsScreen();
 }
@@ -322,6 +312,7 @@ void Cyrey::Board::ResetBoard()
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
 	this->mSelectedTile.reset();
+	this->mQueuedSwapDirection = SwapDirection::None;
 
 	this->mScore = 0;
 	this->mPiecesCleared = 0;
@@ -572,7 +563,7 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 		this->mPiecesCleared += piecesCleared;
 		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesCleared;
-		this->mFallDelay = this->mApp->mGameConfig.mFallDelay * 2;
+		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 2;
 		this->mCascadeNumber++;
 		this->mBoard[row][col] = Cyrey::gNullPiece; // temp until I make a proper sequence
 		return true;
@@ -591,7 +582,7 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 		this->mMovesMade++;
 	else
 	{
-		this->mMissDelay = Board::cMissPenalty;
+		this->mMissDelay += Board::cMissPenalty;
 		::PlaySound(this->mApp->mResMgr->mSounds["badMove.ogg"]);
 	}
 
@@ -755,35 +746,89 @@ void Cyrey::Board::PlayReplay(const Replay& replay)
 	this->PlayReplay();
 }
 
-void Cyrey::Board::UpdateReplay()
+void Cyrey::Board::SetReplayTo(float secs)
+{
+	// edge values don't reset endgame animation
+	if (secs < 0.0f)
+		secs = 0.0f;
+	else if (secs >= this->mApp->mGameConfig.mStartingTime)
+		secs = std::nextafter(this->mApp->mGameConfig.mStartingTime, 0.0f);
+
+	this->mHasSeekedReplay = true;
+	this->PlayReplay();
+	this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
+	this->mDroppedNewGamePieces = true;
+	this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime - secs;
+	this->mSecondsSinceLastCommand = secs;
+	this->mBoardSwerve = {0.0f, 0.0f};
+	this->mFallDelay -= secs;
+	this->mMissDelay -= secs;
+}
+
+void Cyrey::Board::UpdateUI()
+{
+	this->mZoomPct += ::GetMouseWheelMove();
+	// perhaps change this to the Camera functionality in raylib? seems a lot more versatile
+
+	static ::Vector2 lastVector { 0.0f, 0.0f };
+	::Vector2 pinch { std::abs(::GetGesturePinchVector().x), std::abs(::GetGesturePinchVector().y) };
+	if (pinch.x != 0.0f && pinch.y != 0.0f && (lastVector.x != 0.0f && lastVector.y != 0.0f))
+		this->mZoomPct += (pinch.x - lastVector.x + (pinch.y - lastVector.y) * 2) * 5;
+	lastVector = pinch;
+
+	if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_MIDDLE) || ::GetTouchPointCount() >= 4)
+		this->mZoomPct = Board::cDefaultZoomPct;
+
+	auto screenWidth = static_cast<float>(this->mApp->mWidth);
+	auto screenHeight = static_cast<float>(this->mApp->mHeight);
+
+	if (screenWidth > 0 && screenHeight > 0)
+	{
+		this->mTileSize = (screenHeight * this->mZoomPct / 100) / static_cast<float>(this->mHeight);
+		this->mTileInset = this->mTileSize / 10;
+		this->mXOffset = (screenWidth / 2) - (static_cast<float>(this->mWidth) * this->mTileSize / 2) + this->
+			mBoardSwerve.x;
+		this->mYOffset = (screenHeight / 2) - (static_cast<float>(this->mHeight) * this->mTileSize / 2) + this->
+			mBoardSwerve.y;
+	}
+}
+
+bool Cyrey::Board::UpdateReplay()
 {
 	if (this->mReplayCopy->mCommands.empty())
-		return;
+		return false;
 
-	ReplayCommand nextCmd = this->mReplayCopy->mCommands.front();
-	if (this->mSecondsSinceLastCommand >= nextCmd.mSecondsSinceLastCmd)
+	auto& nextCmd = this->mReplayCopy->mCommands.front();
+	if (this->mSecondsSinceLastCommand < nextCmd.mSecondsSinceLastCmd)
+		return false;
+
+	if (this->mHasSeekedReplay)
 	{
-		bool swapSuccessful = this->TrySwap(nextCmd.mBoardCol, nextCmd.mBoardRow, nextCmd.mDirection);
-		// Add an #ifdef _DEBUG here later
-		bool swapQueued = this->mQueuedSwapDirection != SwapDirection::None;
-		::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
-		           ::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
-		                        swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
-		                        nextCmd.mCommandNumber + 1,
-		                        this->mSecondsSinceLastCommand,
-		                        nextCmd.mSecondsSinceLastCmd,
-		                        this->mFallDelay,
-		                        this->mSecondsRemaining,
-		                        this->mReplayCopy->mCommands.size() - 1));
-		this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
-		this->mReplayCopy->mCommands.pop_front();
+		this->mMatchedPieceAnims.clear();
+		this->mDroppedPieceAnims.clear();
+		this->mBoardSwerve = ::Vector2Zero();
 	}
+	bool swapSuccessful = this->TrySwap(nextCmd.mBoardCol, nextCmd.mBoardRow, nextCmd.mDirection);
+	// TODO: Add an #ifdef _DEBUG here later
+	bool swapQueued = this->mQueuedSwapDirection != SwapDirection::None;
+	::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
+	           ::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
+	                        swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
+	                        nextCmd.mCommandNumber + 1,
+	                        this->mSecondsSinceLastCommand,
+	                        nextCmd.mSecondsSinceLastCmd,
+	                        this->mFallDelay,
+	                        this->mSecondsRemaining,
+	                        this->mReplayCopy->mCommands.size() - 1));
+	this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
+	this->mReplayCopy->mCommands.pop_front();
+	return true;
 }
 
 void Cyrey::Board::UpdateSwapAnim()
 {
 	this->mSwapAnim.mOpacity -= SwapAnim::cStartingOpacity *
-		(this->mApp->GetDeltaTime() / this->mApp->mGameConfig.mFallDelay);
+		(this->GetStepInterval() / this->mApp->mGameConfig.mFallDelay);
 	if (this->mSwapAnim.mOpacity < 0.0f)
 	{
 		this->mSwapAnim.mOpacity = 0.0f;
@@ -795,12 +840,12 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 {
 	for (auto& anim : this->mMatchedPieceAnims)
 	{
-		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->GetStepInterval() / this->mApp->mGameConfig.
 			mFallDelay);
 		for (int i = 0; i < anim.mSparklesAmount; ++i)
 		{
-			anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->mApp->GetDeltaTime();
-			anim.mSparkles[i].mDistance += AnimSparkle::cSpeed * this->mApp->GetDeltaTime();
+			anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->GetStepInterval();
+			anim.mSparkles[i].mDistance += AnimSparkle::cSpeed * this->GetStepInterval();
 		}
 	}
 	std::erase_if(this->mMatchedPieceAnims, [](const PieceMatchAnim& anim) { return anim.mOpacity <= 0.0f; });
@@ -809,7 +854,7 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 void Cyrey::Board::UpdateDroppedPieceAnims()
 {
 	for (auto& anim : this->mDroppedPieceAnims)
-		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->mApp->GetDeltaTime() / this->mApp->mGameConfig.
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->GetStepInterval() / this->mApp->mGameConfig.
 			mFallDelay);
 
 	std::erase_if(this->mDroppedPieceAnims, [](const PieceDropAnim& anim) { return anim.mOpacity <= 0.0f; });
@@ -822,7 +867,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 
 	// Implicit casts are intentional, explicit ones would really bloat this function
 	int rowsClearedBeforeUpdate = this->mHeight * (this->mGameOverAnimProgress / Board::cGameOverAnimDuration);
-	if ((this->mGameOverAnimProgress += this->mApp->GetDeltaTime()) > Board::cGameOverAnimDuration)
+	if ((this->mGameOverAnimProgress += this->GetStepInterval()) > Board::cGameOverAnimDuration)
 	{
 		this->mGameOverAnimProgress = Board::cGameOverAnimDuration; // failsafe
 		this->mIsGameOver = true;
@@ -876,7 +921,7 @@ void Cyrey::Board::UpdateCurrentUserStats() const
 
 void Cyrey::Board::UpdateBoardSwerve()
 {
-	float fallDelay = 1 - std::pow(this->mApp->mGameConfig.mFallDelay * 0.003f, this->mApp->GetDeltaTime());
+	float fallDelay = 1 - std::pow(this->mApp->mGameConfig.mFallDelay * 0.003f, this->GetStepInterval());
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 }
@@ -888,7 +933,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 
 	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mApp->mGameConfig.
 		mStartingTime;
-	this->mNewGameAnimProgress += this->mApp->GetDeltaTime();
+	this->mNewGameAnimProgress += this->GetStepInterval();
 
 	if (this->mNewGameAnimProgress >= (Board::cNewGameAnimDuration * 0.75f) && !this->mDroppedNewGamePieces)
 	{
@@ -925,7 +970,7 @@ void Cyrey::Board::UpdateDragging()
 			this->mDragMouseBegin = mousePos;
 			this->mDragTileBegin = *this->GetHoveredTile(); // we're guaranteed to have a value here
 		}
-		else if (this->mDragging && this->mFallDelay <= 0.0f)
+		else if (this->mDragging && this->mFallDelay <= this->mApp->mSettings->mQueueSwapTolerance)
 		{
 			float xDiff = this->mDragMouseBegin.x - mousePos.x;
 			float yDiff = this->mDragMouseBegin.y - mousePos.y;
@@ -961,26 +1006,27 @@ void Cyrey::Board::UpdateDragging()
 size_t Cyrey::Board::UpdateMatchSets()
 {
 	size_t matchSets = this->mMatchSets.size();
-	if (matchSets > 0)
+	if (matchSets <= 0)
+		return matchSets;
+
+	this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
+	this->AddSwerve(::Vector2 {
+		0.0f,
+		Board::cSwerveCoeff *
+		static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
+		this->mTileSize * 0.75f
+	});
+	this->mCascadeNumber++;
+	if (this->mCascadeNumber <= 1)
+		::PlaySound(this->mApp->mResMgr->mSounds["match.ogg"]);
+	else
 	{
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
-		this->AddSwerve(::Vector2 {
-			0.0f,
-			Board::cSwerveCoeff *
-			static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
-			this->mTileSize * 0.75f
-		});
-		this->mCascadeNumber++;
-		if (this->mCascadeNumber <= 1)
-			::PlaySound(this->mApp->mResMgr->mSounds["match.ogg"]);
-		else
-		{
-			::SetSoundPitch(this->mApp->mResMgr->mSounds["doubleset.ogg"],
-			                0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
-				                0.15f));
-			::PlaySound(this->mApp->mResMgr->mSounds["doubleset.ogg"]);
-		}
+		::SetSoundPitch(this->mApp->mResMgr->mSounds["doubleset.ogg"],
+		                0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
+			                0.15f));
+		::PlaySound(this->mApp->mResMgr->mSounds["doubleset.ogg"]);
 	}
+
 	for (auto& [mPieces, mAddedPieces] : this->mMatchSets)
 	{
 		size_t piecesPerSet = mPieces.size();
@@ -1017,6 +1063,7 @@ size_t Cyrey::Board::UpdateMatchSets()
 		this->mScoreInMove += scoreForCascade;
 		this->mPiecesClearedInMove += piecesCleared;
 	}
+
 	this->mMatchSets.clear();
 	return matchSets;
 }
@@ -1071,6 +1118,11 @@ void Cyrey::Board::UpdateDroppedFiles()
 	}
 }
 
+float Cyrey::Board::GetStepInterval() const
+{
+	return this->mApp->GetDeltaTime() * this->mGameSpeed;
+}
+
 void Cyrey::Board::FillInBlanks()
 {
 	for (int i = 0; i < this->mHeight; i++)
@@ -1098,6 +1150,18 @@ void Cyrey::Board::FillInBlanks()
 		this->mScoreInMove = 0;
 		this->mPiecesClearedInMove = 0;
 	}
+}
+
+void Cyrey::Board::HandleQueuedSwaps()
+{
+	if (this->mQueuedSwapDirection != SwapDirection::None)
+	{
+		this->TrySwap(this->mQueuedSwapPos.x, this->mQueuedSwapPos.y, this->mQueuedSwapDirection);
+		this->mQueuedSwapDirection = SwapDirection::None;
+	}
+	// preserve the queued swap through cascades only if tolerance set to inf
+	if (this->mApp->mSettings->mQueueSwapTolerance < 1.0f)
+		this->mQueuedSwapDirection = SwapDirection::None;
 }
 
 void Cyrey::Board::DrawCheckerboard() const
@@ -1241,6 +1305,119 @@ void Cyrey::Board::DrawBorder() const
 		//right
 		::DrawLineEx(startPos, lastRight, thick, timerColor);
 	}
+}
+
+void Cyrey::Board::DrawReplayControls()
+{
+	float controlHeight = static_cast<float>(this->mApp->mHeight) / 25.0f;
+
+	::Rectangle seekingBar {
+		this->mTileSize / 2,
+		static_cast<float>(this->mApp->mHeight) / 3,
+		this->mXOffset - this->mTileSize,
+		controlHeight
+	};
+
+	float oldSeconds = this->mApp->mGameConfig.mStartingTime - this->mSecondsRemaining;
+	float oldSeconds2 = oldSeconds;
+	::GuiSlider(
+		seekingBar,
+		"",
+		"",
+		&oldSeconds,
+		0.0f,
+		this->mApp->mGameConfig.mStartingTime);
+
+	static bool isDragging = false;
+	if (isDragging)
+	{
+		if (::IsMouseButtonUp(::MouseButton::MOUSE_BUTTON_LEFT))
+		{
+			isDragging = false;
+			this->mIsPaused = false;
+		}
+		else if (::GetMouseDelta().x != 0.0f || ::GetMouseDelta().y != 0.0f) // also updates if the bar is alr min or max
+		{
+			this->mIsPaused = false;
+			this->SetReplayTo(oldSeconds);
+		}
+	}
+	else if (::CheckCollisionPointRec(::GetMousePosition(), seekingBar))
+	{
+		if (::IsMouseButtonPressed(::MouseButton::MOUSE_BUTTON_LEFT))
+		{
+			isDragging = true;
+			this->SetReplayTo(oldSeconds);
+		}
+	}
+
+	controlHeight *= 2;
+	::GuiSetIconScale(static_cast<int>(controlHeight / 16.0f));
+	::Rectangle speedLabel {
+		this->mXOffset / 2 - controlHeight / 2,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight * 2,
+		controlHeight,
+		controlHeight
+	};
+	::Rectangle middleButton {
+		this->mXOffset / 2 - controlHeight / 2,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight,
+		controlHeight,
+		controlHeight
+	};
+	::Rectangle slowDownButton {
+		this->mXOffset / 2 - controlHeight * 1.5f,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight,
+		controlHeight,
+		controlHeight
+	};
+	::Rectangle backFrameButton {
+		this->mXOffset / 2 - controlHeight * 2.5f,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight,
+		controlHeight,
+		controlHeight
+	};
+	::Rectangle speedUpButton {
+		this->mXOffset / 2 + controlHeight / 2,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight,
+		controlHeight,
+		controlHeight
+	};
+	::Rectangle forwardFrameButton {
+		this->mXOffset / 2 + controlHeight * 1.5f,
+		static_cast<float>(this->mApp->mHeight) / 3 - controlHeight,
+		controlHeight,
+		controlHeight
+	};
+	if (::GuiButton(middleButton,
+		::GuiIconText(this->mIsPaused ? ::GuiIconName::ICON_PLAYER_PLAY : ::GuiIconName::ICON_PLAYER_PAUSE, "")))
+	{
+		this->mIsPaused ^= 1;
+	}
+	if (::GuiButton(backFrameButton,
+		::GuiIconText(::GuiIconName::ICON_PLAYER_PREVIOUS, "")))
+	{
+		this->mIsPaused = false;
+		this->SetReplayTo((this->mApp->mGameConfig.mStartingTime - this->mSecondsRemaining) - (this->GetStepInterval() * 2));
+	}
+	if (::GuiButton(forwardFrameButton,
+		::GuiIconText(::GuiIconName::ICON_PLAYER_NEXT, "")))
+	{
+		this->mIsPaused = false;
+		this->mHasSeekedReplay = true;
+	}
+	if (::GuiButton(slowDownButton,
+		::GuiIconText(::GuiIconName::ICON_ARROW_LEFT_FILL, "")))
+	{
+		this->mGameSpeed = std::max(0.25f, this->mGameSpeed - 0.25f);
+	}
+	if (::GuiButton(speedUpButton,
+		::GuiIconText(::GuiIconName::ICON_ARROW_RIGHT_FILL, "")))
+	{
+		this->mGameSpeed = std::min(3.0f, this->mGameSpeed + 0.25f);
+	}
+	if (::GuiLabelButton(speedLabel, ::TextFormat("x%.2f", this->mGameSpeed)))
+		this->mGameSpeed = 1.0f;
 }
 
 void Cyrey::Board::DrawPieces() const
@@ -1487,6 +1664,34 @@ void Cyrey::Board::DrawHoverSquare() const
 										this->mTileSize - 2
 									},
 									0.0f, 1, this->mTileInset / 2.0f, ::GREEN);
+	}
+	if (this->mQueuedSwapDirection != SwapDirection::None)
+	{
+		::DrawRectangleRoundedLines(::Rectangle {
+										this->mQueuedSwapPos.x * this->mTileSize + this->mXOffset + 1,
+										this->mQueuedSwapPos.y * this->mTileSize + this->mYOffset + 1,
+										this->mTileSize - 2,
+										this->mTileSize - 2
+									},
+									0.0f, 1, this->mTileInset / 2.0f, ::VIOLET);
+		// lookup table kekw
+		float xDelta = 0.0f;
+		float yDelta = 0.0f;
+		if (this->mQueuedSwapDirection == SwapDirection::Left)
+			xDelta = -1.0f;
+		else if (this->mQueuedSwapDirection == SwapDirection::Right)
+			xDelta = 1.0f;
+		if (this->mQueuedSwapDirection == SwapDirection::Up)
+			yDelta = -1.0f;
+		else if (this->mQueuedSwapDirection == SwapDirection::Down)
+			yDelta = 1.0f;
+		::DrawRectangleRoundedLines(::Rectangle {
+										(this->mQueuedSwapPos.x + xDelta) * this->mTileSize + this->mXOffset + 1,
+										(this->mQueuedSwapPos.y + yDelta) * this->mTileSize + this->mYOffset + 1,
+										this->mTileSize - 2,
+										this->mTileSize - 2
+									},
+									0.0f, 1, this->mTileInset / 2.0f, ::VIOLET);
 	}
 }
 

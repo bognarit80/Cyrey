@@ -62,7 +62,7 @@ void Cyrey::TutorialBoard::Update()
 
 	if (this->mFallDelay > 0.0f)
 	{
-		this->mFallDelay -= this->mApp->GetDeltaTime();
+		this->mFallDelay -= this->GetStepInterval();
 		if (this->mFallDelay <= 0.0f)
 		{
 			this->mFallDelay = 0.0f;
@@ -100,7 +100,7 @@ void Cyrey::TutorialBoard::Update()
 		|| this->mStage == TutorialStage::Cascade)
 	{
 		static float timer = 4.0f;
-		timer -= this->mApp->GetDeltaTime();
+		timer -= this->GetStepInterval();
 		if (timer <= 0.0f)
 		{
 			timer = 4.0f;
@@ -109,7 +109,7 @@ void Cyrey::TutorialBoard::Update()
 	}
 	if (this->mMissDelay > 0.0f)
 	{
-		this->mMissDelay -= this->mApp->GetDeltaTime();
+		this->mMissDelay -= this->GetStepInterval();
 		if (this->mMissDelay <= 0.0f)
 			this->mMissDelay = 0.0f;
 	}
@@ -127,7 +127,7 @@ void Cyrey::TutorialBoard::Update()
 
 	if (this->mPopupHighlightAlpha > 0.0f)
 	{
-		this->mPopupHighlightAlpha -= this->mApp->GetDeltaTime() * 255.0f;
+		this->mPopupHighlightAlpha -= this->GetStepInterval() * 255.0f;
 		if (this->mPopupHighlightAlpha <= 0.0f)
 			this->mPopupHighlightAlpha = 0.0f;
 	}
@@ -417,7 +417,7 @@ void Cyrey::TutorialBoard::DrawPieceHighlights(std::initializer_list<Vector2> pi
 	static Color rectColor = { 75, 228, 255, 255 };
 	static float mult = 1.0f;
 	static float accum = rectColor.g;
-	float increment = (this->mApp->GetDeltaTime() * 255.0f) * 2.0f; // for consistent speed on all framerates
+	float increment = (this->GetStepInterval() * 255.0f) * 2.0f; // for consistent speed on all framerates
 
 	if (static_cast<uint32_t>(rectColor.g) + static_cast<uint32_t>(increment * mult) >= 255)
 		mult = -mult;
