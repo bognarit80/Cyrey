@@ -432,6 +432,6 @@ void Cyrey::TutorialBoard::DrawPieceHighlights(std::initializer_list<Vector2> pi
 			this->mTileSize - 2,
 			this->mTileSize - 2
 		};
-		::DrawRectangleRoundedLines(rect, 0.0f, 1, this->mTileInset / 2.0f, rectColor);
+		::DrawRectangleRoundedLinesEx(rect, 0.0f, 1, this->mTileInset / 2.0f, rectColor);
 	}
 }

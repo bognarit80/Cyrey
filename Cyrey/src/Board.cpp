@@ -1192,7 +1192,7 @@ void Cyrey::Board::DrawBorder() const
 	if (this->mMissDelay > 0.0f || this->mSecondsRemaining <= 0.0f)
 		outlineColor = ::RED;
 
-	::DrawRectangleRoundedLines(
+	::DrawRectangleRoundedLinesEx(
 		::Rectangle {
 			this->mXOffset - 1,
 			this->mYOffset - 1,
@@ -1647,7 +1647,7 @@ void Cyrey::Board::DrawHoverSquare() const
 
 	if (std::optional<::Vector2> hoveredTile = this->GetHoveredTile(); hoveredTile.has_value())
 	{
-		::DrawRectangleRoundedLines(::Rectangle {
+		::DrawRectangleRoundedLinesEx(::Rectangle {
 			                            hoveredTile->x * this->mTileSize + this->mXOffset + 1,
 			                            hoveredTile->y * this->mTileSize + this->mYOffset + 1,
 			                            this->mTileSize - 2,
@@ -1657,7 +1657,7 @@ void Cyrey::Board::DrawHoverSquare() const
 	}
 	if (this->mSelectedTile.has_value())
 	{
-		::DrawRectangleRoundedLines(::Rectangle {
+		::DrawRectangleRoundedLinesEx(::Rectangle {
 										this->mSelectedTile->x * this->mTileSize + this->mXOffset + 1,
 										this->mSelectedTile->y * this->mTileSize + this->mYOffset + 1,
 										this->mTileSize - 2,
@@ -1667,7 +1667,7 @@ void Cyrey::Board::DrawHoverSquare() const
 	}
 	if (this->mQueuedSwapDirection != SwapDirection::None)
 	{
-		::DrawRectangleRoundedLines(::Rectangle {
+		::DrawRectangleRoundedLinesEx(::Rectangle {
 										this->mQueuedSwapPos.x * this->mTileSize + this->mXOffset + 1,
 										this->mQueuedSwapPos.y * this->mTileSize + this->mYOffset + 1,
 										this->mTileSize - 2,
@@ -1685,7 +1685,7 @@ void Cyrey::Board::DrawHoverSquare() const
 			yDelta = -1.0f;
 		else if (this->mQueuedSwapDirection == SwapDirection::Down)
 			yDelta = 1.0f;
-		::DrawRectangleRoundedLines(::Rectangle {
+		::DrawRectangleRoundedLinesEx(::Rectangle {
 										(this->mQueuedSwapPos.x + xDelta) * this->mTileSize + this->mXOffset + 1,
 										(this->mQueuedSwapPos.y + yDelta) * this->mTileSize + this->mYOffset + 1,
 										this->mTileSize - 2,
