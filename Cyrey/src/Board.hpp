@@ -5,6 +5,8 @@
 #include <optional>
 #include <vector>
 #include "CyreyApp.hpp"
+#include "GameConfig.hpp"
+#include "GameStats.hpp"
 #include "MatchSet.hpp"
 #include "Piece.hpp"
 #include "PieceDropAnim.hpp"
@@ -20,54 +22,45 @@ namespace Cyrey
 	class Board
 	{
 	public:
-		int mWidth;
-		int mHeight;
-		float mXOffset;
-		float mYOffset;
-		float mTileSize;
-		float mTileInset;
-		float mBoardAlpha;
+		int mWidth { 1 };
+		int mHeight { 1 };
+		float mXOffset { 0.0f };
+		float mYOffset { 0.0f };
+		float mTileSize { 0.0f };
+		float mTileInset { 0.0f };
 		std::vector<std::vector<Piece>> mBoard;
-		CyreyApp* mApp;
-		float mZoomPct;
-		bool mDragging;
-		::Vector2 mDragMouseBegin;
-		::Vector2 mDragTileBegin;
-		bool mTriedSwap; // used for disabling swaps until the mouse is released
+		CyreyApp* mApp {};
+		float mZoomPct { Board::cDefaultZoomPct };
+		bool mDragging { false };
 		std::vector<MatchSet> mMatchSets;
-		std::unique_ptr<MatchSet> mCurrentMatchSet;
-		float mFallDelay;
-		float mMissDelay;
-		int64_t mScore;
-		int mPiecesCleared;
-		int mCascadeNumber;
-		int mPiecesClearedInMove;
-		int64_t mScoreInMove;
-		::Vector2 mBoardSwerve;
-		int mColorCount;
-		int mBaseScore; // score for one match
-		int mScoreMultiplier;
-		float mSecondsRemaining;
+		float mFallDelay { 0.0f };
+		float mMissDelay { 0.0f };
+		GameStats mStats {};
+		int mCascadeNumber { 0 };
+		int mPiecesClearedInMove { 0 };
+		int64_t mScoreInMove { 0 };
+		::Vector2 mBoardSwerve {};
+		GameConfig mGameConfig {};
+		int mScoreMultiplier { 1 };
+		float mGameSpeed { 1.0f };
+		float mSecondsRemaining { 0.0f };
 		std::vector<PieceMatchAnim> mMatchedPieceAnims;
 		std::vector<PieceDropAnim> mDroppedPieceAnims;
-		::Vector2 mQueuedSwapPos;
-		SwapDirection mQueuedSwapDirection;
-		float mNewGameAnimProgress;
-		bool mDroppedNewGamePieces;
-		float mGameOverAnimProgress;
-		bool mIsGameOver;
-		bool mIsInReplay;
+		::Vector2 mQueuedSwapPos {};
+		SwapDirection mQueuedSwapDirection { SwapDirection::None };
+		float mNewGameAnimProgress { 0.0f };
+		bool mDroppedNewGamePieces { false };
+		float mGameOverAnimProgress { 0.0f };
+		bool mIsGameOver { false };
+		bool mIsInReplay { false };
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
-		float mSecondsSinceLastCommand;
-		bool mHasSavedReplay;
-		bool mHasDroppedFile;
-		std::optional<Replay> mDroppedReplay;
+		float mSecondsSinceLastCommand { 0.0f };
+		bool mHasSavedReplay { false };
 		SwapAnim mSwapAnim;
 		std::optional<::Vector2> mSelectedTile;
-		bool mIsPaused;
-		bool mHasSeekedReplay;
-		float mGameSpeed;
+		bool mIsPaused { false };
+		bool mHasSeekedReplay { false };
 
 #ifdef PLATFORM_ANDROID
 		static constexpr float cDefaultZoomPct = 85.0f;
@@ -76,29 +69,21 @@ namespace Cyrey
 #endif
 		static constexpr float cSwerveCoeff = 0.1f;
 		static constexpr int cMaxCascadesSwerve = 8;
-		static constexpr float cFallDelay = 0.2f;
-		static constexpr float cMissPenalty = 3 * cFallDelay;
-		static constexpr float cStartingTime = 60.0f;
-		static constexpr int cLightningPiecesAmount = 10;
 		static constexpr float cNewGameAnimDuration = 1.0f;
 		static constexpr float cGameOverAnimDuration = 1.0f;
-
-		// game stats
-		int mMovesMade;
-		int mBombsDetonated;
-		int mLightningsDetonated;
-		int mHypercubesDetonated;
-		int64_t mBestMovePoints;
-		int mBestMoveCascades;
+		static constexpr float cBoardAlpha = 0.25f;
 
 		Board() = default;
 
 		Board(int width, int height) :
-			mWidth(width), mHeight(height) {};
-		explicit Board(int size) : Board(size, size) {};
+			mWidth(width), mHeight(height) {}
+		explicit Board(int size) : Board(size, size) {}
+		Board(const Board& other) = delete;
+		Board(Board&& other) noexcept = default;
+		Board& operator=(const Board& other) = delete;
+		Board& operator=(Board&& other) noexcept = default;
 		virtual ~Board() = default;
 
-		void Init();
 		virtual void Update();
 		virtual void Draw(); // not const because we want buttons on side UI and results screen
 		void UpdateInput();

@@ -6,8 +6,8 @@ namespace Cyrey
 {
 	struct SwapAnim
 	{
-		int mRow;
-		int mCol;
+		int mRow { 0 };
+		int mCol { 0 };
 		SwapDirection mDirection { SwapDirection::None };
 		float mOpacity { cStartingOpacity };
 

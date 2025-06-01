@@ -32,7 +32,6 @@ void Cyrey::CyreyApp::Init()
 	this->mGameConfig = Cyrey::cDefaultGameConfig;
 	this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
 	this->mBoard->mApp = this;
-	this->mBoard->Init();
 	this->mMainMenu = std::make_unique<MainMenu>(*this);
 	this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile(CyreyApp::cUserFileName));
 	this->mSettings = std::make_unique<SettingsMenu>(*this);
@@ -120,7 +119,6 @@ void Cyrey::CyreyApp::Update()
 				this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
 			}
 			this->mBoard->mApp = this;
-			this->mBoard->Init();
 
 			this->ChangeToState(CyreyAppState::InGame);
 			this->mBoard->NewGame();
@@ -149,7 +147,6 @@ void Cyrey::CyreyApp::Update()
 				mGameConfig.mVersion)
 			{
 				this->ChangeToState(CyreyAppState::InGame);
-				this->mBoard->Init();
 				this->mBoard->PlayReplay(*this->mReplaysMenu->mSelectedReplay); // we will always have a value here
 				this->mBoard->mHasSavedReplay = true; // prevent saving the replay again
 				this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update

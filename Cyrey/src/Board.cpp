@@ -4,48 +4,6 @@
 #include "raygui.h"
 #include "raymath.h"
 
-void Cyrey::Board::Init()
-{
-	this->mXOffset = 100;
-	this->mYOffset = 100;
-	this->mTileSize = 30;
-	this->mTileInset = 3;
-	this->mBoardAlpha = 0.25f;
-	this->mZoomPct = Board::cDefaultZoomPct;
-	this->mDragging = false;
-	this->mTriedSwap = false;
-	this->mScore = 0;
-	this->mPiecesCleared = 0;
-	this->mCascadeNumber = 0;
-	this->mPiecesClearedInMove = 0;
-	this->mScoreInMove = 0;
-	this->mBoardSwerve = ::Vector2 { 0, -this->mTileSize * 8 };
-	this->mFallDelay = 0.0f;
-	this->mMissDelay = 0.0f;
-	this->mColorCount = this->mApp->mGameConfig.mPieceColorAmount;
-	this->mBaseScore = this->mApp->mGameConfig.mBaseScore;
-	this->mScoreMultiplier = 1;
-	this->mSecondsRemaining = 0.0f;
-	this->mMatchedPieceAnims = {};
-	this->mDroppedPieceAnims = {};
-	this->mNewGameAnimProgress = 0.0f;
-	this->mDroppedNewGamePieces = false;
-	this->mGameOverAnimProgress = 0.0f;
-	this->mIsGameOver = false;
-	this->mCurrentMatchSet = std::make_unique<MatchSet>();
-	this->mIsInReplay = false;
-	this->mReplayData = std::make_unique<Replay>();
-	this->mHasSavedReplay = false;
-	this->mHasDroppedFile = false;
-	this->mIsPaused = false;
-	this->mHasSeekedReplay = false;
-	this->mGameSpeed = 1.0f;
-	this->ResetBoard();
-
-	this->mWidth = mBoard[0].size();
-	this->mHeight = mBoard.size();
-}
-
 void Cyrey::Board::Update()
 {
 	this->UpdateUI();
@@ -265,7 +223,7 @@ std::vector<std::vector<Cyrey::Piece>> Cyrey::Board::GenerateStartingBoard() con
 	{
 		for (int j = 0; j < this->mWidth; j++)
 		{
-			row.emplace_back(static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mColorCount)));
+			row.emplace_back(static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mGameConfig.mPieceColorAmount)));
 			row[j].mBoardX = j;
 			row[j].mBoardY = i;
 		}
@@ -285,6 +243,7 @@ void Cyrey::Board::NewGame()
 
 void Cyrey::Board::ResetBoard()
 {
+	this->mGameConfig = this->mApp->mGameConfig;
 	unsigned int seed;
 	if (this->mIsInReplay)
 	{
@@ -314,15 +273,8 @@ void Cyrey::Board::ResetBoard()
 	this->mIsGameOver = false;
 	this->mSelectedTile.reset();
 	this->mQueuedSwapDirection = SwapDirection::None;
+	this->mStats = {};
 
-	this->mScore = 0;
-	this->mPiecesCleared = 0;
-	this->mMovesMade = 0;
-	this->mBombsDetonated = 0;
-	this->mLightningsDetonated = 0;
-	this->mHypercubesDetonated = 0;
-	this->mBestMovePoints = 0;
-	this->mBestMoveCascades = 0;
 	::StopMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 	::PlayMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 }
@@ -377,23 +329,24 @@ bool Cyrey::Board::FindSets()
 bool Cyrey::Board::FindSets(int pieceCol, int pieceRow, PieceColor color, bool first)
 {
 	if (this->mBoard[pieceRow][pieceCol].mColor == PieceColor::Uncolored)
-		return false; //don't check uncolored pieces at all
+		return false; // don't check uncolored pieces at all
 
-	if (this->mCurrentMatchSet->mPieces.empty())
+	static MatchSet matchSet {};
+	if (matchSet.mPieces.empty())
 	{
 		if (!this->IsPieceBeingMatched(this->mBoard[pieceRow][pieceCol].mID))
-			this->mCurrentMatchSet->mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
+			matchSet.mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
 		else
-			return false; //already checked
+			return false; // already checked
 	}
 	else
 	{
-		for (auto piece : this->mCurrentMatchSet->mPieces)
+		for (auto piece : matchSet.mPieces)
 		{
 			if (piece->mID == this->mBoard[pieceRow][pieceCol].mID)
 				return false; // already checked
 		}
-		this->mCurrentMatchSet->mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
+		matchSet.mPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
 	}
 
 	if ((pieceRow - 1) >= 0 &&
@@ -425,20 +378,20 @@ bool Cyrey::Board::FindSets(int pieceCol, int pieceRow, PieceColor color, bool f
 	}
 
 	bool foundSet = false;
-	if (this->mCurrentMatchSet->mPieces.size() >= 3)
+	if (matchSet.mPieces.size() >= 3)
 	{
 		foundSet = true;
 		if (first)
 		{
-			this->mCurrentMatchSet->mAddedPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
-			this->mMatchSets.push_back(*this->mCurrentMatchSet);
+			matchSet.mAddedPieces.push_back(&this->mBoard[pieceRow][pieceCol]);
+			this->mMatchSets.push_back(matchSet);
 		}
 	}
 
 	if (first)
 	{
-		this->mCurrentMatchSet->mPieces.clear();
-		this->mCurrentMatchSet->mAddedPieces.clear();
+		matchSet.mPieces.clear();
+		matchSet.mAddedPieces.clear();
 	}
 
 	return foundSet;
@@ -561,8 +514,8 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 	{
 		this->mCascadeNumber++;
 		int piecesCleared = this->DoHypercube(this->mBoard[row][col], this->mBoard[toRow][toCol]);
-		this->mPiecesCleared += piecesCleared;
-		this->mScore += (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		this->mStats.mPiecesCleared += piecesCleared;
+		this->mStats.mScore += (piecesCleared - 2) * this->mGameConfig.mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesCleared;
 		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 2;
 		this->mCascadeNumber++;
@@ -580,10 +533,10 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 	bool foundSet1 = this->FindSets(toCol, toRow, this->mBoard[toRow][toCol].mColor);
 	bool foundSet2 = this->FindSets(col, row, this->mBoard[row][col].mColor);
 	if (foundSet1 || foundSet2)
-		this->mMovesMade++;
+		this->mStats.mMovesMade++;
 	else
 	{
-		this->mMissDelay += Board::cMissPenalty;
+		this->mMissDelay += this->mGameConfig.mFallDelay * this->mGameConfig.mMissDelayMultiplier;
 		::PlaySound(this->mApp->mResMgr->mSounds["badMove.ogg"]);
 	}
 
@@ -656,7 +609,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	int piecesCleared = 1;
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
 	{
-		this->mBombsDetonated++;
+		this->mStats.mBombsDetonated++;
 		::PlaySound(this->mApp->mResMgr->mSounds["bombExplode.ogg"]);
 		for (int i = -1; i <= 1; i++)
 		{
@@ -674,7 +627,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
-		this->mLightningsDetonated++;
+		this->mStats.mLightningsDetonated++;
 		::PlaySound(this->mApp->mResMgr->mSounds["lightningExplode.ogg"]);
 		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
@@ -714,7 +667,7 @@ int Cyrey::Board::DoHypercube(const Piece& cubePiece, const Piece& byPiece)
 		return 0;
 
 	::PlaySound(this->mApp->mResMgr->mSounds["hypercubeExplode.ogg"]);
-	this->mHypercubesDetonated++;
+	this->mStats.mHypercubesDetonated++;
 	int piecesCleared = 1;
 	PieceColor targetColor = byPiece.mColor != PieceColor::Uncolored ? byPiece.mColor : cubePiece.mOldColor;
 	bool wantDHR = byPiece.IsFlagSet(PieceFlag::Hypercube);
@@ -872,20 +825,11 @@ void Cyrey::Board::UpdateGameOverAnim()
 	{
 		this->mGameOverAnimProgress = Board::cGameOverAnimDuration; // failsafe
 		this->mIsGameOver = true;
-		if (this->mIsInReplay && this->mReplayCopy->mScore != this->mScore)
+		if (this->mIsInReplay && this->mReplayCopy->mStats.mScore != this->mStats.mScore)
 			::TraceLog(::TraceLogLevel::LOG_WARNING, "Replay score mismatch!");
 		else
-		{
-			auto& rep = this->mReplayData;
-			rep->mScore = this->mScore;
-			rep->mMovesMade = this->mMovesMade;
-			rep->mPiecesCleared = this->mPiecesCleared;
-			rep->mBombsDetonated = this->mBombsDetonated;
-			rep->mLightningsDetonated = this->mLightningsDetonated;
-			rep->mHypercubesDetonated = this->mHypercubesDetonated;
-			rep->mBestMovePoints = this->mBestMovePoints;
-			rep->mBestMoveCascades = this->mBestMoveCascades;
-		}
+			this->mReplayData->mStats = this->mStats;
+
 		if (!this->mIsInReplay)
 			this->UpdateCurrentUserStats();
 
@@ -908,14 +852,15 @@ void Cyrey::Board::UpdateGameOverAnim()
 void Cyrey::Board::UpdateCurrentUserStats() const
 {
 	User& user = *this->mApp->mCurrentUser;
-	user.mXP += this->mScore;
-	user.mPiecesCleared += this->mPiecesCleared;
+	auto& stats = this->mStats;
+	user.mXP += stats.mScore;
+	user.mPiecesCleared += stats.mPiecesCleared;
 	user.mGamesPlayed++;
-	user.mBombsDetonated += this->mBombsDetonated;
-	user.mLightningsDetonated += this->mLightningsDetonated;
-	user.mHypercubesDetonated += this->mHypercubesDetonated;
-	user.mBestMovePoints = std::max(user.mBestMovePoints, this->mBestMovePoints);
-	user.mBestMoveCascades = std::max(user.mBestMoveCascades, this->mBestMoveCascades);
+	user.mBombsDetonated += stats.mBombsDetonated;
+	user.mLightningsDetonated += stats.mLightningsDetonated;
+	user.mHypercubesDetonated += stats.mHypercubesDetonated;
+	user.mBestMovePoints = std::max(user.mBestMovePoints, stats.mBestMovePoints);
+	user.mBestMoveCascades = std::max(user.mBestMoveCascades, stats.mBestMoveCascades);
 
 	this->mApp->SaveCurrentUserData();
 }
@@ -961,46 +906,49 @@ bool Cyrey::Board::UpdateNewGameAnim()
 void Cyrey::Board::UpdateDragging()
 {
 	::Vector2 mousePos = ::GetMousePosition();
+	static ::Vector2 dragMouseBegin { ::Vector2Zeros };
+	static ::Vector2 dragTileBegin { ::Vector2Zeros };
+	static bool triedSwap = false;
 	if (::IsMouseButtonDown(::MouseButton::MOUSE_BUTTON_LEFT))
 	{
 		if (!this->mDragging
 			&& this->IsMouseInBoard()
-			&& !this->mTriedSwap)
+			&& !triedSwap)
 		{
 			this->mDragging = true;
-			this->mDragMouseBegin = mousePos;
-			this->mDragTileBegin = *this->GetHoveredTile(); // we're guaranteed to have a value here
+			dragMouseBegin = mousePos;
+			dragTileBegin = *this->GetHoveredTile(); // we're guaranteed to have a value here
 		}
 		else if (this->mDragging && this->mFallDelay <= this->mApp->mSettings->mQueueSwapTolerance)
 		{
-			float xDiff = this->mDragMouseBegin.x - mousePos.x;
-			float yDiff = this->mDragMouseBegin.y - mousePos.y;
+			float xDiff = dragMouseBegin.x - mousePos.x;
+			float yDiff = dragMouseBegin.y - mousePos.y;
 
-			auto xTileBegin = static_cast<int>(this->mDragTileBegin.x);
-			auto yTileBegin = static_cast<int>(this->mDragTileBegin.y);
+			auto xTileBegin = static_cast<int>(dragTileBegin.x);
+			auto yTileBegin = static_cast<int>(dragTileBegin.y);
 
 			if (abs(xDiff) > (this->mTileSize * this->mApp->mSettings->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (xDiff > 0 ? SwapDirection::Left : SwapDirection::Right));
 				this->mDragging = false;
-				this->mTriedSwap = true;
+				triedSwap = true;
 			}
 			else if (abs(yDiff) > (this->mTileSize * this->mApp->mSettings->mSwapDeadZone))
 			{
 				this->TrySwap(xTileBegin, yTileBegin, (yDiff > 0 ? SwapDirection::Up : SwapDirection::Down));
 				this->mDragging = false;
-				this->mTriedSwap = true;
+				triedSwap = true;
 			}
 		}
 	}
 	else if (::IsMouseButtonReleased(::MouseButton::MOUSE_BUTTON_LEFT))
 	{
 		if (this->mDragging)
-			this->SelectPiece(this->mDragTileBegin.x, this->mDragTileBegin.y);
+			this->SelectPiece(dragTileBegin.x, dragTileBegin.y);
 		this->mDragging = false;
-		this->mDragMouseBegin = ::Vector2Zero();
-		this->mDragTileBegin = ::Vector2Zero();
-		this->mTriedSwap = false;
+		dragMouseBegin = ::Vector2Zero();
+		dragTileBegin = ::Vector2Zero();
+		triedSwap = false;
 	}
 }
 
@@ -1058,9 +1006,9 @@ size_t Cyrey::Board::UpdateMatchSets()
 
 			piecesCleared += this->MatchPiece(*piece);
 		}
-		this->mPiecesCleared += piecesCleared;
-		int scoreForCascade = (piecesCleared - 2) * this->mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
-		this->mScore += scoreForCascade;
+		this->mStats.mPiecesCleared += piecesCleared;
+		int scoreForCascade = (piecesCleared - 2) * this->mGameConfig.mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
+		this->mStats.mScore += scoreForCascade;
 		this->mScoreInMove += scoreForCascade;
 		this->mPiecesClearedInMove += piecesCleared;
 	}
@@ -1091,31 +1039,33 @@ void Cyrey::Board::UpdateFalling()
 
 void Cyrey::Board::UpdateDroppedFiles()
 {
+	static std::optional<Replay> replay = std::nullopt;
+	static bool hasDroppedFile = false;
 	if (::IsFileDropped())
 	{
 		::FilePathList fileList = ::LoadDroppedFiles();
 		if (fileList.paths != nullptr)
-			this->mDroppedReplay = Replay::OpenReplayFile(fileList.paths[0]);
+			replay = Replay::OpenReplayFile(fileList.paths[0]);
 
-		this->mHasDroppedFile = true;
+		hasDroppedFile = true;
 		::UnloadDroppedFiles(fileList);
 	}
 
-	if (!this->mHasDroppedFile)
+	if (!hasDroppedFile)
 		return;
 
 	// TODO: handle dropped files in the CyreyApp class instead
 
-	if (this->mDroppedReplay.has_value())
+	if (replay.has_value())
 	{
-		this->PlayReplay(*this->mDroppedReplay);
-		this->mDroppedReplay = std::nullopt;
-		this->mHasDroppedFile = false;
+		this->PlayReplay(*replay);
+		replay = std::nullopt;
+		hasDroppedFile = false;
 	}
 	else
 	{
 		if (this->mApp->DrawDialog("Error", "Failed to open file.", "OK") != -1)
-			this->mHasDroppedFile = false;
+			hasDroppedFile = false;
 	}
 }
 
@@ -1133,7 +1083,7 @@ void Cyrey::Board::FillInBlanks()
 			Piece& piece = this->mBoard[i][j];
 			if (piece.mID == 0)
 			{
-				piece = Piece(static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mColorCount)));
+				piece = Piece(static_cast<PieceColor>(this->mApp->GetRandomNumber(1, this->mGameConfig.mPieceColorAmount)));
 				piece.mBoardX = j;
 				piece.mBoardY = i;
 				this->mDroppedPieceAnims.emplace_back(j);
@@ -1142,10 +1092,10 @@ void Cyrey::Board::FillInBlanks()
 	}
 	if (!this->FindSets())
 	{
-		if (this->mCascadeNumber > this->mBestMoveCascades)
-			this->mBestMoveCascades = this->mCascadeNumber;
-		if (this->mScoreInMove > this->mBestMovePoints)
-			this->mBestMovePoints = this->mScoreInMove;
+		if (this->mCascadeNumber > this->mStats.mBestMoveCascades)
+			this->mStats.mBestMoveCascades = this->mCascadeNumber;
+		if (this->mScoreInMove > this->mStats.mBestMovePoints)
+			this->mStats.mBestMovePoints = this->mScoreInMove;
 
 		this->mCascadeNumber = 0;
 		this->mScoreInMove = 0;
@@ -1180,8 +1130,8 @@ void Cyrey::Board::DrawCheckerboard() const
 				},
 				(i % 2) ^ (j % 2) ?
 					//alternate between light and dark every row
-					::ColorAlpha(::LIGHTGRAY, this->mBoardAlpha) :
-					::ColorAlpha(::GRAY, this->mBoardAlpha));
+					::ColorAlpha(::LIGHTGRAY, Board::cBoardAlpha) :
+					::ColorAlpha(::GRAY, Board::cBoardAlpha));
 		}
 	}
 }
@@ -1708,14 +1658,14 @@ void Cyrey::Board::DrawSideUI()
 			0, static_cast<float>(this->mApp->mHeight) / 2,
 			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
 		},
-		::TextFormat("Score: %lld", this->mScore)
+		::TextFormat("Score: %lld", this->mStats.mScore)
 	);
 	::GuiLabel(
 		::Rectangle {
 			0, (static_cast<float>(this->mApp->mHeight) / 2) + fontSize,
 			this->mXOffset - (this->mTileSize / 2), static_cast<float>(fontSize)
 		},
-		::TextFormat("Pieces cleared: %d", this->mPiecesCleared)
+		::TextFormat("Pieces cleared: %d", this->mStats.mPiecesCleared)
 	);
 
 	if (this->mCascadeNumber >= 3)
@@ -1955,16 +1905,17 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiLabel(bestCascadeLabelPos, "Highest cascade: ");
 	::GuiLabel(piecesClearedLabelPos, "Pieces cleared: ");
 
+	auto& stats = this->mStats;
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
-	::GuiLabel(movesValuePos, ::TextFormat(" %d", this->mMovesMade));
+	::GuiLabel(movesValuePos, ::TextFormat(" %d", stats.mMovesMade));
 	::GuiLabel(mpsValuePos,
-	           ::TextFormat(" %.2f", static_cast<float>(this->mMovesMade) / this->mApp->mGameConfig.mStartingTime));
-	::GuiLabel(bombsValuePos, ::TextFormat(" %d", this->mBombsDetonated));
-	::GuiLabel(lightningsValuePos, ::TextFormat(" %d", this->mLightningsDetonated));
-	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", this->mHypercubesDetonated));
-	::GuiLabel(bestMoveValuePos, ::TextFormat(" %d", this->mBestMovePoints));
-	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", this->mBestMoveCascades));
-	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", this->mPiecesCleared));
+	           ::TextFormat(" %.2f", static_cast<float>(stats.mMovesMade) / this->mApp->mGameConfig.mStartingTime));
+	::GuiLabel(bombsValuePos, ::TextFormat(" %d", stats.mBombsDetonated));
+	::GuiLabel(lightningsValuePos, ::TextFormat(" %d", stats.mLightningsDetonated));
+	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", stats.mHypercubesDetonated));
+	::GuiLabel(bestMoveValuePos, ::TextFormat(" %d", stats.mBestMovePoints));
+	::GuiLabel(bestCascadeValuePos, ::TextFormat(" %d", stats.mBestMoveCascades));
+	::GuiLabel(piecesClearedValuePos, ::TextFormat(" %d", stats.mPiecesCleared));
 
 	if (this->mHasSavedReplay)
 		::GuiDisable();
@@ -2007,5 +1958,5 @@ void Cyrey::Board::DrawResultsScreen()
 	};
 	::GuiLabel(finalScoreLabel,
 	           ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime),
-	                        this->mScore));
+	                        stats.mScore));
 }

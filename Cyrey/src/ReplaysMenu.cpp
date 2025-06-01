@@ -108,19 +108,20 @@ void Cyrey::ReplaysMenu::Draw()
 		float controlOffsetY = fontSize * 1.3f;
 		float controlPaddingX = windowWidth * 0.05f;
 
+		auto& stats = this->mSelectedReplay->mStats;
 		const std::map<const char*, std::string> labelValueMap {
-			{ "Moves: ", ::TextFormat("%d", this->mSelectedReplay->mMovesMade) },
+			{ "Moves: ", ::TextFormat("%d", stats.mMovesMade) },
 			{
 				"Moves per second: ", ::TextFormat("%.2f",
-				                                   static_cast<float>(this->mSelectedReplay->mMovesMade) / this->mApp.
+				                                   static_cast<float>(stats.mMovesMade) / this->mApp.
 				                                   mGameConfig.mStartingTime)
 			},
-			{ "Bombs: ", ::TextFormat("%d", this->mSelectedReplay->mBombsDetonated) },
-			{ "Lightnings: ", ::TextFormat("%d", this->mSelectedReplay->mLightningsDetonated) },
-			{ "Hypercubes: ", ::TextFormat("%d", this->mSelectedReplay->mHypercubesDetonated) },
-			{ "Best move (points): ", ::TextFormat("%d", this->mSelectedReplay->mBestMovePoints) },
-			{ "Highest cascade: ", ::TextFormat("%d", this->mSelectedReplay->mBestMoveCascades) },
-			{ "Pieces cleared: ", ::TextFormat("%d", this->mSelectedReplay->mPiecesCleared) }
+			{ "Bombs: ", ::TextFormat("%d", stats.mBombsDetonated) },
+			{ "Lightnings: ", ::TextFormat("%d", stats.mLightningsDetonated) },
+			{ "Hypercubes: ", ::TextFormat("%d", stats.mHypercubesDetonated) },
+			{ "Best move (points): ", ::TextFormat("%d", stats.mBestMovePoints) },
+			{ "Highest cascade: ", ::TextFormat("%d", stats.mBestMoveCascades) },
+			{ "Pieces cleared: ", ::TextFormat("%d", stats.mPiecesCleared) }
 		};
 
 		int i = 3;
@@ -158,7 +159,7 @@ void Cyrey::ReplaysMenu::Draw()
 		};
 		::GuiLabel(finalScoreLabel,
 		           ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp.mGameConfig.mStartingTime),
-		                        this->mSelectedReplay->mScore));
+		                        stats.mScore));
 
 		return;
 	}

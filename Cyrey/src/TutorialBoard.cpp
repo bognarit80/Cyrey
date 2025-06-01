@@ -197,8 +197,7 @@ void Cyrey::TutorialBoard::ResetBoard()
 	this->mGameOverAnimProgress = 0.0f;
 	this->mIsGameOver = false;
 	this->mSelectedTile.reset();
-	this->mScore = 0;
-	this->mPiecesCleared = 0;
+	this->mStats = {};
 	::StopMusicStream(this->mApp->mResMgr->mMusics["mainMenuTheme.ogg"]);
 	::PlayMusicStream(this->mApp->mResMgr->mMusics["mainMenuTheme.ogg"]);
 }

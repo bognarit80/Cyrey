@@ -17,12 +17,20 @@
 
 template <typename T>
 #ifndef PLATFORM_ANDROID
-	requires std::integral<T>
+	requires std::is_trivially_copyable_v<T>
 #endif
 static void InsertIntoVector(std::vector<uint8_t>& data, T val)
 {
 	data.insert(data.end(), sizeof(T), 0);
 	std::memcpy(&data.back() - sizeof(T) + 1, &val, sizeof(T));
+}
+
+template <typename T>
+	requires std::is_trivially_copyable_v<T>
+void GetFromVector(const std::vector<uint8_t>& data, T& intoValue, size_t& index)
+{
+	std::memcpy(&intoValue, data.data() + index, sizeof(T));
+	index += sizeof(T);
 }
 
 std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
@@ -33,15 +41,8 @@ std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
 	            cReplayFileMagic, &cReplayFileMagic[std::size(cReplayFileMagic) - 1]); // don't push null terminator
 
 	InsertIntoVector(data, replayData.mConfigVersion);
-	InsertIntoVector(data, replayData.mScore);
 	InsertIntoVector(data, replayData.mSeed);
-	InsertIntoVector(data, replayData.mMovesMade);
-	InsertIntoVector(data, replayData.mPiecesCleared);
-	InsertIntoVector(data, replayData.mBombsDetonated);
-	InsertIntoVector(data, replayData.mLightningsDetonated);
-	InsertIntoVector(data, replayData.mHypercubesDetonated);
-	InsertIntoVector(data, replayData.mBestMovePoints);
-	InsertIntoVector(data, replayData.mBestMoveCascades);
+	InsertIntoVector(data, replayData.mStats);
 
 	for (auto& cmd : replayData.mCommands)
 	{
@@ -69,45 +70,9 @@ std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::u
 
 	Replay replay {};
 
-	auto& config = replay.mConfigVersion;
-	std::memcpy(&config, data.data() + index, sizeof(config));
-	index += sizeof(config);
-
-	auto& score = replay.mScore;
-	std::memcpy(&score, data.data() + index, sizeof(score));
-	index += sizeof(score);
-
-	auto& seed = replay.mSeed;
-	std::memcpy(&seed, data.data() + index, sizeof(seed));
-	index += sizeof(seed);
-
-	auto& moves = replay.mMovesMade;
-	std::memcpy(&moves, data.data() + index, sizeof(moves));
-	index += sizeof(moves);
-
-	auto& pieces = replay.mPiecesCleared;
-	std::memcpy(&pieces, data.data() + index, sizeof(pieces));
-	index += sizeof(pieces);
-
-	auto& bombs = replay.mBombsDetonated;
-	std::memcpy(&bombs, data.data() + index, sizeof(bombs));
-	index += sizeof(bombs);
-
-	auto& lightnings = replay.mLightningsDetonated;
-	std::memcpy(&lightnings, data.data() + index, sizeof(lightnings));
-	index += sizeof(lightnings);
-
-	auto& hypercubes = replay.mHypercubesDetonated;
-	std::memcpy(&hypercubes, data.data() + index, sizeof(hypercubes));
-	index += sizeof(hypercubes);
-
-	auto& bestPoints = replay.mBestMovePoints;
-	std::memcpy(&bestPoints, data.data() + index, sizeof(bestPoints));
-	index += sizeof(bestPoints);
-
-	auto& cascades = replay.mBestMoveCascades;
-	std::memcpy(&cascades, data.data() + index, sizeof(cascades));
-	index += sizeof(cascades);
+	GetFromVector(data, replay.mConfigVersion, index);
+	GetFromVector(data, replay.mSeed, index);
+	GetFromVector(data, replay.mStats, index);
 
 	int replayCmdSize = 8; // IMPORTANT: keep this up to date with changes to the structure!
 	uint64_t cmdsAmount = (data.size() - index + 1) / replayCmdSize;

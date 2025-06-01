@@ -6,6 +6,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "GameStats.hpp"
 #include "SwapDirection.hpp"
 
 namespace Cyrey
@@ -34,16 +36,9 @@ namespace Cyrey
 
 	struct Replay
 	{
-		int64_t mScore;
-		unsigned int mSeed;
 		int mConfigVersion;
-		int mMovesMade;
-		int mBombsDetonated;
-		int mLightningsDetonated;
-		int mHypercubesDetonated;
-		int64_t mBestMovePoints;
-		int mBestMoveCascades;
-		int mPiecesCleared;
+		unsigned int mSeed;
+		GameStats mStats;
 		std::deque<ReplayCommand> mCommands;
 
 		static constexpr char cReplaysFolderName[] = "replays/";
