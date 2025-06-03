@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.14)
+﻿cmake_minimum_required(VERSION 3.28)
 project("CyreyApp")
 
 add_link_options(-static -static-libgcc -static-libstdc++)
@@ -13,14 +13,7 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
             DOWNLOAD_EXTRACT_TIMESTAMP OFF
             URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
     )
-    FetchContent_GetProperties(raylib)
-    if (NOT raylib_POPULATED) # Have we downloaded raylib yet?
-        set(FETCHCONTENT_QUIET NO)
-        FetchContent_Populate(raylib)
-        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
-        set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
-        add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
-    endif()
+    FetchContent_MakeAvailable(raylib)
 endif()
 
 # raygui
@@ -35,12 +28,7 @@ if (NOT raygui_FOUND)
             DOWNLOAD_EXTRACT_TIMESTAMP OFF
             URL https://github.com/raysan5/raygui/archive/refs/tags/${RAYGUI_VERSION}.tar.gz
     )
-    if (NOT raygui_POPULATED)
-        set(FETCHCONTENT_QUIET NO)
-        FetchContent_Populate(raygui)
-        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
-        set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
-    endif()
+    FetchContent_MakeAvailable(raygui)
 endif()
 
 # nlohmann_json
@@ -71,8 +59,46 @@ endif()
 
 add_compile_definitions(CYREY_APIURL="https://localhost:44392/api/")
 
-file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
-add_executable(${PROJECT_NAME} ${CPP_SOURCES})
+add_executable(${PROJECT_NAME}
+        src/Board.cpp
+        src/Board.hpp
+        src/CyreyApp.cpp
+        src/CyreyApp.hpp
+        src/GameConfig.cpp
+        src/GameConfig.hpp
+        src/GameStats.hpp
+        src/main.cpp
+        src/MainMenu.cpp
+        src/MainMenu.hpp
+        src/MatchSet.hpp
+        src/MatchSet.hpp
+        src/Piece.cpp
+        src/Piece.hpp
+        src/PieceDropAnim.cpp
+        src/PieceDropAnim.hpp
+        src/PieceMatchAnim.cpp
+        src/PieceMatchAnim.hpp
+        src/raylib_win32.h
+        src/Replay.cpp
+        src/Replay.hpp
+        src/ReplaysMenu.cpp
+        src/ReplaysMenu.hpp
+        src/ResourceManager.cpp
+        src/Resources.hpp
+        src/SettingsMenu.cpp
+        src/SettingsMenu.hpp
+        src/SwapAnim.cpp
+        src/SwapAnim.hpp
+        src/TutorialBoard.cpp
+        src/TutorialBoard.hpp
+        src/User.cpp
+        src/User.hpp
+        src/UserMenu.cpp
+        src/UserMenu.hpp
+        src/VerificationBoard.cpp
+        src/VerificationBoard.hpp
+        src/MinApp.cpp
+        src/MinApp.hpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 WIN32_EXECUTABLE
         $<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug,RelWithDebInfo>>>)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json cpr::cpr)
