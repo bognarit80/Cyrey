@@ -446,7 +446,9 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	if (!this->CanSwap())
 	{
 		float queueSwapTolerance = this->mApp->mSettings->mQueueSwapTolerance;
-		if ((queueSwapTolerance >= 1.0f ||
+		// Always queue if in replay, as thanks to rounding/timing errors the outcome can differ.
+		// (except if game already ended)
+		if ((this->mIsInReplay || queueSwapTolerance >= 1.0f ||
 				(this->mFallDelay < queueSwapTolerance &&
 					this->mMissDelay < queueSwapTolerance &&
 					Board::cNewGameAnimDuration - this->mNewGameAnimProgress < queueSwapTolerance)) &&
