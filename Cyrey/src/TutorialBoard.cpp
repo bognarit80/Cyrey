@@ -190,6 +190,8 @@ void Cyrey::TutorialBoard::ResetBoard()
 	this->PlaySound(ResSoundID::BoardAppear);
 	this->mBoard = this->GenerateStartingBoard(); // current seed generates a matchless board in 1 try
 	this->mSecondsRemaining = 0.0f;
+	// to fix NewGameAnim when called from other menus
+	this->mTileSize = (static_cast<float>(this->mApp->mHeight) * this->mZoomPct / 100.0f) / static_cast<float>(this->mHeight);
 	this->mBoardSwerve = ::Vector2 { 0.0f, -this->mTileSize * 8 };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;

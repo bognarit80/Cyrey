@@ -262,6 +262,8 @@ void Cyrey::Board::ResetBoard()
 	}
 	while (this->FindSets()); // ugly until I make a better algorithm for creating boards with no sets
 	this->mSecondsRemaining = 0.0f;
+	// to fix NewGameAnim when called from other menus
+	this->mTileSize = (static_cast<float>(this->mApp->mHeight) * this->mZoomPct / 100.0f) / static_cast<float>(this->mHeight);
 	this->mBoardSwerve = ::Vector2 { 0.0f, -this->mTileSize * 8 };
 	this->mNewGameAnimProgress = 0.0f;
 	this->mDroppedNewGamePieces = false;
