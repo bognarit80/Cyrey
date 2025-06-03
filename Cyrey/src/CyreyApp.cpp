@@ -147,6 +147,7 @@ void Cyrey::CyreyApp::Update()
 				mGameConfig.mVersion)
 			{
 				this->ChangeToState(CyreyAppState::InGame);
+				this->mBoard->mGameConfig = this->mGameConfig;
 				this->mBoard->PlayReplay(*this->mReplaysMenu->mSelectedReplay); // we will always have a value here
 				this->mBoard->mHasSavedReplay = true; // prevent saving the replay again
 				this->mReplaysMenu->mActive = -1; // otherwise the same replay will play every update
