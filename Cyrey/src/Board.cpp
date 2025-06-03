@@ -233,6 +233,7 @@ void Cyrey::Board::NewGame()
 	this->mIsInReplay = false;
 	this->mHasSavedReplay = false;
 	this->mGameSpeed = 1.0f;
+	this->mIsPaused = false;
 	this->ResetBoard();
 }
 
