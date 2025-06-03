@@ -111,7 +111,10 @@ void Cyrey::CyreyApp::Update()
 		if (this->mMainMenu->mIsPlayBtnPressed)
 		{
 			if (!this->mCurrentUser->mFinishedTutorial)
+			{
+				this->mGameConfig = Cyrey::cTutorialGameConfig;
 				this->mBoard = std::make_unique<TutorialBoard>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
+			}
 			else
 			{
 				this->mGameConfig = Cyrey::cDefaultGameConfig; // TODO: Attempt to fetch game config here?

@@ -251,7 +251,7 @@ void Cyrey::Board::ResetBoard()
 		seed = this->mApp->SeedRNG();
 		this->mReplayData = std::make_unique<Replay>();
 		this->mReplayData->mSeed = seed;
-		this->mReplayData->mConfigVersion = this->mApp->mGameConfig.mVersion;
+		this->mReplayData->mConfigVersion = this->mGameConfig.mVersion;
 	}
 	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
 	this->PlaySound(ResSoundID::BoardAppear);
@@ -512,7 +512,7 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 		this->mStats.mPiecesCleared += piecesCleared;
 		this->mStats.mScore += (piecesCleared - 2) * this->mGameConfig.mBaseScore * this->mScoreMultiplier * this->mCascadeNumber;
 		this->mPiecesClearedInMove += piecesCleared;
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 2;
+		this->mFallDelay += this->mGameConfig.mFallDelay * 2;
 		this->mCascadeNumber++;
 		this->mBoard[row][col] = Cyrey::gNullPiece; // temp until I make a proper sequence
 		return true;
@@ -618,13 +618,13 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 					                                  pieceCopy, true);
 			}
 		}
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay * 0.25f;
+		this->mFallDelay += this->mGameConfig.mFallDelay * 0.25f;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
 		this->mStats.mLightningsDetonated++;
 		this->PlaySound(ResSoundID::LightningExplode);
-		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
+		for (int i = 0; i < this->mGameConfig.mLightningPiecesAmount; i++)
 		{
 			uint32_t row, col, count = 0;
 			do
@@ -644,12 +644,12 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 
 			piecesCleared += this->MatchPiece(this->mBoard[row][col], pieceCopy, true);
 		}
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
+		this->mFallDelay += this->mGameConfig.mFallDelay;
 	}
 	else if (pieceCopy.IsFlagSet(PieceFlag::Hypercube))
 	{
 		piecesCleared += this->DoHypercube(pieceCopy, byPiece);
-		this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
+		this->mFallDelay += this->mGameConfig.mFallDelay;
 	}
 
 	return piecesCleared;
@@ -681,7 +681,7 @@ int Cyrey::Board::DoHypercube(const Piece& cubePiece, const Piece& byPiece)
 
 void Cyrey::Board::PlayReplay()
 {
-	if (this->mReplayData->mConfigVersion != this->mApp->mGameConfig.mVersion)
+	if (this->mReplayData->mConfigVersion != this->mGameConfig.mVersion)
 		return;
 
 	this->mIsInReplay = true;
@@ -700,14 +700,14 @@ void Cyrey::Board::SetReplayTo(float secs)
 	// edge values don't reset endgame animation
 	if (secs < 0.0f)
 		secs = 0.0f;
-	else if (secs >= this->mApp->mGameConfig.mStartingTime)
-		secs = std::nextafter(this->mApp->mGameConfig.mStartingTime, 0.0f);
+	else if (secs >= this->mGameConfig.mStartingTime)
+		secs = std::nextafter(this->mGameConfig.mStartingTime, 0.0f);
 
 	this->mHasSeekedReplay = true;
 	this->PlayReplay();
 	this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
 	this->mDroppedNewGamePieces = true;
-	this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime - secs;
+	this->mSecondsRemaining = this->mGameConfig.mStartingTime - secs;
 	this->mSecondsSinceLastCommand = secs;
 	this->mBoardSwerve = {0.0f, 0.0f};
 	this->mFallDelay -= secs;
@@ -778,7 +778,7 @@ bool Cyrey::Board::UpdateReplay()
 void Cyrey::Board::UpdateSwapAnim()
 {
 	this->mSwapAnim.mOpacity -= SwapAnim::cStartingOpacity *
-		(this->GetStepInterval() / this->mApp->mGameConfig.mFallDelay);
+		(this->GetStepInterval() / this->mGameConfig.mFallDelay);
 	if (this->mSwapAnim.mOpacity < 0.0f)
 	{
 		this->mSwapAnim.mOpacity = 0.0f;
@@ -790,8 +790,7 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 {
 	for (auto& anim : this->mMatchedPieceAnims)
 	{
-		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->GetStepInterval() / this->mApp->mGameConfig.
-			mFallDelay);
+		anim.mOpacity -= PieceMatchAnim::cStartingOpacity * (this->GetStepInterval() / this->mGameConfig.mFallDelay);
 		for (int i = 0; i < anim.mSparklesAmount; ++i)
 		{
 			anim.mSparkles[i].mRotationDeg += AnimSparkle::cRotationPerSec * this->GetStepInterval();
@@ -804,8 +803,7 @@ void Cyrey::Board::UpdateMatchedPieceAnims()
 void Cyrey::Board::UpdateDroppedPieceAnims()
 {
 	for (auto& anim : this->mDroppedPieceAnims)
-		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->GetStepInterval() / this->mApp->mGameConfig.
-			mFallDelay);
+		anim.mOpacity -= PieceDropAnim::cStartingOpacity * (this->GetStepInterval() / this->mGameConfig.mFallDelay);
 
 	std::erase_if(this->mDroppedPieceAnims, [](const PieceDropAnim& anim) { return anim.mOpacity <= 0.0f; });
 }
@@ -862,7 +860,7 @@ void Cyrey::Board::UpdateCurrentUserStats() const
 
 void Cyrey::Board::UpdateBoardSwerve()
 {
-	float fallDelay = 1 - std::pow(this->mApp->mGameConfig.mFallDelay * 0.003f, this->GetStepInterval());
+	float fallDelay = 1 - std::pow(this->mGameConfig.mFallDelay * 0.003f, this->GetStepInterval());
 	this->mBoardSwerve.x = ::Lerp(this->mBoardSwerve.x, 0, fallDelay);
 	this->mBoardSwerve.y = ::Lerp(this->mBoardSwerve.y, 0, fallDelay);
 }
@@ -872,8 +870,7 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress > Board::cNewGameAnimDuration)
 		return false;
 
-	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mApp->mGameConfig.
-		mStartingTime;
+	this->mSecondsRemaining = (this->mNewGameAnimProgress / Board::cNewGameAnimDuration) * this->mGameConfig.mStartingTime;
 	this->mNewGameAnimProgress += this->GetStepInterval();
 
 	if (this->mNewGameAnimProgress >= (Board::cNewGameAnimDuration * 0.75f) && !this->mDroppedNewGamePieces)
@@ -888,12 +885,12 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
 	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
-		this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime; //failsafe
+		this->mSecondsRemaining = this->mGameConfig.mStartingTime; //failsafe
 		this->mSecondsSinceLastCommand = 0.0f;
 	}
 
-	if (this->mSecondsRemaining > this->mApp->mGameConfig.mStartingTime)
-		this->mSecondsRemaining = this->mApp->mGameConfig.mStartingTime; //failsafe
+	if (this->mSecondsRemaining > this->mGameConfig.mStartingTime)
+		this->mSecondsRemaining = this->mGameConfig.mStartingTime; //failsafe
 
 	return true;
 }
@@ -953,7 +950,7 @@ size_t Cyrey::Board::UpdateMatchSets()
 	if (matchSets <= 0)
 		return matchSets;
 
-	this->mFallDelay += this->mApp->mGameConfig.mFallDelay;
+	this->mFallDelay += this->mGameConfig.mFallDelay;
 	this->AddSwerve(::Vector2 {
 		0.0f,
 		Board::cSwerveCoeff *
@@ -1160,7 +1157,7 @@ void Cyrey::Board::DrawBorder() const
 
 	float halfPerimeter = ((static_cast<float>(this->mWidth) * this->mTileSize) +
 		(static_cast<float>(this->mHeight) * this->mTileSize) + thick * 2 + offset);
-	float fillPct = this->mSecondsRemaining / this->mApp->mGameConfig.mStartingTime;
+	float fillPct = this->mSecondsRemaining / this->mGameConfig.mStartingTime;
 	if (this->mMissDelay > 0.0f)
 	{
 		fillPct = 1;
@@ -1269,7 +1266,7 @@ void Cyrey::Board::DrawReplayControls()
 		controlHeight
 	};
 
-	float oldSeconds = this->mApp->mGameConfig.mStartingTime - this->mSecondsRemaining;
+	float oldSeconds = this->mGameConfig.mStartingTime - this->mSecondsRemaining;
 	float oldSeconds2 = oldSeconds;
 	::GuiSlider(
 		seekingBar,
@@ -1277,7 +1274,7 @@ void Cyrey::Board::DrawReplayControls()
 		"",
 		&oldSeconds,
 		0.0f,
-		this->mApp->mGameConfig.mStartingTime);
+		this->mGameConfig.mStartingTime);
 
 	static bool isDragging = false;
 	if (isDragging)
@@ -1349,7 +1346,7 @@ void Cyrey::Board::DrawReplayControls()
 		::GuiIconText(::GuiIconName::ICON_PLAYER_PREVIOUS, "")))
 	{
 		this->mIsPaused = false;
-		this->SetReplayTo((this->mApp->mGameConfig.mStartingTime - this->mSecondsRemaining) - (this->GetStepInterval() * 2));
+		this->SetReplayTo((this->mGameConfig.mStartingTime - this->mSecondsRemaining) - (this->GetStepInterval() * 2));
 	}
 	if (::GuiButton(forwardFrameButton,
 		::GuiIconText(::GuiIconName::ICON_PLAYER_NEXT, "")))
@@ -1909,7 +1906,7 @@ void Cyrey::Board::DrawResultsScreen()
 	::GuiSetStyle(::GuiControl::LABEL, ::GuiControlProperty::TEXT_ALIGNMENT, ::GuiTextAlignment::TEXT_ALIGN_LEFT);
 	::GuiLabel(movesValuePos, ::TextFormat(" %d", stats.mMovesMade));
 	::GuiLabel(mpsValuePos,
-	           ::TextFormat(" %.2f", static_cast<float>(stats.mMovesMade) / this->mApp->mGameConfig.mStartingTime));
+	           ::TextFormat(" %.2f", static_cast<float>(stats.mMovesMade) / this->mGameConfig.mStartingTime));
 	::GuiLabel(bombsValuePos, ::TextFormat(" %d", stats.mBombsDetonated));
 	::GuiLabel(lightningsValuePos, ::TextFormat(" %d", stats.mLightningsDetonated));
 	::GuiLabel(hypercubesValuePos, ::TextFormat(" %d", stats.mHypercubesDetonated));
@@ -1957,6 +1954,6 @@ void Cyrey::Board::DrawResultsScreen()
 		fontSizeTitle
 	};
 	::GuiLabel(finalScoreLabel,
-	           ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mApp->mGameConfig.mStartingTime),
+	           ::TextFormat("Blitz %ds: %lld pts", static_cast<int>(this->mGameConfig.mStartingTime),
 	                        stats.mScore));
 }

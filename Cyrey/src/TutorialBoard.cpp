@@ -89,7 +89,7 @@ void Cyrey::TutorialBoard::Update()
 					if (this->mMatchesRemaining-- == 0)
 						this->NextStage();
 					else
-						this->mApp->mGameConfig.mFallDelay -= 0.05f;
+						this->mGameConfig.mFallDelay -= 0.05f;
 				}
 			default:
 				break;
@@ -174,13 +174,14 @@ void Cyrey::TutorialBoard::Draw()
 
 void Cyrey::TutorialBoard::NewGame()
 {
+	this->mGameConfig = this->mApp->mGameConfig; // should be set to cTutorialGameConfig in CyreyApp
 	this->mIsInReplay = false;
 	this->mHasSavedReplay = false;
 	this->mApp->SeedRNG(TutorialBoard::cTutorialSeed);
+	this->mReplayData = std::make_unique<Replay>();
 	this->mReplayData->mSeed = TutorialBoard::cTutorialSeed;
 	this->mStage = TutorialStage::Loading;
 	this->mMatchesRemaining = TutorialBoard::cFinalMatchesAmount;
-	this->mApp->mGameConfig = Cyrey::cTutorialGameConfig;
 	this->ResetBoard();
 }
 
