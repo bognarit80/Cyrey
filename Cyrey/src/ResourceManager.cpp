@@ -42,17 +42,17 @@ std::string Cyrey::ResourceManager::GetFullPath(const std::string& fileName)
 
 void Cyrey::ResourceManager::LoadMusic()
 {
-	for (auto& [name, music] : this->mMusics)
+	for (auto& [id, music] : this->mMusics)
 	{
-		music = ::LoadMusicStream(ResourceManager::GetFullPath(name).c_str());
+		music = ::LoadMusicStream(ResourceManager::GetFullPath(this->mMusicNames[id]).c_str());
 	}
 }
 
 void Cyrey::ResourceManager::LoadSounds()
 {
-	for (auto& [name, sound] : this->mSounds)
+	for (auto& [id, sound] : this->mSounds)
 	{
-		sound = ::LoadSound(ResourceManager::GetFullPath(name).c_str());
+		sound = ::LoadSound(ResourceManager::GetFullPath(this->mSoundNames[id]).c_str());
 	}
 }
 

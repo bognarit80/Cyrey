@@ -123,8 +123,6 @@ void Cyrey::TutorialBoard::Update()
 
 	this->UpdateGameOverAnim();
 
-	::UpdateMusicStream(this->mApp->mResMgr->mMusics["mainMenuTheme.ogg"]);
-
 	if (this->mPopupHighlightAlpha > 0.0f)
 	{
 		this->mPopupHighlightAlpha -= this->GetStepInterval() * 255.0f;
@@ -188,7 +186,7 @@ void Cyrey::TutorialBoard::NewGame()
 
 void Cyrey::TutorialBoard::ResetBoard()
 {
-	::PlaySound(this->mApp->mResMgr->mSounds["boardAppear.ogg"]);
+	this->PlaySound(ResSoundID::BoardAppear);
 	this->mBoard = this->GenerateStartingBoard(); // current seed generates a matchless board in 1 try
 	this->mSecondsRemaining = 0.0f;
 	this->mBoardSwerve = ::Vector2 { 0.0f, -this->mTileSize * 8 };
@@ -198,8 +196,7 @@ void Cyrey::TutorialBoard::ResetBoard()
 	this->mIsGameOver = false;
 	this->mSelectedTile.reset();
 	this->mStats = {};
-	::StopMusicStream(this->mApp->mResMgr->mMusics["mainMenuTheme.ogg"]);
-	::PlayMusicStream(this->mApp->mResMgr->mMusics["mainMenuTheme.ogg"]);
+	this->mApp->PlayMusic(ResMusicID::MainMenuTheme);
 }
 
 bool Cyrey::TutorialBoard::TrySwap(int col, int row, SwapDirection direction)

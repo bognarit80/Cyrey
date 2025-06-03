@@ -12,6 +12,7 @@
 #include "PieceDropAnim.hpp"
 #include "PieceMatchAnim.hpp"
 #include "Replay.hpp"
+#include "Resources.hpp"
 #include "SwapAnim.hpp"
 #include "SwapDirection.hpp"
 
@@ -130,6 +131,7 @@ namespace Cyrey
 		[[nodiscard]] float GetStepInterval() const;
 		void FillInBlanks();
 		void HandleQueuedSwaps();
+		void PlaySound(ResSoundID sound) const; /// Wrapper, for skipping sounds while seeking replays.
 		void DrawCheckerboard() const;
 		void DrawBorder() const;
 		void DrawPieces() const;

@@ -64,6 +64,7 @@ namespace Cyrey
 		std::unique_ptr<ResourceManager> mResMgr;
         std::unique_ptr<ReplaysMenu> mReplaysMenu;
 		std::unique_ptr<UserMenu> mUserMenu;
+		ResMusicID mCurrentMusic { ResMusicID::None };
 
 		static constexpr char cTitle[] = "Cyrey";
 		static constexpr char cLoading[] = "Loading...";
@@ -80,6 +81,11 @@ namespace Cyrey
 		void ToggleFullscreen();
 		static User ParseUserFile(const char* path);
 		void SaveCurrentUserData() const;
+
+		void PlayMusic(ResMusicID id, bool reset = true);
+		void PlaySound(ResSoundID id);
+		void SeekMusic(ResMusicID id, float toSeconds);
+		void SetSoundPitch(ResSoundID id, float pitch);
 
 		unsigned int SeedRNG(); /// Returns the seed.
 		void SeedRNG(unsigned int seed); /// For replays and games with set seed.

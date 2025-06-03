@@ -108,7 +108,6 @@ void Cyrey::CyreyApp::Update()
 
 	case CyreyAppState::MainMenu:
 		this->mMainMenu->Update();
-		::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
 		if (this->mMainMenu->mIsPlayBtnPressed)
 		{
 			if (!this->mCurrentUser->mFinishedTutorial)
@@ -136,13 +135,11 @@ void Cyrey::CyreyApp::Update()
 
 	case CyreyAppState::SettingsMenu:
 		this->mSettings->Update();
-		::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
 		break;
 
 	case CyreyAppState::ReplaysMenu:
 		{
 			this->mReplaysMenu->Update();
-			::UpdateMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
 			if (this->mReplaysMenu->mPlayReplay && this->mReplaysMenu->mSelectedReplay->mConfigVersion == this->
 				mGameConfig.mVersion)
 			{
@@ -159,6 +156,8 @@ void Cyrey::CyreyApp::Update()
 	default:
 		break;
 	}
+	if (!this->mBoard->mIsPaused)
+		::UpdateMusicStream(this->mResMgr->mMusics[this->mCurrentMusic]);
 	this->mUpdateCnt++;
 }
 
@@ -248,19 +247,14 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 		break;
 	case Cyrey::CyreyAppState::MainMenu:
 		if (this->mPrevState != CyreyAppState::SettingsMenu && this->mPrevState != CyreyAppState::ReplaysMenu)
-		{
-			::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-			::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-		}
+			this->PlayMusic(ResMusicID::MainMenuTheme);
 		break;
 	case Cyrey::CyreyAppState::InGame:
+		this->PlayMusic(ResMusicID::Blitz1min, false);
 		break;
 	case Cyrey::CyreyAppState::SettingsMenu:
 		if (this->mPrevState != CyreyAppState::MainMenu)
-		{
-			::StopMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-			::PlayMusicStream(this->mResMgr->mMusics["mainMenuTheme.ogg"]);
-		}
+			this->PlayMusic(ResMusicID::MainMenuTheme);
 		break;
 	case CyreyAppState::ReplaysMenu:
 		this->mReplaysMenu->RefreshReplayList();
@@ -301,6 +295,28 @@ void Cyrey::CyreyApp::SaveCurrentUserData() const
 	nlohmann::json json = *this->mCurrentUser;
 	std::string str = json.dump();
 	::SaveFileData(CyreyApp::cUserFileName, str.data(), static_cast<int>(str.length()));
+}
+
+void Cyrey::CyreyApp::PlayMusic(ResMusicID id, bool reset)
+{
+	if (reset)
+		::StopMusicStream(this->mResMgr->mMusics[id]);
+	::PlayMusicStream(this->mResMgr->mMusics[id]);
+	this->mCurrentMusic = id;
+}
+void Cyrey::CyreyApp::PlaySound(ResSoundID id)
+{
+	::PlaySound(this->mResMgr->mSounds[id]);
+}
+
+void Cyrey::CyreyApp::SeekMusic(ResMusicID id, float toSeconds)
+{
+	::SeekMusicStream(this->mResMgr->mMusics[id], toSeconds);
+}
+
+void Cyrey::CyreyApp::SetSoundPitch(ResSoundID id, float pitch)
+{
+	::SetSoundPitch(this->mResMgr->mSounds[id], pitch);
 }
 
 unsigned int Cyrey::CyreyApp::SeedRNG()

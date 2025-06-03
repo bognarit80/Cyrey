@@ -65,11 +65,6 @@ void Cyrey::Board::Update()
 		this->mSecondsRemaining = 0.0f;
 
 	this->UpdateGameOverAnim();
-	// perhaps add PlayMusicStream to each of these, in case we reset the context during gameplay?
-	if (this->mIsGameOver)
-		::UpdateMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
-	else
-		::UpdateMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
 
 	this->UpdateDroppedFiles();
 	if (this->mHasSeekedReplay)
@@ -258,13 +253,13 @@ void Cyrey::Board::ResetBoard()
 		this->mReplayData->mConfigVersion = this->mApp->mGameConfig.mVersion;
 	}
 	::TraceLog(TraceLogLevel::LOG_INFO, ::TextFormat("Seed: %u", seed));
-	::PlaySound(this->mApp->mResMgr->mSounds["boardAppear.ogg"]);
+	this->PlaySound(ResSoundID::BoardAppear);
 	do
 	{
 		this->mMatchSets.clear();
 		this->mBoard = this->GenerateStartingBoard();
 	}
-	while (this->FindSets()); //ugly until I make a better algorithm for creating boards with no sets
+	while (this->FindSets()); // ugly until I make a better algorithm for creating boards with no sets
 	this->mSecondsRemaining = 0.0f;
 	this->mBoardSwerve = ::Vector2 { 0.0f, -this->mTileSize * 8 };
 	this->mNewGameAnimProgress = 0.0f;
@@ -275,8 +270,7 @@ void Cyrey::Board::ResetBoard()
 	this->mQueuedSwapDirection = SwapDirection::None;
 	this->mStats = {};
 
-	::StopMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
-	::PlayMusicStream(this->mApp->mResMgr->mMusics["gameplayBlitz1min.ogg"]);
+	this->mApp->PlayMusic(ResMusicID::Blitz1min);
 }
 
 void Cyrey::Board::AddSwerve(::Vector2 swerve)
@@ -537,7 +531,7 @@ bool Cyrey::Board::TrySwap(int col, int row, int toCol, int toRow)
 	else
 	{
 		this->mMissDelay += this->mGameConfig.mFallDelay * this->mGameConfig.mMissDelayMultiplier;
-		::PlaySound(this->mApp->mResMgr->mSounds["badMove.ogg"]);
+		this->PlaySound(ResSoundID::BadMove);
 	}
 
 	this->UpdateMatchSets();
@@ -610,7 +604,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	if (pieceCopy.IsFlagSet(PieceFlag::Bomb))
 	{
 		this->mStats.mBombsDetonated++;
-		::PlaySound(this->mApp->mResMgr->mSounds["bombExplode.ogg"]);
+		this->PlaySound(ResSoundID::BombExplode);
 		for (int i = -1; i <= 1; i++)
 		{
 			for (int j = -1; j <= 1; j++)
@@ -628,7 +622,7 @@ int Cyrey::Board::MatchPiece(Piece& piece, const Piece& byPiece, bool destroy)
 	else if (pieceCopy.IsFlagSet(PieceFlag::Lightning))
 	{
 		this->mStats.mLightningsDetonated++;
-		::PlaySound(this->mApp->mResMgr->mSounds["lightningExplode.ogg"]);
+		this->PlaySound(ResSoundID::LightningExplode);
 		for (int i = 0; i < this->mApp->mGameConfig.mLightningPiecesAmount; i++)
 		{
 			uint32_t row, col, count = 0;
@@ -666,7 +660,7 @@ int Cyrey::Board::DoHypercube(const Piece& cubePiece, const Piece& byPiece)
 	if (!cubePiece.IsFlagSet(PieceFlag::Hypercube))
 		return 0;
 
-	::PlaySound(this->mApp->mResMgr->mSounds["hypercubeExplode.ogg"]);
+	this->PlaySound(ResSoundID::HypercubeExplode);
 	this->mStats.mHypercubesDetonated++;
 	int piecesCleared = 1;
 	PieceColor targetColor = byPiece.mColor != PieceColor::Uncolored ? byPiece.mColor : cubePiece.mOldColor;
@@ -717,6 +711,7 @@ void Cyrey::Board::SetReplayTo(float secs)
 	this->mBoardSwerve = {0.0f, 0.0f};
 	this->mFallDelay -= secs;
 	this->mMissDelay -= secs;
+	this->mApp->SeekMusic(ResMusicID::Blitz1min, secs);
 }
 
 void Cyrey::Board::UpdateUI()
@@ -833,8 +828,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 		if (!this->mIsInReplay)
 			this->UpdateCurrentUserStats();
 
-		::StopMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
-		::PlayMusicStream(this->mApp->mResMgr->mMusics["resultsScreenBlitz1min.ogg"]);
+		this->mApp->PlayMusic(ResMusicID::ResultsScreenBlitz1Min);
 	}
 	int rowsClearedAfterUpdate = this->mHeight * (this->mGameOverAnimProgress / Board::cGameOverAnimDuration);
 
@@ -845,7 +839,7 @@ void Cyrey::Board::UpdateGameOverAnim()
 			this->mMatchedPieceAnims.emplace_back(piece.mBoardX, piece.mBoardY, piece.mColor, false);
 			piece = Cyrey::gNullPiece;
 		}
-		::PlaySound(this->mApp->mResMgr->mSounds["rowBlow.ogg"]);
+		this->PlaySound(ResSoundID::RowBlow);
 	}
 }
 
@@ -967,13 +961,12 @@ size_t Cyrey::Board::UpdateMatchSets()
 	});
 	this->mCascadeNumber++;
 	if (this->mCascadeNumber <= 1)
-		::PlaySound(this->mApp->mResMgr->mSounds["match.ogg"]);
+		this->PlaySound(ResSoundID::Match);
 	else
 	{
-		::SetSoundPitch(this->mApp->mResMgr->mSounds["doubleset.ogg"],
-		                0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) *
-			                0.15f));
-		::PlaySound(this->mApp->mResMgr->mSounds["doubleset.ogg"]);
+		this->mApp->SetSoundPitch(ResSoundID::Cascade,
+			0.7f + (static_cast<float>(std::min(this->mCascadeNumber, Board::cMaxCascadesSwerve)) * 0.15f));
+		this->PlaySound(ResSoundID::Cascade);
 	}
 
 	for (auto& [mPieces, mAddedPieces] : this->mMatchSets)
@@ -991,17 +984,17 @@ size_t Cyrey::Board::UpdateMatchSets()
 			if (piece == addedPiece && piecesPerSet == 4)
 			{
 				addedPiece->Bombify();
-				::PlaySound(this->mApp->mResMgr->mSounds["bombCreate.ogg"]);
+				this->PlaySound(ResSoundID::BombCreate);
 			}
 			else if (piece == addedPiece && piecesPerSet == 5)
 			{
 				addedPiece->Lightningify();
-				::PlaySound(this->mApp->mResMgr->mSounds["lightningCreate.ogg"]);
+				this->PlaySound(ResSoundID::LightningCreate);
 			}
 			else if (piece == addedPiece && piecesPerSet >= 6)
 			{
 				addedPiece->Hypercubify();
-				::PlaySound(this->mApp->mResMgr->mSounds["hypercubeCreate.ogg"]);
+				this->PlaySound(ResSoundID::HypercubeCreate);
 			}
 
 			piecesCleared += this->MatchPiece(*piece);
@@ -1033,7 +1026,7 @@ void Cyrey::Board::UpdateFalling()
 			}
 		}
 	}
-	::PlaySound(this->mApp->mResMgr->mSounds["pieceFall.ogg"]);
+	this->PlaySound(ResSoundID::PieceFall);
 	this->FillInBlanks();
 }
 
@@ -1113,6 +1106,12 @@ void Cyrey::Board::HandleQueuedSwaps()
 	// preserve the queued swap through cascades only if tolerance set to inf
 	if (this->mApp->mSettings->mQueueSwapTolerance < 1.0f)
 		this->mQueuedSwapDirection = SwapDirection::None;
+}
+
+void Cyrey::Board::PlaySound(ResSoundID sound) const
+{
+	if (!this->mHasSeekedReplay)
+		this->mApp->PlaySound(sound);
 }
 
 void Cyrey::Board::DrawCheckerboard() const

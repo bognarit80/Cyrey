@@ -4,38 +4,33 @@
 #include <map>
 #include <string>
 #include "raylib.h"
+#include "Resources.hpp"
 
 namespace Cyrey
 {
 	class ResourceManager
 	{
 	public:
-#ifdef PLATFORM_ANDROID // Android assets have their own folder, no need to layer the "resources" one on top of it.
-		static constexpr char cRootResorcesPath[] = "";
-#else
-		static constexpr char cRootResorcesPath[] = "resources/";
-#endif
-
-		std::map<std::string, ::Music> mMusics
+		std::map<ResMusicID, ::Music> mMusics
 		{
-			{ "mainMenuTheme.ogg", ::Music {} },
-			{ "gameplayBlitz1min.ogg", ::Music {} },
-			{ "resultsScreenBlitz1min.ogg", ::Music {} }
+			{ ResMusicID::MainMenuTheme, ::Music {} },
+			{ ResMusicID::Blitz1min, ::Music {} },
+			{ ResMusicID::ResultsScreenBlitz1Min, ::Music {} }
 		};
-		std::map<std::string, ::Sound> mSounds
+		std::map<ResSoundID, ::Sound> mSounds
 		{
-			{ "badMove.ogg", ::Sound {} },
-			{ "boardAppear.ogg", ::Sound {} },
-			{ "bombCreate.ogg", ::Sound {} },
-			{ "bombExplode.ogg", ::Sound {} },
-			{ "doubleset.ogg", ::Sound {} },
-			{ "hypercubeCreate.ogg", ::Sound {} },
-			{ "hypercubeExplode.ogg", ::Sound {} },
-			{ "lightningCreate.ogg", ::Sound {} },
-			{ "lightningExplode.ogg", ::Sound {} },
-			{ "match.ogg", ::Sound {} },
-			{ "pieceFall.ogg", ::Sound {} },
-			{ "rowBlow.ogg", ::Sound {} }
+			{ ResSoundID::BadMove, ::Sound {} },
+			{ ResSoundID::BoardAppear, ::Sound {} },
+			{ ResSoundID::BombCreate, ::Sound {} },
+			{ ResSoundID::BombExplode, ::Sound {} },
+			{ ResSoundID::Cascade, ::Sound {} },
+			{ ResSoundID::HypercubeCreate, ::Sound {} },
+			{ ResSoundID::HypercubeExplode, ::Sound {} },
+			{ ResSoundID::LightningCreate, ::Sound {} },
+			{ ResSoundID::LightningExplode, ::Sound {} },
+			{ ResSoundID::Match, ::Sound {} },
+			{ ResSoundID::PieceFall, ::Sound {} },
+			{ ResSoundID::RowBlow, ::Sound {} }
 		};
 
 		[[nodiscard]] bool HasFinishedLoading() const;
@@ -45,8 +40,35 @@ namespace Cyrey
 
 	private:
 		bool mHasFinishedLoading { false };
+		std::map<ResMusicID, std::string> mMusicNames
+		{
+			{ ResMusicID::MainMenuTheme, "mainMenuTheme.ogg" },
+			{ ResMusicID::Blitz1min, "gameplayBlitz1min.ogg" },
+			{ ResMusicID::ResultsScreenBlitz1Min, "resultsScreenBlitz1min.ogg" }
+		};
+		std::map<ResSoundID, std::string> mSoundNames
+		{
+			{ ResSoundID::BadMove, "badMove.ogg" },
+			{ ResSoundID::BoardAppear, "boardAppear.ogg" },
+			{ ResSoundID::BombCreate, "bombCreate.ogg" },
+			{ ResSoundID::BombExplode, "bombExplode.ogg" },
+			{ ResSoundID::Cascade, "doubleset.ogg" },
+			{ ResSoundID::HypercubeCreate, "hypercubeCreate.ogg" },
+			{ ResSoundID::HypercubeExplode, "hypercubeExplode.ogg" },
+			{ ResSoundID::LightningCreate, "lightningCreate.ogg" },
+			{ ResSoundID::LightningExplode, "lightningExplode.ogg" },
+			{ ResSoundID::Match, "match.ogg" },
+			{ ResSoundID::PieceFall, "pieceFall.ogg" },
+			{ ResSoundID::RowBlow, "rowBlow.ogg" }
+		};
 
-		static std::string GetFullPath(const std::string& fileName); // try with const char* instead to avoid .c_str()?
+#ifdef PLATFORM_ANDROID // Android assets have their own folder, no need to layer the "resources" one on top of it.
+		static constexpr char cRootResorcesPath[] = "";
+#else
+		static constexpr char cRootResorcesPath[] = "resources/";
+#endif
+
+		static std::string GetFullPath(const std::string& fileName);
 
 		void LoadMusic();
 		void LoadSounds();
