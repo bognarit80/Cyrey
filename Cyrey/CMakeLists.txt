@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.28)
+﻿cmake_minimum_required(VERSION 3.14)
 project("CyreyApp")
 
 add_link_options(-static -static-libgcc -static-libstdc++)
@@ -14,7 +14,7 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
             URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
     )
     FetchContent_MakeAvailable(raylib)
-endif()
+endif ()
 
 # raygui
 set(RAYGUI_VERSION 4.0)
@@ -22,14 +22,14 @@ find_package(raygui ${RAYGUI_VERSION} QUIET)
 if (NOT raygui_FOUND)
     include(FetchContent)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
+    set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
     FetchContent_Declare(
             raygui
             DOWNLOAD_EXTRACT_TIMESTAMP OFF
             URL https://github.com/raysan5/raygui/archive/refs/tags/${RAYGUI_VERSION}.tar.gz
     )
     FetchContent_MakeAvailable(raygui)
-endif()
+endif ()
 
 # nlohmann_json
 set(JSON_VERSION 3.11.3)
@@ -42,7 +42,7 @@ if (NOT json_FOUND)
             URL https://github.com/nlohmann/json/releases/download/v${JSON_VERSION}/json.tar.xz
     )
     FetchContent_MakeAvailable(json)
-endif()
+endif ()
 
 # libcpr
 set(CPR_VERSION 1.10.5)
@@ -55,11 +55,11 @@ if (NOT cpr_FOUND)
             URL https://github.com/libcpr/cpr/archive/refs/tags/${CPR_VERSION}.tar.gz
     )
     FetchContent_MakeAvailable(cpr)
-endif()
+endif ()
 
 add_compile_definitions(CYREY_APIURL="https://localhost:44392/api/")
 
-add_executable(${PROJECT_NAME}
+set(CPP_SOURCES
         src/Board.cpp
         src/Board.hpp
         src/CyreyApp.cpp
@@ -70,7 +70,7 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/MainMenu.cpp
         src/MainMenu.hpp
-        src/MatchSet.hpp
+        src/MatchSet.cpp
         src/MatchSet.hpp
         src/Piece.cpp
         src/Piece.hpp
@@ -84,21 +84,31 @@ add_executable(${PROJECT_NAME}
         src/ReplaysMenu.cpp
         src/ReplaysMenu.hpp
         src/ResourceManager.cpp
+        src/ResourceManager.hpp
         src/Resources.hpp
         src/SettingsMenu.cpp
         src/SettingsMenu.hpp
         src/SwapAnim.cpp
         src/SwapAnim.hpp
+        src/SwapDirection.hpp
         src/TutorialBoard.cpp
         src/TutorialBoard.hpp
         src/User.cpp
         src/User.hpp
         src/UserMenu.cpp
-        src/UserMenu.hpp
-        src/VerificationBoard.cpp
-        src/VerificationBoard.hpp
-        src/MinApp.cpp
-        src/MinApp.hpp)
+        src/UserMenu.hpp)
+
+if (BUILD_LIBRARY)
+    set(CPP_SOURCES
+            ${CPP_SOURCES}
+            src/VerificationBoard.cpp
+            src/VerificationBoard.hpp
+            src/MinApp.cpp
+            src/MinApp.hpp)
+    add_library(${PROJECT_NAME} SHARED ${CPP_SOURCES})
+else ()
+    add_executable(${PROJECT_NAME} ${CPP_SOURCES})
+endif ()
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 20 WIN32_EXECUTABLE
         $<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug,RelWithDebInfo>>>)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib nlohmann_json cpr::cpr)
@@ -106,8 +116,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_LIST_DIR}/inc
 
 # Copy /resources
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                       ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources)
 
 # Web Configurations
 if (EMSCRIPTEN)
@@ -118,4 +128,4 @@ if (EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE -sUSE_GLFW=3 -sWASM=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2
             -sTOTAL_MEMORY=128mb --shell-file ${CMAKE_SOURCE_DIR}/Cyrey/minshell.html --preload-file "../../../resources")
     # Resources path has to be a relative path so raylib can read the files
-endif()
+endif ()

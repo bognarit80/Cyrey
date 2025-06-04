@@ -12,9 +12,6 @@ _deps
 
 # output folders
 out
-cmake-build-debug
-cmake-build-release
-cmake-build-minsizerel
 
 # resources folder
 resources
@@ -24,3 +21,9 @@ resources
 
 # Idea
 .idea
+
+# Library specifc source files
+Cyrey/src/MinApp.cpp
+Cyrey/src/MinApp.hpp
+Cyrey/src/VerificationBoard.cpp
+Cyrey/src/VerificationBoard.hpp
