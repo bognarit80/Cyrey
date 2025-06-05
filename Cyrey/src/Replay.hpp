@@ -43,7 +43,8 @@ namespace Cyrey
 
 		static constexpr char cReplaysFolderName[] = "replays/";
 		static constexpr char cReplayFileExtension[] = ".cyrep";
-		static constexpr char cReplayFileMagic[] = "CYREP";
+		//static constexpr char cReplayFileMagic[] = "CYRP";
+		static constexpr unsigned int cReplayFileMagic = 'PRYC'; // intended multichar literal
 		static constexpr char cReplaysUrl[] = CYREY_APIURL "Replays/";
 
 		static std::vector<uint8_t> Serialize(const Replay& replayData);

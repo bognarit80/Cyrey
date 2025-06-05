@@ -15,31 +15,32 @@
 
 // TODO: Break on invalid input, use std::optional
 
-template <typename T>
+namespace
+{
+	template <typename T>
 #ifndef PLATFORM_ANDROID
-	requires std::is_trivially_copyable_v<T>
+		requires std::is_trivially_copyable_v<T>
 #endif
-static void InsertIntoVector(std::vector<uint8_t>& data, T val)
-{
-	data.insert(data.end(), sizeof(T), 0);
-	std::memcpy(&data.back() - sizeof(T) + 1, &val, sizeof(T));
-}
+	void InsertIntoVector(std::vector<uint8_t>& data, T val)
+	{
+		data.insert(data.end(), sizeof(T), 0);
+		std::memcpy(&data.back() - sizeof(T) + 1, &val, sizeof(T));
+	}
 
-template <typename T>
-	requires std::is_trivially_copyable_v<T>
-void GetFromVector(const std::vector<uint8_t>& data, T& intoValue, size_t& index)
-{
-	std::memcpy(&intoValue, data.data() + index, sizeof(T));
-	index += sizeof(T);
+	template <typename T>
+		requires std::is_trivially_copyable_v<T>
+	void GetFromVector(const std::vector<uint8_t>& data, T& intoValue, size_t& index)
+	{
+		std::memcpy(&intoValue, data.data() + index, sizeof(T));
+		index += sizeof(T);
+	}
 }
 
 std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
 {
 	std::vector<uint8_t> data {};
 
-	data.insert(data.end(),
-	            cReplayFileMagic, &cReplayFileMagic[std::size(cReplayFileMagic) - 1]); // don't push null terminator
-
+	InsertIntoVector(data, Replay::cReplayFileMagic);
 	InsertIntoVector(data, replayData.mConfigVersion);
 	InsertIntoVector(data, replayData.mSeed);
 	InsertIntoVector(data, replayData.mStats);
@@ -60,13 +61,12 @@ std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::u
 	size_t index = 0;
 
 	// Verify the file's magic
-	constexpr size_t arr = std::size(cReplayFileMagic);
-	if (memcmp(data.data() + index, cReplayFileMagic, arr - 1) != 0)
+	int magic = 0;
+	if (GetFromVector(data, magic, index); magic != Replay::cReplayFileMagic)
 	{
 		::TraceLog(::TraceLogLevel::LOG_ERROR, "File is not a Cyrey Replay!");
 		return std::nullopt;
 	}
-	index += arr - 1;
 
 	Replay replay {};
 
@@ -141,9 +141,7 @@ std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
 	data.insert(data.end(), cmd.mBoardCol);
 	data.insert(data.end(), cmd.mBoardRow);
 	data.insert(data.end(), static_cast<uint8_t>(cmd.mDirection));
-	uint8_t floatData[sizeof(cmd.mSecondsSinceLastCmd)];
-	std::memcpy(floatData, &cmd.mSecondsSinceLastCmd, sizeof(cmd.mSecondsSinceLastCmd));
-	data.insert(data.end(), { floatData[0], floatData[1], floatData[2], floatData[3] });
+	InsertIntoVector(data, cmd.mSecondsSinceLastCmd);
 
 	return data;
 }
