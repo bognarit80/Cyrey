@@ -240,6 +240,8 @@ void Cyrey::Board::NewGame()
 void Cyrey::Board::ResetBoard()
 {
 	this->mGameConfig = this->mApp->mGameConfig;
+	this->mWidth = this->mGameConfig.mBoardWidth;
+	this->mHeight = this->mGameConfig.mBoardHeight;
 	unsigned int seed;
 	if (this->mIsInReplay)
 	{
