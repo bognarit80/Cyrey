@@ -131,7 +131,7 @@ namespace Cyrey
 		[[nodiscard]] float GetStepInterval() const;
 		void FillInBlanks();
 		void HandleQueuedSwaps();
-		void PlaySound(ResSoundID sound) const; /// Wrapper, for skipping sounds while seeking replays.
+		virtual void PlaySound(ResSoundID sound) const; /// Wrapper, for skipping sounds while seeking replays.
 		void DrawCheckerboard() const;
 		void DrawBorder() const;
 		void DrawPieces() const;

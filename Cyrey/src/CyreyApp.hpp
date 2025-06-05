@@ -44,6 +44,7 @@ namespace Cyrey
 		CyreyApp& operator=(const CyreyApp&) = delete;
 		CyreyApp(CyreyApp&&) = delete;
 		CyreyApp& operator=(const CyreyApp&&) = delete;
+		virtual ~CyreyApp() = default;
 
 		int mWidth;
 		int mHeight;
@@ -76,16 +77,16 @@ namespace Cyrey
 		void Update();
 		void Draw() const;
 		int DrawDialog(const char* title, const char* message, const char* buttons) const;
-		[[nodiscard]] float GetDeltaTime() const;
+		[[nodiscard]] virtual float GetDeltaTime() const;
 		void ChangeToState(CyreyAppState state); /// Change to the state at the beginning of the next update
 		void ToggleFullscreen();
 		static User ParseUserFile(const char* path);
 		void SaveCurrentUserData() const;
 
-		void PlayMusic(ResMusicID id, bool reset = true);
+		virtual void PlayMusic(ResMusicID id, bool reset = true);
 		void PlaySound(ResSoundID id);
 		void SeekMusic(ResMusicID id, float toSeconds);
-		void SetSoundPitch(ResSoundID id, float pitch);
+		virtual void SetSoundPitch(ResSoundID id, float pitch);
 
 		unsigned int SeedRNG(); /// Returns the seed.
 		void SeedRNG(unsigned int seed); /// For replays and games with set seed.
