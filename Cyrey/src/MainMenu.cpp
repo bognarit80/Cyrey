@@ -8,19 +8,6 @@
 
 static std::future<cpr::Response> futureConfig;
 
-static void FetchGameConfig()
-{
-	if (futureConfig.valid())
-		return; // we are already trying to fetch the config
-
-	futureConfig = std::async(std::launch::async, []
-	{
-		return cpr::Get(cpr::Url { Cyrey::GameConfig::cLatestConfigUrl },
-		                cpr::Timeout { 10000 },
-		                cpr::ConnectTimeout { 500 });
-	});
-}
-
 Cyrey::MainMenu::MainMenu(CyreyApp& app) : mApp(app)
 {
 	FetchGameConfig();
@@ -168,4 +155,18 @@ void Cyrey::MainMenu::Draw()
 	{
 		FetchGameConfig();
 	}
+}
+
+
+void Cyrey::MainMenu::FetchGameConfig()
+{
+	if (futureConfig.valid())
+		return; // we are already trying to fetch the config
+
+	futureConfig = std::async(std::launch::async, []
+	{
+		return cpr::Get(cpr::Url { Cyrey::GameConfig::cLatestConfigUrl },
+						cpr::Timeout { 10000 },
+						cpr::ConnectTimeout { 500 });
+	});
 }

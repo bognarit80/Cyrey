@@ -117,7 +117,9 @@ void Cyrey::CyreyApp::Update()
 			}
 			else
 			{
-				this->mGameConfig = Cyrey::cDefaultGameConfig; // TODO: Attempt to fetch game config here?
+				// we attempted to fetch the config by now, fall back to default if unchanged
+				if (this->mGameConfig.mVersion == Cyrey::cTutorialGameConfig.mVersion)
+					this->mGameConfig = Cyrey::cDefaultGameConfig;
 				this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
 			}
 			this->mBoard->mApp = this;
@@ -252,6 +254,8 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 	case Cyrey::CyreyAppState::MainMenu:
 		if (this->mPrevState != CyreyAppState::SettingsMenu && this->mPrevState != CyreyAppState::ReplaysMenu)
 			this->PlayMusic(ResMusicID::MainMenuTheme);
+		if (this->mPrevState == CyreyAppState::InGame)
+			MainMenu::FetchGameConfig();
 		break;
 	case Cyrey::CyreyAppState::InGame:
 		this->PlayMusic(ResMusicID::Blitz1min, false);
