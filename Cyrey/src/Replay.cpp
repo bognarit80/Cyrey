@@ -3,7 +3,7 @@
 #include <cstring>
 #include <filesystem>
 #include <vector>
-#ifdef PLATFORM_DESKTOP
+#ifdef WIN32
 #include "raylib_win32.h"
 #endif
 #include "cpr/cpr.h"
@@ -34,7 +34,7 @@ namespace
 		std::memcpy(&intoValue, data.data() + index, sizeof(T));
 		index += sizeof(T);
 	}
-}
+} // namespace
 
 std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
 {

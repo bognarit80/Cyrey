@@ -1,12 +1,15 @@
 #include "MainMenu.hpp"
 #include "raygui.h"
 #include "raylib.h"
-#ifdef PLATFORM_DESKTOP
+#ifdef WIN32
 #include "raylib_win32.h"
 #endif
 #include "cpr/cpr.h"
 
-static std::future<cpr::Response> futureConfig;
+namespace
+{
+	std::future<cpr::Response> futureConfig;
+} // namespace
 
 Cyrey::MainMenu::MainMenu(CyreyApp& app) : mApp(app)
 {

@@ -1,7 +1,7 @@
 #include "ReplaysMenu.hpp"
 #include "raygui.h"
 #include "nlohmann/json.hpp"
-#ifdef PLATFORM_DESKTOP
+#ifdef WIN32
 #include "raylib_win32.h"
 #endif
 #include "cpr/cpr.h"
