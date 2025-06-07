@@ -32,10 +32,8 @@ void Cyrey::Board::Update()
 		{
 			this->UpdateFalling();
 			if (!this->UpdateMatchSets())
-			{
 				this->mFallDelay = 0.0f;
-				this->HandleQueuedSwaps();
-			}
+			this->HandleQueuedSwaps();
 		}
 
 		if (this->mMissDelay < 0.0f)
@@ -459,7 +457,7 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 			this->mQueuedSwapPos = ::Vector2 { static_cast<float>(col), static_cast<float>(row) };
 			this->mQueuedSwapDirection = direction;
 		}
-		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) //skip anim if user tries to swap during it
+		else if (this->mNewGameAnimProgress < Board::cNewGameAnimDuration) // skip anim if user tries to swap during it
 		{
 			this->mNewGameAnimProgress = Board::cNewGameAnimDuration;
 			this->mBoardSwerve = ::Vector2Zero();
@@ -891,12 +889,13 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration)
 	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
-		this->mSecondsRemaining = this->mGameConfig.mStartingTime; //failsafe
+		this->mSecondsRemaining = this->mGameConfig.mStartingTime; // failsafe
 		this->mSecondsSinceLastCommand = 0.0f;
+		this->HandleQueuedSwaps();
 	}
 
 	if (this->mSecondsRemaining > this->mGameConfig.mStartingTime)
-		this->mSecondsRemaining = this->mGameConfig.mStartingTime; //failsafe
+		this->mSecondsRemaining = this->mGameConfig.mStartingTime; // failsafe
 
 	return true;
 }
@@ -1102,7 +1101,7 @@ void Cyrey::Board::FillInBlanks()
 
 void Cyrey::Board::HandleQueuedSwaps()
 {
-	if (this->mQueuedSwapDirection != SwapDirection::None)
+	if (this->mQueuedSwapDirection != SwapDirection::None && this->CanSwap()) // queued swap shouldn't queue another
 	{
 		this->TrySwap(this->mQueuedSwapPos.x, this->mQueuedSwapPos.y, this->mQueuedSwapDirection);
 		this->mQueuedSwapDirection = SwapDirection::None;
