@@ -56,7 +56,8 @@ namespace Cyrey
 		bool mIsInReplay { false };
 		std::unique_ptr<Replay> mReplayData;
 		std::unique_ptr<Replay> mReplayCopy; // temp for testing purposes
-		float mSecondsSinceLastCommand { 0.0f };
+		int mReplayMoveIdx { 0 };
+		// float mSecondsSinceLastCommand { 0.0f };
 		bool mHasSavedReplay { false };
 		SwapAnim mSwapAnim;
 		std::optional<::Vector2> mSelectedTile;

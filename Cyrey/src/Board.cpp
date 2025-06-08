@@ -11,9 +11,6 @@ void Cyrey::Board::Update()
 	if (this->mIsPaused)
 		return;
 
-	if (this->mNewGameAnimProgress >= Board::cNewGameAnimDuration && this->mSecondsRemaining > 0.0f)
-		this->mSecondsSinceLastCommand += this->GetStepInterval();
-
 	if (!this->mIsInReplay)
 	{
 		this->UpdateDragging();
@@ -46,11 +43,11 @@ void Cyrey::Board::Update()
 			didReplayMove = this->UpdateReplay();
 		if (didReplayMove)
 		{
-			// SSLC would then be the remainder after doing the command
+			float excess = this->mReplayCopy->mCommands[this->mReplayMoveIdx - 1].mSecondsRemaining - this->mSecondsRemaining;
 			if (this->mFallDelay != 0.0f)
-				this->mFallDelay -= this->mSecondsSinceLastCommand;
+				this->mFallDelay -= excess;
 			if (this->mMissDelay != 0.0f)
-				this->mMissDelay -= this->mSecondsSinceLastCommand;
+				this->mMissDelay -= excess;
 		}
 	} while (didReplayMove);
 
@@ -271,6 +268,7 @@ void Cyrey::Board::ResetBoard()
 	this->mIsGameOver = false;
 	this->mSelectedTile.reset();
 	this->mQueuedSwapDirection = SwapDirection::None;
+	this->mReplayMoveIdx = 0;
 	this->mStats = {};
 
 	this->mApp->PlayMusic(ResMusicID::Blitz1min);
@@ -493,11 +491,8 @@ bool Cyrey::Board::TrySwap(int col, int row, SwapDirection direction)
 	this->AddSwerve(swerve);
 
 	if (!this->mIsInReplay)
-	{
-		this->mReplayData->mCommands.emplace_back(this->mReplayData->mCommands.size(),
-		                                          col, row, direction, this->mSecondsSinceLastCommand);
-		this->mSecondsSinceLastCommand = 0.0f;
-	}
+		this->mReplayData->mCommands.emplace_back(this->mReplayData->mCommands.size(), col, row, direction,
+		                                          this->mSecondsRemaining);
 
 	this->mSwapAnim = { col, row, direction };
 	return this->TrySwap(col, row, toRow, toCol);
@@ -712,8 +707,7 @@ void Cyrey::Board::SetReplayTo(float secs)
 	this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
 	this->mDroppedNewGamePieces = true;
 	this->mSecondsRemaining = this->mGameConfig.mStartingTime - secs;
-	this->mSecondsSinceLastCommand = secs;
-	this->mBoardSwerve = {0.0f, 0.0f};
+	this->mBoardSwerve = ::Vector2Zeros;
 	this->mFallDelay -= secs;
 	this->mMissDelay -= secs;
 	this->mApp->SeekMusic(ResMusicID::Blitz1min, secs);
@@ -752,8 +746,8 @@ bool Cyrey::Board::UpdateReplay()
 	if (this->mReplayCopy->mCommands.empty())
 		return false;
 
-	auto& nextCmd = this->mReplayCopy->mCommands.front();
-	if (this->mSecondsSinceLastCommand < nextCmd.mSecondsSinceLastCmd)
+	auto& nextCmd = this->mReplayCopy->mCommands[this->mReplayMoveIdx];
+	if (this->mSecondsRemaining >= nextCmd.mSecondsRemaining)
 		return false;
 
 	if (this->mHasSeekedReplay)
@@ -766,16 +760,15 @@ bool Cyrey::Board::UpdateReplay()
 	// TODO: Add an #ifdef _DEBUG here later
 	bool swapQueued = this->mQueuedSwapDirection != SwapDirection::None;
 	::TraceLog((swapSuccessful || swapQueued) ? ::TraceLogLevel::LOG_INFO : ::TraceLogLevel::LOG_WARNING,
-	           ::TextFormat("%s Replay move %d: sslc:%f, repsslc:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
+	           ::TextFormat("%s Replay move %d: at:%f, fallDelay:%f, secondsRemaining:%f. %d left.",
 	                        swapSuccessful ? "(S)" : swapQueued ? "(Q)" : "(F)",
 	                        nextCmd.mCommandNumber + 1,
-	                        this->mSecondsSinceLastCommand,
-	                        nextCmd.mSecondsSinceLastCmd,
+	                        nextCmd.mSecondsRemaining,
 	                        this->mFallDelay,
 	                        this->mSecondsRemaining,
 	                        this->mReplayCopy->mCommands.size() - 1));
-	this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
-	this->mReplayCopy->mCommands.pop_front();
+	// this->mSecondsSinceLastCommand -= nextCmd.mSecondsSinceLastCmd;
+	this->mReplayMoveIdx++;
 	return true;
 }
 
@@ -890,7 +883,6 @@ bool Cyrey::Board::UpdateNewGameAnim()
 	{
 		this->mNewGameAnimProgress = Board::cNewGameAnimDuration + 1;
 		this->mSecondsRemaining = this->mGameConfig.mStartingTime; // failsafe
-		this->mSecondsSinceLastCommand = 0.0f;
 		this->HandleQueuedSwaps();
 	}
 
@@ -1089,9 +1081,15 @@ void Cyrey::Board::FillInBlanks()
 	if (!this->FindSets())
 	{
 		if (this->mCascadeNumber > this->mStats.mBestMoveCascades)
+		{
 			this->mStats.mBestMoveCascades = this->mCascadeNumber;
+			this->mStats.mBestMoveCascadesIdx = this->mStats.mMovesMade - 1;
+		}
 		if (this->mScoreInMove > this->mStats.mBestMovePoints)
+		{
 			this->mStats.mBestMovePoints = this->mScoreInMove;
+			this->mStats.mBestMovePointsIdx = this->mStats.mMovesMade - 1;
+		}
 
 		this->mCascadeNumber = 0;
 		this->mScoreInMove = 0;

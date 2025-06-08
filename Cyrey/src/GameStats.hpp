@@ -13,6 +13,8 @@ namespace Cyrey
 		int mHypercubesDetonated;
 		int mBestMoveCascades;
 		int64_t mBestMovePoints;
+		int mBestMoveCascadesIdx;
+		int mBestMovePointsIdx;
 	};
 }
 

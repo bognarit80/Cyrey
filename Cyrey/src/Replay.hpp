@@ -20,15 +20,15 @@ namespace Cyrey
 		int mBoardCol;
 		int mBoardRow;
 		SwapDirection mDirection;
-		float mSecondsSinceLastCmd;
+		float mSecondsRemaining;
 
 		ReplayCommand() = default;
 
 		ReplayCommand(int mCommandNumber, int mBoardCol, int mBoardRow, SwapDirection mDirection,
-		              float mSecondsSinceLastCmd) : mCommandNumber(mCommandNumber),
+		              float mSecondsRemaining) : mCommandNumber(mCommandNumber),
 		                                            mBoardCol(mBoardCol), mBoardRow(mBoardRow),
 		                                            mDirection(mDirection),
-		                                            mSecondsSinceLastCmd(mSecondsSinceLastCmd) {}
+		                                            mSecondsRemaining(mSecondsRemaining) {}
 
 		static std::vector<uint8_t> Serialize(const ReplayCommand& cmd);
 		static ReplayCommand Deserialize(const std::vector<uint8_t>& data);
@@ -39,7 +39,7 @@ namespace Cyrey
 		int mConfigVersion;
 		unsigned int mSeed;
 		GameStats mStats;
-		std::deque<ReplayCommand> mCommands;
+		std::vector<ReplayCommand> mCommands;
 
 		static constexpr char cReplaysFolderName[] = "replays/";
 		static constexpr char cReplayFileExtension[] = ".cyrep";

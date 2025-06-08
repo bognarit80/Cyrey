@@ -141,7 +141,7 @@ std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
 	data.insert(data.end(), cmd.mBoardCol);
 	data.insert(data.end(), cmd.mBoardRow);
 	data.insert(data.end(), static_cast<uint8_t>(cmd.mDirection));
-	InsertIntoVector(data, cmd.mSecondsSinceLastCmd);
+	InsertIntoVector(data, cmd.mSecondsRemaining);
 
 	return data;
 }
@@ -154,7 +154,7 @@ Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::vector<uint8_t
 	cmd.mBoardCol = data[1];
 	cmd.mBoardRow = data[2];
 	cmd.mDirection = static_cast<SwapDirection>(data[3]);
-	std::memcpy(&cmd.mSecondsSinceLastCmd, data.data() + 4, sizeof(cmd.mSecondsSinceLastCmd));
+	std::memcpy(&cmd.mSecondsRemaining, data.data() + 4, sizeof(cmd.mSecondsRemaining));
 
 	return cmd;
 }
