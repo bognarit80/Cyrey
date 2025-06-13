@@ -21,7 +21,7 @@ namespace Cyrey
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(GameConfig, mVersion, mPieceColorAmount, mBoardWidth, mBoardHeight, mBaseScore,
 		                               mStartingTime, mFallDelay, mMissDelayMultiplier, mLightningPiecesAmount);
 
-		constexpr static char cLatestConfigUrl[] = CYREY_APIURL "GameConfig/latest";
+		constexpr static char cLatestConfigUrl[] = "GameConfig/latest";
 	};
 
 	constexpr GameConfig cDefaultGameConfig {

@@ -3,10 +3,7 @@
 #include <cstring>
 #include <filesystem>
 #include <vector>
-#ifdef WIN32
-#include "raylib_win32.h"
-#endif
-#include "cpr/cpr.h"
+#include "Networking.hpp"
 #ifdef PLATFORM_ANDROID
 #include "raymob.h"
 #else
@@ -29,11 +26,13 @@ namespace
 
 	template <typename T>
 		requires std::is_trivially_copyable_v<T>
-	void GetFromVector(const std::vector<uint8_t>& data, T& intoValue, size_t& index)
+	void GetFromVector(const std::span<uint8_t>& data, T& intoValue, size_t& index)
 	{
 		std::memcpy(&intoValue, data.data() + index, sizeof(T));
 		index += sizeof(T);
 	}
+
+	std::future<Cyrey::Response> publish;
 } // namespace
 
 std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
@@ -56,7 +55,7 @@ std::vector<uint8_t> Cyrey::Replay::Serialize(const Replay& replayData)
 	return data;
 }
 
-std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::uint8_t>& data)
+std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::span<std::uint8_t>& data)
 {
 	size_t index = 0;
 
@@ -75,15 +74,24 @@ std::optional<Cyrey::Replay> Cyrey::Replay::Deserialize(const std::vector<std::u
 	GetFromVector(data, replay.mStats, index);
 
 	int replayCmdSize = 8; // IMPORTANT: keep this up to date with changes to the structure!
-	uint64_t cmdsAmount = (data.size() - index + 1) / replayCmdSize;
-	// way too simple, no special indicator bytes nor anything, review later
-	for (int i = 0; i < cmdsAmount; i++)
+	size_t cmdsAmount = (data.size() - index + 1) / replayCmdSize;
+	if (cmdsAmount &&
+		(cmdsAmount < replay.mStats.mMovesMade ||
+		cmdsAmount - 1 < replay.mStats.mBestMovePointsIdx ||
+		cmdsAmount - 1 < replay.mStats.mBestMoveCascadesIdx))
 	{
-		std::vector<uint8_t> cmdData(replayCmdSize);
-		std::memcpy(cmdData.data(), data.data() + index + (i * replayCmdSize), replayCmdSize);
-		replay.mCommands.push_back(ReplayCommand::Deserialize(cmdData));
+		// TODO: communicate errors to the user, use exceptions?
+		::TraceLog(::TraceLogLevel::LOG_ERROR, "Invalid replay stats!");
+		return std::nullopt;
 	}
-	unsigned char nextByte = data[index + (cmdsAmount * replayCmdSize)];
+
+	// way too simple, no special indicator bytes nor anything, review later
+	for (size_t i = 0; i < cmdsAmount; i++)
+	{
+		replay.mCommands.push_back(
+			ReplayCommand::Deserialize(data.subspan(index + (i * replayCmdSize), replayCmdSize)));
+	}
+	uint8_t nextByte = data[index + (cmdsAmount * replayCmdSize)];
 	if (nextByte != 0)
 	{
 		::TraceLog(::TraceLogLevel::LOG_ERROR, ::TextFormat("Last byte of file is 0x%hhX instead of 0x00!", nextByte));
@@ -100,10 +108,10 @@ std::optional<Cyrey::Replay> Cyrey::Replay::OpenReplayFile(const char* fileName)
 	if (!fileData)
 		return std::nullopt;
 
-	std::vector<uint8_t> data(dataRead);
-	std::memcpy(data.data(), fileData, dataRead);
+	std::span data(fileData, dataRead);
+	auto replay = Replay::Deserialize(data);
 	::UnloadFileData(fileData);
-	return Replay::Deserialize(data);
+	return replay;
 }
 
 bool Cyrey::Replay::SaveReplayToFile(const Replay& replay, const char* fileName)
@@ -122,15 +130,7 @@ bool Cyrey::Replay::SaveReplayToFile(const Replay& replay, const char* fileName)
 
 void Cyrey::Replay::PublishReplay(const Replay& replay, const std::string& userName)
 {
-	std::thread([=]
-	{
-		auto data = Replay::Serialize(replay);
-		auto response = cpr::Post(cpr::Url { Replay::cReplaysUrl + userName },
-		                          cpr::Timeout { 10000 },
-		                          cpr::ConnectTimeout { 500 },
-		                          cpr::Header { { "Content-Type", "application/octet-stream" } },
-		                          cpr::Body { cpr::Buffer { data.begin(), data.end(), "" } });
-	}).detach();
+	publish = Networking::PostBuffer(std::format("{}/{}", Replay::cReplaysUrl, userName), Replay::Serialize(replay));
 }
 
 std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
@@ -146,14 +146,14 @@ std::vector<uint8_t> Cyrey::ReplayCommand::Serialize(const ReplayCommand& cmd)
 	return data;
 }
 
-Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::vector<uint8_t>& data)
+Cyrey::ReplayCommand Cyrey::ReplayCommand::Deserialize(const std::span<uint8_t>& data)
 {
 	ReplayCommand cmd {};
 
 	cmd.mCommandNumber = data[0];
 	cmd.mBoardCol = data[1];
 	cmd.mBoardRow = data[2];
-	cmd.mDirection = static_cast<SwapDirection>(data[3]);
+	cmd.mDirection = SwapDirection { data[3] };
 	std::memcpy(&cmd.mSecondsRemaining, data.data() + 4, sizeof(cmd.mSecondsRemaining));
 
 	return cmd;

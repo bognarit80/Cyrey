@@ -29,7 +29,7 @@ namespace Cyrey
 		void Init();
 		void Update();
 		void Draw(); // not const because we want raygui functions to modify the members
-		static void FetchGameConfig();
+		static void FetchGameConfig(CyreyApp& app);
 	};
 } // namespace Cyrey
 

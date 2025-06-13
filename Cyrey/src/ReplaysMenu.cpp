@@ -1,18 +1,19 @@
 #include "ReplaysMenu.hpp"
+#include <format>
+#include "Networking.hpp"
 #include "raygui.h"
 #include "nlohmann/json.hpp"
-#ifdef WIN32
-#include "raylib_win32.h"
-#endif
-#include "cpr/cpr.h"
 
-static bool loading = false;
+namespace
+{
+	std::atomic_bool loading = false;
+	std::future<Cyrey::Response> loadingFuture;
+}
 
 void Cyrey::ReplaysMenu::Update()
 {
 	if (this->mActive >= 0)
 	{
-		// TODO: Make this async later, for now it's already ~1 frame of waiting in both network and local cases
 		std::string fileName;
 		if (this->mWantLeaderboard)
 			fileName = this->mLeaderboardData[this->mActive]["fileName"].get<std::string>();
@@ -24,16 +25,17 @@ void Cyrey::ReplaysMenu::Update()
 				(Replay::cReplaysFolderName + this->mReplays[this->mActive]).c_str());
 		else
 		{
-			cpr::Response r = cpr::Get(cpr::Url { Replay::cReplaysUrl },
-			                           cpr::Parameters { { "fileName", fileName } },
-			                           cpr::Timeout { 10000 },
-			                           cpr::ConnectTimeout { 500 });
-			if (r.status_code == 200)
+			loading = true;
+			loadingFuture = Networking::Get(std::format("{}?fileName={}", Replay::cReplaysUrl, fileName),
+				[this] (Response r)
 			{
-				std::vector<std::uint8_t> data(r.text.size());
-				std::memcpy(data.data(), r.text.c_str(), r.text.size());
-				this->mSelectedReplay = Replay::Deserialize(data);
-			}
+				if (r.mCode == 200)
+				{
+					this->mSelectedReplay = Replay::Deserialize(
+						std::span { reinterpret_cast<unsigned char*>(r.mBody.data()), r.mBody.size() });
+				}
+				loading = false;
+			});
 		}
 		this->mActive = -1;
 	}
@@ -245,49 +247,52 @@ void Cyrey::ReplaysMenu::RefreshReplayList()
 		return; // we don't want more than one thread like this running at the same time
 
 	loading = true;
-	std::thread([this]
+	this->mReplays.clear();
+	if (this->mWantLeaderboard)
 	{
-		this->mReplays.clear();
-		if (this->mWantLeaderboard)
-		{
-			cpr::Response r = cpr::Get(cpr::Url { ReplaysMenu::cLeaderboardUrl },
-			                           cpr::Parameters {
-				                           { "page", std::to_string(this->mCurrentPage) },
-				                           { "size", std::to_string(ReplaysMenu::cPageSize) }
-			                           },
-			                           cpr::Timeout { 10000 },
-			                           cpr::ConnectTimeout { 500 });
-			if (r.status_code == 200)
+		loadingFuture = Networking::Get(
+			std::format("{}?page={}&size={}", ReplaysMenu::cLeaderboardUrl, this->mCurrentPage, ReplaysMenu::cPageSize),
+			[this](Response r)
 			{
-				this->mTotalPages = std::stoi(r.header["TotalPages"]);
-				int idx = 1;
-				this->mLeaderboardData = nlohmann::json::parse(r.text);
-				for (auto rep : this->mLeaderboardData)
+				if (r.mCode != 200)
 				{
-					auto str = ::TextFormat("%d. %s %lld pts %s",
-					                        idx + (this->mCurrentPage - 1) * ReplaysMenu::cPageSize,
-					                        rep["playerName"].get<std::string>().c_str(),
-					                        rep["mScore"].get<int64_t>(),
-					                        rep["achievedOn"].get<std::string>().substr(0, 19).c_str());
-					this->mReplays.emplace_back(str);
+					loading = false;
+					return;
+				}
+				this->mTotalPages = std::stoi(r.mHeaders["TotalPages"]);
+				this->mLeaderboardData = nlohmann::json::parse(r.mBody);
+				for (int idx = 1; auto rep : this->mLeaderboardData)
+				{
+					this->mReplays.emplace_back(std::format("{}. {} {} pts {}",
+					                                        idx + (this->mCurrentPage - 1) * ReplaysMenu::cPageSize,
+					                                        rep["playerName"].get<std::string>(),
+					                                        rep["mScore"].get<int64_t>(),
+					                                        rep["achievedOn"].get<std::string>().substr(0, 19)));
 					idx++;
 				}
-			}
-		}
-		else if (this->mWantServerReplays)
-		{
-			cpr::Response r = cpr::Get(cpr::Url { Replay::cReplaysUrl + this->mApp.mCurrentUser->mName },
-			                           cpr::Timeout { 10000 },
-			                           cpr::ConnectTimeout { 500 });
-			if (r.status_code == 200)
+				this->ResetReplayList();
+			});
+	}
+	else if (this->mWantServerReplays)
+	{
+		loadingFuture = Networking::Get(
+			std::format("{}/{}", Replay::cReplaysUrl, this->mApp.mCurrentUser->mName),
+			[this] (const Response& r)
 			{
-				for (auto rep : nlohmann::json::parse(r.text))
+				if (r.mCode != 200)
+				{
+					loading = false;
+					return;
+				}
+				for (auto rep : nlohmann::json::parse(r.mBody))
 				{
 					this->mReplays.emplace_front(rep["fileName"]);
 				}
-			}
-		}
-		else
+				this->ResetReplayList();
+			});
+	}
+	else std::thread([this]
+	{
 		{
 #ifdef PLATFORM_ANDROID
             const char* directory = ::TextFormat("%s/%s", ::GetAndroidApp()->activity->internalDataPath, Replay::cReplaysFolderName);
@@ -303,11 +308,15 @@ void Cyrey::ReplaysMenu::RefreshReplayList()
 					this->mReplays.emplace_front(entry.path().filename().generic_string());
 			}
 		}
-
-		// reset the window's parameters, protect against out of bounds errors as we just changed the amount of list entries
-		this->mScrollIndex = 0;
-		this->mActive = -1;
-		this->mFocus = -1;
-		loading = false;
+		this->ResetReplayList();
 	}).detach();
+}
+
+void Cyrey::ReplaysMenu::ResetReplayList()
+{
+	// reset the window's parameters, protect against out of bounds errors as we just changed the amount of list entries
+	this->mScrollIndex = 0;
+	this->mActive = -1;
+	this->mFocus = -1;
+	loading = false;
 }

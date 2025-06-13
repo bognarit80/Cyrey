@@ -9,6 +9,7 @@
 #pragma GCC diagnostic pop
 #include <thread>
 
+#include "Networking.hpp"
 #include "TutorialBoard.hpp"
 #include "UserMenu.hpp"
 
@@ -32,8 +33,8 @@ void Cyrey::CyreyApp::Init()
 	this->mGameConfig = Cyrey::cDefaultGameConfig;
 	this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
 	this->mBoard->mApp = this;
-	this->mMainMenu = std::make_unique<MainMenu>(*this);
 	this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile(CyreyApp::cUserFileName));
+	this->mMainMenu = std::make_unique<MainMenu>(*this);
 	this->mSettings = std::make_unique<SettingsMenu>(*this);
 	this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);
 	this->mUserMenu = std::make_unique<UserMenu>(*this);
@@ -233,7 +234,7 @@ int Cyrey::CyreyApp::DrawDialog(const char* title, const char* message, const ch
 
 float Cyrey::CyreyApp::GetDeltaTime() const
 {
-#ifndef NDEBUG
+#if defined NDEBUG or EMSCRIPTEN
     return ::GetFrameTime();
 #else
 	return 1.0f / static_cast<float>(this->mRefreshRate); //fixed frametime for debugging
@@ -255,7 +256,7 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 		if (this->mPrevState != CyreyAppState::SettingsMenu && this->mPrevState != CyreyAppState::ReplaysMenu)
 			this->PlayMusic(ResMusicID::MainMenuTheme);
 		if (this->mPrevState == CyreyAppState::InGame)
-			MainMenu::FetchGameConfig();
+			MainMenu::FetchGameConfig(*this);
 		break;
 	case Cyrey::CyreyAppState::InGame:
 		this->PlayMusic(ResMusicID::Blitz1min, false);

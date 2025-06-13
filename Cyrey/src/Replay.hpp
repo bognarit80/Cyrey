@@ -2,8 +2,8 @@
 #define CYREY_REPLAY_HEADER
 
 #include <cstdint>
-#include <deque>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -31,7 +31,7 @@ namespace Cyrey
 		                                            mSecondsRemaining(mSecondsRemaining) {}
 
 		static std::vector<uint8_t> Serialize(const ReplayCommand& cmd);
-		static ReplayCommand Deserialize(const std::vector<uint8_t>& data);
+		static ReplayCommand Deserialize(const std::span<uint8_t>& data);
 	};
 
 	struct Replay
@@ -45,10 +45,10 @@ namespace Cyrey
 		static constexpr char cReplayFileExtension[] = ".cyrep";
 		//static constexpr char cReplayFileMagic[] = "CYRP";
 		static constexpr unsigned int cReplayFileMagic = 'PRYC'; // intended multichar literal
-		static constexpr char cReplaysUrl[] = CYREY_APIURL "Replays/";
+		static constexpr char cReplaysUrl[] = "Replays";
 
 		static std::vector<uint8_t> Serialize(const Replay& replayData);
-		static std::optional<Replay> Deserialize(const std::vector<std::uint8_t>& data);
+		static std::optional<Replay> Deserialize(const std::span<std::uint8_t>& data);
 		static std::optional<Replay> OpenReplayFile(const char* fileName);
 		static bool SaveReplayToFile(const Replay& replay, const char* fileName);
 		/// Temporarily in this class, move later

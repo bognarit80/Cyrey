@@ -67,9 +67,13 @@ namespace Cyrey
 		std::unique_ptr<UserMenu> mUserMenu;
 		ResMusicID mCurrentMusic { ResMusicID::None };
 
-		static constexpr char cTitle[] = "Cyrey";
+		static constexpr char cTitle[] = "Cyrey - ALPHA VERSION, WORK IN PROGRESS";
 		static constexpr char cLoading[] = "Loading...";
+#ifdef EMSCRIPTEN
+		static constexpr char cUserFileName[] = "/data/user.json";
+#else
 		static constexpr char cUserFileName[] = "user.json";
+#endif
 
 		void Init();
 		void InitWindow();

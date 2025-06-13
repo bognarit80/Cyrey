@@ -1,19 +1,17 @@
 #include "MainMenu.hpp"
+#include "Networking.hpp"
 #include "raygui.h"
 #include "raylib.h"
-#ifdef WIN32
-#include "raylib_win32.h"
-#endif
-#include "cpr/cpr.h"
 
 namespace
 {
-	std::future<cpr::Response> futureConfig;
+	std::future<Cyrey::Response> futureConfig;
 } // namespace
 
 Cyrey::MainMenu::MainMenu(CyreyApp& app) : mApp(app)
 {
-	FetchGameConfig();
+	if (app.mCurrentUser->mFinishedTutorial)
+		FetchGameConfig(this->mApp);
 }
 
 void Cyrey::MainMenu::Update()
@@ -23,10 +21,10 @@ void Cyrey::MainMenu::Update()
 	if (futureConfig.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
 		return;
 	auto resp = futureConfig.get();
-	if (resp.status_code != 200)
+	if (resp.mCode != 200)
 		return;
 
-	if (auto cfg = GameConfig::ParseConfig(resp.text); cfg.has_value())
+	if (auto cfg = GameConfig::ParseConfig(resp.mBody); cfg.has_value())
 		this->mApp.mGameConfig = *cfg;
 }
 
@@ -156,20 +154,14 @@ void Cyrey::MainMenu::Draw()
 		txt
 	))
 	{
-		FetchGameConfig();
+		FetchGameConfig(this->mApp);
 	}
 }
 
 
-void Cyrey::MainMenu::FetchGameConfig()
+void Cyrey::MainMenu::FetchGameConfig(CyreyApp& app)
 {
 	if (futureConfig.valid())
 		return; // we are already trying to fetch the config
-
-	futureConfig = std::async(std::launch::async, []
-	{
-		return cpr::Get(cpr::Url { Cyrey::GameConfig::cLatestConfigUrl },
-						cpr::Timeout { 10000 },
-						cpr::ConnectTimeout { 500 });
-	});
+	futureConfig = Networking::Get(GameConfig::cLatestConfigUrl);
 }

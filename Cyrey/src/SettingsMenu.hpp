@@ -38,7 +38,11 @@ namespace Cyrey
 		static constexpr float cQueueSwapTolerance = 0.15f;
 		static constexpr bool cWantReplayAutoSave = true;
 
+#ifdef EMSCRIPTEN
+		static constexpr char cSettingsFileName[] = "/data/settings.json";
+#else
 		static constexpr char cSettingsFileName[] = "settings.json";
+#endif
 
 		static constexpr char cWindowText[] = "Settings";
 		static constexpr char cMusicSliderText[] = "Music volume";

@@ -26,6 +26,7 @@ namespace Cyrey
 		void Draw(); // not const because we want raygui functions to modify members
 		void DrawReplayPopup();
 		void RefreshReplayList();
+		void ResetReplayList();
 
 	private:
 		CyreyApp& mApp;
@@ -49,7 +50,7 @@ namespace Cyrey
 		static constexpr char cPreviousTxt[] = "Previous";
 		static constexpr char cNextTxt[] = "Next";
 
-		static constexpr char cLeaderboardUrl[] = CYREY_APIURL "Leaderboard";
+		static constexpr char cLeaderboardUrl[] = "Leaderboard";
 	};
 } // namespace Cyrey
 
