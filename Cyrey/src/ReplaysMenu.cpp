@@ -104,8 +104,11 @@ void Cyrey::ReplaysMenu::Draw()
 			::GuiButton(doneBtnPos, ::GuiIconText(::GuiIconName::ICON_EXIT, ReplaysMenu::cBackBtnText)))
 			this->mSelectedReplay = std::nullopt;
 
+		if (this->mSelectedReplay->mConfigVersion != this->mApp.mGameConfig.mVersion)
+			::GuiDisable();
 		if (::GuiButton(refreshBtnPos, ::GuiIconText(::GuiIconName::ICON_PLAYER_PLAY, "Play")))
 			this->mPlayReplay = true;
+		::GuiEnable();
 
 		float controlOffsetY = fontSize * 1.3f;
 		float controlPaddingX = windowWidth * 0.05f;
