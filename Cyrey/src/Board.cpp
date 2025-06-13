@@ -1369,6 +1369,34 @@ void Cyrey::Board::DrawReplayControls()
 	}
 	if (::GuiLabelButton(speedLabel, ::TextFormat("x%.2f", this->mGameSpeed)))
 		this->mGameSpeed = 1.0f;
+
+	// protect against div by zero issues
+	if (this->mReplayData->mCommands.empty())
+		return;
+
+	// highlight the best moves on the bar
+	controlHeight /= 2;
+	float highlightThickness = this->mTileInset;
+	float pointsPct = this->mReplayData->mCommands[this->mReplayData->mStats.mBestMovePointsIdx].mSecondsRemaining /
+		this->mGameConfig.mStartingTime;
+	float cascadePct = this->mReplayData->mCommands[this->mReplayData->mStats.mBestMoveCascadesIdx].mSecondsRemaining /
+		this->mGameConfig.mStartingTime;
+	::Rectangle pointsHighlight {
+		seekingBar.x - highlightThickness / 2 + seekingBar.width - seekingBar.width * pointsPct,
+		seekingBar.y + controlHeight,
+		highlightThickness,
+		controlHeight
+	};
+	::Rectangle cascadeHighlight {
+		seekingBar.x - highlightThickness / 2 + seekingBar.width - seekingBar.width * cascadePct,
+		seekingBar.y + controlHeight,
+		highlightThickness,
+		controlHeight
+	};
+	if (pointsPct == cascadePct)
+		cascadeHighlight.height /= 2;
+	::DrawRectangleRec(pointsHighlight, ::GetColor(::GuiGetStyle(::GuiControl::DEFAULT, ::GuiControlProperty::TEXT_COLOR_NORMAL)));
+	::DrawRectangleRec(cascadeHighlight, ::GREEN);
 }
 
 void Cyrey::Board::DrawPieces() const
