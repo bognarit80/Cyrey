@@ -24,18 +24,17 @@ void Cyrey::CyreyApp::Init()
 	this->mChangeToState = CyreyAppState::Loading;
 	this->mPrevState = CyreyAppState::Loading;
 	this->mWantExit = false;
-	this->mOldWindowSize = ::Vector2 { static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
 	this->mHasWindow = false;
 	this->mMTInstance = std::mt19937 {}; // init the object first, we will reseed for sure
 
 	this->mResMgr = std::make_unique<ResourceManager>();
+	this->mSettings = std::make_unique<SettingsMenu>(*this);
 	this->InitWindow();
 	this->mGameConfig = Cyrey::cDefaultGameConfig;
 	this->mBoard = std::make_unique<Board>(this->mGameConfig.mBoardWidth, this->mGameConfig.mBoardHeight);
 	this->mBoard->mApp = this;
 	this->mCurrentUser = std::make_unique<User>(CyreyApp::ParseUserFile(CyreyApp::cUserFileName));
 	this->mMainMenu = std::make_unique<MainMenu>(*this);
-	this->mSettings = std::make_unique<SettingsMenu>(*this);
 	this->mReplaysMenu = std::make_unique<ReplaysMenu>(*this);
 	this->mUserMenu = std::make_unique<UserMenu>(*this);
 }
@@ -46,19 +45,15 @@ void Cyrey::CyreyApp::InitWindow()
 	{
 		::CloseWindow();
 		this->mResMgr->UnloadResources();
-
-		// We always get here through settings, so it's guaranteed that they are available.
-		this->mSettings->mIsFullscreen ?
-			::SetConfigFlags(::ConfigFlags::FLAG_FULLSCREEN_MODE) :
-			::ClearWindowState(::ConfigFlags::FLAG_FULLSCREEN_MODE);
-
-		this->mSettings->mIsVSync ?
-			::SetConfigFlags(::ConfigFlags::FLAG_VSYNC_HINT) :
-			::ClearWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
 	}
+	::ClearWindowState(::ConfigFlags::FLAG_FULLSCREEN_MODE | ::ConfigFlags::FLAG_VSYNC_HINT);
+	if (this->mSettings->mIsVSync)
+		::SetConfigFlags(::ConfigFlags::FLAG_VSYNC_HINT);
 	::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN | ConfigFlags::FLAG_MSAA_4X_HINT);
 
 	::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
+	if (this->mSettings->mIsFullscreen)
+		this->ToggleFullscreen();
 	this->mRefreshRate = ::GetMonitorRefreshRate(::GetCurrentMonitor());
 	::SetTargetFPS(this->mRefreshRate);
 	this->mHasWindow = true;
@@ -275,14 +270,17 @@ void Cyrey::CyreyApp::ChangeToState(CyreyAppState state)
 
 void Cyrey::CyreyApp::ToggleFullscreen()
 {
+	static int oldWindowWidth;
+	static int oldWindowHeight;
 	if (::IsWindowFullscreen())
 	{
 		::ToggleFullscreen();
-		::SetWindowSize(this->mOldWindowSize.x, this->mOldWindowSize.y);
+		::SetWindowSize(oldWindowWidth, oldWindowHeight);
 	}
 	else
 	{
-		this->mOldWindowSize = ::Vector2 { static_cast<float>(this->mWidth), static_cast<float>(this->mHeight) };
+		oldWindowWidth = this->mWidth;
+		oldWindowHeight = this->mHeight;
 		int currentMonitor = ::GetCurrentMonitor();
 		::SetWindowSize(::GetMonitorWidth(currentMonitor), ::GetMonitorHeight(currentMonitor));
 		::ToggleFullscreen();

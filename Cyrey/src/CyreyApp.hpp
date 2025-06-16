@@ -59,7 +59,6 @@ namespace Cyrey
 		bool mWantExit;
 		std::unique_ptr<User> mCurrentUser;
 		std::unique_ptr<SettingsMenu> mSettings;
-		::Vector2 mOldWindowSize;
 		GameConfig mGameConfig;
 		bool mHasWindow;
 		std::unique_ptr<ResourceManager> mResMgr;
