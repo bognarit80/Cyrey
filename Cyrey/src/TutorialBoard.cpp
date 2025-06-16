@@ -1,11 +1,7 @@
 #include "TutorialBoard.hpp"
 
 #include <raygui.h>
-
-bool operator==(const ::Vector2 first, const ::Vector2 second)
-{
-	return first.x == second.x && first.y == second.y;
-}
+#include <raymath.h>
 
 static bool IsSwapInCoords(int col, int row, Cyrey::SwapDirection direction, std::initializer_list<::Vector2> pieces)
 {
@@ -32,7 +28,11 @@ static bool IsSwapInCoords(int col, int row, Cyrey::SwapDirection direction, std
 
 void Cyrey::TutorialBoard::Update()
 {
-	if (this->mStage != TutorialStage::FirstWindow
+	this->UpdateUI();
+
+	if (this->mStage != TutorialStage::Loading
+		&& this->mStage != TutorialStage::FirstWindow
+		&& this->mStage != TutorialStage::FirstMatch
 		&& this->mStage != TutorialStage::FirstRefill
 		&& this->mStage != TutorialStage::Cascade
 		&& !this->mShowSkipDialog)
@@ -44,20 +44,6 @@ void Cyrey::TutorialBoard::Update()
 	this->UpdateSwapAnim();
 	this->UpdateMatchedPieceAnims();
 	this->UpdateDroppedPieceAnims();
-
-	auto screenWidth = static_cast<float>(this->mApp->mWidth);
-	auto screenHeight = static_cast<float>(this->mApp->mHeight);
-
-	if (screenWidth > 0 && screenHeight > 0)
-	{
-		this->mTileSize = (screenHeight * this->mZoomPct / 100) / static_cast<float>(this->mHeight);
-		this->mTileInset = this->mTileSize / 10;
-		this->mXOffset = (screenWidth / 2) - (static_cast<float>(this->mWidth) * this->mTileSize / 2) + this->
-			mBoardSwerve.x;
-		this->mYOffset = (screenHeight / 2) - (static_cast<float>(this->mHeight) * this->mTileSize / 2) + this->
-			mBoardSwerve.y;
-	}
-
 	this->UpdateBoardSwerve();
 
 	if (this->mFallDelay > 0.0f)
@@ -94,6 +80,8 @@ void Cyrey::TutorialBoard::Update()
 			default:
 				break;
 			}
+
+			this->HandleQueuedSwaps();
 		}
 	}
 	if (this->mStage == TutorialStage::FirstRefill
@@ -111,7 +99,10 @@ void Cyrey::TutorialBoard::Update()
 	{
 		this->mMissDelay -= this->GetStepInterval();
 		if (this->mMissDelay <= 0.0f)
+		{
 			this->mMissDelay = 0.0f;
+			this->HandleQueuedSwaps();
+		}
 	}
 
 	bool isInNewGameAnim = this->UpdateNewGameAnim();
@@ -174,7 +165,7 @@ void Cyrey::TutorialBoard::Draw()
 
 void Cyrey::TutorialBoard::NewGame()
 {
-	this->mGameConfig = this->mApp->mGameConfig; // should be set to cTutorialGameConfig in CyreyApp
+	this->mGameConfig = Cyrey::cTutorialGameConfig;
 	this->mIsInReplay = false;
 	this->mHasSavedReplay = false;
 	this->mApp->SeedRNG(TutorialBoard::cTutorialSeed);
