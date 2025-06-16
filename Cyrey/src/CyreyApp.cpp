@@ -56,7 +56,7 @@ void Cyrey::CyreyApp::InitWindow()
 			::SetConfigFlags(::ConfigFlags::FLAG_VSYNC_HINT) :
 			::ClearWindowState(::ConfigFlags::FLAG_VSYNC_HINT);
 	}
-	::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN);
+	::SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE | ConfigFlags::FLAG_WINDOW_ALWAYS_RUN | ConfigFlags::FLAG_MSAA_4X_HINT);
 
 	::InitWindow(this->mWidth, this->mHeight, CyreyApp::cTitle);
 	this->mRefreshRate = ::GetMonitorRefreshRate(::GetCurrentMonitor());
